@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">home-anthill</string>
+    <string name="prompt_apitoken">API Token</string>
+    <string name="action_init">Initialize</string>
+    <string name="alarm_apitoken">API Token</string>
+    <string name="alarm_fcmtoken">FCM Token</string>
+    <string name="welcome">"Welcome!"</string>
+    <string name="init_failed">"Initialization failed"</string>
+</resources>
