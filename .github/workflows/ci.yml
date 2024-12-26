@@ -32,5 +32,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '21'
+      - name: Prepare fake google-services.json
+        run: cp google-services.json_template app/google-services.json
       - name: Build with Gradle
         run: ./gradlew build
