@@ -1,68 +1,98 @@
 plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("com.google.gms.google-services")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
-    namespace = "eu.homeanthill.alarm"
+    namespace = "eu.homeanthill"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "eu.homeanthill.alarm"
-        minSdk = 23
+        applicationId = "eu.homeanthill"
+        minSdk = 33
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        multiDexEnabled = true
     }
+
     buildTypes {
-        getByName("release") {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.109:8082/api/\"")
+            // manifestPlaceholders.clearTextTraffic = true
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            isDebuggable = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        release {
+            buildConfigField("String", "API_BASE_URL", "\"https://home-anthill.eu/api/\"")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // signingConfig signingConfigs.release
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "11"
     }
     buildFeatures {
-        viewBinding = true
+        buildConfig = true
+        compose = true
     }
 }
 
 dependencies {
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    // Core
+    implementation(libs.androidx.core.ktx)
 
-    // Retrofit to make http requests
-    implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:okhttp")
-    implementation("com.squareup.okhttp3:logging-interceptor")
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
+    // Compose & Material
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
 
-    // Import the Firebase BoM (see: https://firebase.google.com/docs/android/learn-more#bom)
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    // Import Firebase Cloud Messaging library
-    implementation("com.google.firebase:firebase-messaging")
-    // Used to store FCM Registration Token.
-    // This is recommended, but not required.
-    // See: https://firebase.google.com/docs/cloud-messaging/manage-tokens
-    implementation("com.google.firebase:firebase-firestore")
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
 
-    implementation("com.google.android.gms:play-services-auth:21.3.0")
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.annotation:annotation:1.9.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.2.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
-    implementation("androidx.activity:activity:1.9.3")
+    // Koin
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.firestore)
+//    implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.firebase.analytics.ktx)
+
+    // Accompanist (permission library)
+    implementation(libs.accompanist.permissions)
+
+    // Test
+    testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.koin.test)
+
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
