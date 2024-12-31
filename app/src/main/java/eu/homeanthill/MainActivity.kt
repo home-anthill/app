@@ -1,6 +1,7 @@
 package eu.homeanthill
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,8 +24,13 @@ import eu.homeanthill.ui.theme.HomeAnthillTheme
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
         enableEdgeToEdge()
         setContent {
             HomeAnthillTheme {

@@ -33,7 +33,11 @@ jobs:
           distribution: 'adopt'
           java-version: '21'
       - name: Prepare fake google-services.json
-        run: cp google-services.json_template app/google-services.json
+        run: |
+          cp google-services.json_template app/google-services.json
+          cp secrets.defaults.properties secrets.properties
+          cp secrets.defaults.properties staging.properties
+          cp secrets.defaults.properties release.properties
       - name: Build with Gradle
         run: |
           chmod +x gradlew

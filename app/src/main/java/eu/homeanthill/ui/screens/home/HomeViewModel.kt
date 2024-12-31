@@ -19,7 +19,9 @@ class HomeViewModel(
     private val loginRepository: LoginRepository,
     private val fcmTokenRepository: FCMTokenRepository
 ) : ViewModel() {
-    private val TAG = "HomeViewModel"
+    companion object {
+        private const val TAG = "HomeViewModel"
+    }
 
     sealed class HomeUiState {
         data class Idle(val apiToken: String, val fcmToken: String) : HomeUiState()

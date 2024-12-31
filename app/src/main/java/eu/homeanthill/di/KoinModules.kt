@@ -3,6 +3,7 @@ package eu.homeanthill.di
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.requests.FCMTokenServices
 import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.LoginRepository
@@ -50,7 +51,7 @@ val retrofitModule = module {
 
     fun provideRetrofit(factory: Gson, okHttpClient: OkHttpClient): Retrofit {
         val retrofitBuilder = Retrofit.Builder()
-            .baseUrl("http://192.168.1.111:8082/api/")
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(factory))
 

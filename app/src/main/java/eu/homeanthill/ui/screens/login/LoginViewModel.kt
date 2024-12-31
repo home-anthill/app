@@ -11,6 +11,10 @@ import kotlinx.coroutines.launch
 class LoginViewModel(
     private val loginRepository: LoginRepository
 ) : ViewModel() {
+    companion object {
+        private const val TAG = "LoginViewModel"
+    }
+
     sealed class LoginUiState {
         data class IsLogged(val loggedIn: Boolean) : LoginUiState()
         data class Error(val errorMessage: String) : LoginUiState()
@@ -30,7 +34,7 @@ class LoginViewModel(
     private fun init() {
         viewModelScope.launch {
             val isLogged = loginRepository.isLoggedIn()
-            Log.d("LoginViewModel", "isLogged = $isLogged")
+            Log.d(TAG, "isLogged = $isLogged")
             if (isLogged) {
                 _loginUiState.emit(LoginUiState.IsLogged(true))
             } else {

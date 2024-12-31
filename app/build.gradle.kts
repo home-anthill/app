@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
@@ -21,20 +22,22 @@ android {
     }
 
     buildTypes {
-        debug {
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.109:8082/api/\"")
-            // manifestPlaceholders.clearTextTraffic = true
+        getByName("release") {
+            isMinifyEnabled = true
+            isDebuggable = false
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+        }
+        create("staging") {
             isMinifyEnabled = false
             isDebuggable = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            versionNameSuffix = "-staging"
+            signingConfig = signingConfigs.getByName("debug")
         }
-        release {
-            buildConfigField("String", "API_BASE_URL", "\"https://home-anthill.eu/api/\"")
-            isMinifyEnabled = true
-            isShrinkResources = true
-            isDebuggable = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // signingConfig signingConfigs.release
+        getByName("debug") {
+            isMinifyEnabled = false
+            isDebuggable = true
+            versionNameSuffix = "-debug"
         }
     }
     compileOptions {
@@ -95,4 +98,11 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+secrets {
+    propertiesFileName = "secrets.properties"
+    // A properties file containing default secret values. This file can be
+    // checked in version control.
+    defaultPropertiesFileName = "secrets.defaults.properties"
 }

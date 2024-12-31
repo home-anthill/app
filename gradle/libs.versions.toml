@@ -13,9 +13,9 @@ retrofit = "2.11.0"
 loggingInterceptor = "4.12.0"
 koin = "3.4.0"
 firebase = "33.7.0"
-#crashlytics = "3.0.2"
 googleServices = "4.4.2"
 accompanist = "0.37.0"
+secretsGradlePlugin = "2.0.1"
 
 [libraries]
 #core
@@ -50,7 +50,6 @@ logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-intercep
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
-#firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
 firebase-analytics-ktx = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 
 #accompanist
@@ -60,11 +59,11 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-#firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

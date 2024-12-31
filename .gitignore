@@ -7,6 +7,12 @@ build/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# Gradle secrets plugin
+# `secrets.properties` is the default file used in debug
+secrets.properties
+staging.properties
+release.properties
+
 # Log/OS Files
 *.log
 
