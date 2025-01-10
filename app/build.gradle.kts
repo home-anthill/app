@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
+    implementation(libs.urlconnection)
 
     // Koin
     implementation(libs.koin.core)

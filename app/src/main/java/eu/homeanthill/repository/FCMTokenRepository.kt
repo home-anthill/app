@@ -1,7 +1,8 @@
 package eu.homeanthill.repository
 
-import eu.homeanthill.api.model.FCMTokenResponse
 import java.io.IOException
+
+import eu.homeanthill.api.model.FCMTokenResponse
 
 import eu.homeanthill.api.requests.FCMTokenServices
 

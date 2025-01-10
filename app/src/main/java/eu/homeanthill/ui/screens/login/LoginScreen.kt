@@ -1,5 +1,7 @@
 package eu.homeanthill.ui.screens.login
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,18 +10,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import eu.homeanthill.BuildConfig
+
 import eu.homeanthill.R
 import eu.homeanthill.ui.components.TopAppBar
 import eu.homeanthill.ui.navigation.MainRoute
@@ -30,7 +30,7 @@ fun LoginScreen(
     loginViewModel: LoginViewModel,
     navController: NavController,
 ) {
-    var apiToken by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -49,31 +49,21 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 when (loginUiState) {
-                    is LoginViewModel.LoginUiState.Error -> {
-                        Text(
-                            text = loginUiState.errorMessage,
-                            color = Color.Red
-                        )
-                    }
-
-                    is LoginViewModel.LoginUiState.IsLogged -> {
-                        val isLoggedIn = loginUiState.loggedIn
-                        if (isLoggedIn) {
+                    is LoginViewModel.LoginUiState.HasJWT -> {
+                        val hasJWT = loginUiState.hasJWT
+                        if (hasJWT) {
                             navController.navigate(route = MainRoute.Home.name)
                         } else {
-                            TextField(
-                                value = apiToken,
-                                onValueChange = { apiToken = it },
-                            )
                             Button(
                                 onClick = {
-                                    loginViewModel.login(apiToken)
-                                    navController.navigate(route = MainRoute.Home.name)
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.API_BASE_URL + "login_app"))
+                                    context.startActivity(intent)
                                 },
                                 enabled = true,
                             ) {
-                                Text(text = "Initialize")
+                                Text(text = "Login via Github")
                             }
+
                         }
                     }
                 }

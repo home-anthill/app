@@ -5,15 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.messaging.messaging
-import eu.homeanthill.api.model.LoggedUser
-import eu.homeanthill.repository.FCMTokenRepository
-import eu.homeanthill.repository.LoginRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.io.IOException
+
+import eu.homeanthill.api.model.LoggedUser
+import eu.homeanthill.repository.FCMTokenRepository
+import eu.homeanthill.repository.LoginRepository
 
 class HomeViewModel(
     private val loginRepository: LoginRepository,
@@ -24,12 +25,12 @@ class HomeViewModel(
     }
 
     sealed class HomeUiState {
-        data class Idle(val apiToken: String, val fcmToken: String) : HomeUiState()
+        data class Idle(val fcmToken: String) : HomeUiState()
         data object Loading : HomeUiState()
         data class Error(val errorMessage: String) : HomeUiState()
     }
 
-    private val _homeUiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle("",""))
+    private val _homeUiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle(""))
     val homeUiState: StateFlow<HomeUiState> = _homeUiState
 
     init {
@@ -42,34 +43,29 @@ class HomeViewModel(
             delay(500)
 
             val loggedUser: LoggedUser = loginRepository.getLoggedUser()
-            if (loggedUser.apiToken == null) {
-                _homeUiState.emit(HomeUiState.Error("Missing API Token"))
-                return@launch
-            }
             if  (loggedUser.fcmToken != null) {
-                _homeUiState.emit(HomeUiState.Idle(loggedUser.apiToken, loggedUser.fcmToken))
+                _homeUiState.emit(HomeUiState.Idle(loggedUser.fcmToken))
                 return@launch
             }
 
             // register this device
             delay(250)
-            val fcmToken: String? = registerDeviceToFirebase(loggedUser.apiToken)
+            val fcmToken: String? = registerDeviceToFirebase()
             if (fcmToken == null) {
                 _homeUiState.emit(HomeUiState.Error("Cannot generate FCM Token"))
                 return@launch
             }
 
-            _homeUiState.emit(HomeUiState.Idle(loggedUser.apiToken, fcmToken))
+            _homeUiState.emit(HomeUiState.Idle(fcmToken))
         }
     }
 
-    private suspend fun registerDeviceToFirebase(apiToken: String): String? {
+    private suspend fun registerDeviceToFirebase(): String? {
         // Get new FCM registration token
         val token = Firebase.messaging.getToken().await()
         Log.d(TAG, "fcm token = $token")
 
         val body = mapOf(
-            "apiToken" to apiToken,
             "fcmToken" to token,
         )
         try {

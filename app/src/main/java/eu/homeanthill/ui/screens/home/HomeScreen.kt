@@ -123,11 +123,6 @@ fun HomeScreen(
 
                         is HomeViewModel.HomeUiState.Idle -> {
                             Text(
-                                text = homeUiState.apiToken,
-                                color = Color.Black,
-                                fontSize = 24.sp
-                            )
-                            Text(
                                 text = homeUiState.fcmToken,
                                 color = Color.Black,
                                 fontSize = 24.sp
