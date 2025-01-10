@@ -71,8 +71,8 @@ class HomeViewModel(
         try {
             delay(250)
             val result = fcmTokenRepository.repoPostFCMToken(body)
-            Log.d(TAG, "registerToFirebase - result = $result")
-            loginRepository.setFCMToken(token)
+//            Log.d(TAG, "registerToFirebase - result = $result")
+//            loginRepository.setFCMToken(token)
             return token
         } catch (err: IOException) {
             _homeUiState.emit(HomeUiState.Error(err.message.toString()))

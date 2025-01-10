@@ -27,6 +27,8 @@ android {
             isDebuggable = false
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            // TODO change signingConfig to create a real release build
+            signingConfig = signingConfigs.getByName("debug")
         }
         create("staging") {
             isMinifyEnabled = false
@@ -83,7 +85,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.firestore)
-//    implementation(libs.firebase.crashlytics.ktx)
     implementation(libs.firebase.analytics.ktx)
 
     // Accompanist (permission library)
