@@ -24,7 +24,7 @@ class LoginViewModel(
 
     private fun init() {
         viewModelScope.launch {
-            val hasJWT = loginRepository.isLoggedIn()
+            val hasJWT = loginRepository.hasJWT()
             _loginUiState.emit(LoginUiState.HasJWT(hasJWT))
         }
     }

@@ -1,27 +1,16 @@
 package eu.homeanthill.repository
 
 import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 
-import eu.homeanthill.api.model.LoggedUser
+import eu.homeanthill.api.model.Profile
 
 class LoginRepository(private val context: Context) {
-    fun login(jwt: String) {
-        val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-        val editor = sharedPreference.edit()
-        editor.putString("jwt", jwt)
-        editor.apply()
-    }
-
-    fun isLoggedIn(): Boolean {
-        val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-        return sharedPreference.contains("jwt")
-    }
-
-    fun setJWT(jwt: String) {
-        val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-        val editor = sharedPreference.edit()
-        editor.putString("jwt", jwt)
-        editor.apply()
+    fun hasJWT(): Boolean {
+        return context
+            .getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
+            .contains("jwt")
     }
 
     fun getJWT(): String? {
@@ -30,26 +19,38 @@ class LoginRepository(private val context: Context) {
         return jwt
     }
 
-    fun logout() {
-        val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-        val editor = sharedPreference.edit()
-        editor.remove("apiToken")
-        editor.apply()
-    }
+    // setJWT is missing because it's manually set in MainActivity
 
     fun setFCMToken(fcmToken: String) {
-        val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-        val editor = sharedPreference.edit()
-        editor.putString("fcmToken", fcmToken)
-        editor.apply()
+        context
+            .getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
+            .edit()
+            .putString("fcmToken", fcmToken)
+            .apply()
     }
 
-    fun getLoggedUser(): LoggedUser {
+    fun getFCMToken(): String? {
+        return context
+            .getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
+            .getString("fcmToken", null)
+    }
+
+    fun getLoggedProfile(): Profile? {
         val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-        val fcmToken: String? = sharedPreference.getString("fcmToken", null)
-        val loggedUser: LoggedUser = LoggedUser(
-            fcmToken = fcmToken,
-        )
-        return loggedUser
+        val json: String = sharedPreference.getString("profile", null) ?: return null
+        return try {
+            Gson().fromJson(json, Profile::class.java)
+        } catch (err: JsonSyntaxException) {
+            null
+        }
+    }
+
+    fun setLoggedProfile(profile: Profile) {
+        val json = Gson().toJson(profile)
+        context
+            .getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
+            .edit()
+            .putString("profile", json)
+            .apply()
     }
 }

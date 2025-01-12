@@ -17,14 +17,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import org.koin.androidx.compose.koinViewModel
+import eu.homeanthill.ui.theme.AppTheme
 import eu.homeanthill.ui.navigation.Graph
 import eu.homeanthill.ui.navigation.MainRoute
 import eu.homeanthill.ui.screens.home.HomeScreen
 import eu.homeanthill.ui.screens.home.HomeViewModel
 import eu.homeanthill.ui.screens.login.LoginScreen
 import eu.homeanthill.ui.screens.login.LoginViewModel
-import eu.homeanthill.ui.theme.HomeAnthillTheme
-import org.koin.androidx.compose.koinViewModel
+import eu.homeanthill.ui.screens.profile.ProfileScreen
+import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -55,17 +57,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
-
         enableEdgeToEdge()
         setContent {
-            HomeAnthillTheme {
+            AppTheme(dynamicColor = false) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     val navController = rememberNavController()
-
                     NavHost(
                         navController = navController,
                         route = Graph.MAIN,
@@ -76,11 +76,10 @@ class MainActivity : ComponentActivity() {
                         ) {
                             val loginViewModel = koinViewModel<LoginViewModel>()
                             val loginUiState by loginViewModel.loginUiState.collectAsStateWithLifecycle()
-
                             LoginScreen(
                                 loginUiState = loginUiState,
-                                loginViewModel = loginViewModel,
-                                navController = navController
+                                navController = navController,
+
                             )
                         }
                         composable(
@@ -88,9 +87,18 @@ class MainActivity : ComponentActivity() {
                         ) {
                             val homeViewModel = koinViewModel<HomeViewModel>()
                             val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
-
                             HomeScreen(
                                 homeUiState = homeUiState,
+                                navController = navController,
+                            )
+                        }
+                        composable(
+                            route = MainRoute.Profile.name
+                        ) {
+                            val profileViewModel = koinViewModel<ProfileViewModel>()
+                            val profileUiState by profileViewModel.profileUiState.collectAsStateWithLifecycle()
+                            ProfileScreen(
+                                profileUiState = profileUiState,
                                 navController = navController
                             )
                         }

@@ -7,4 +7,5 @@ object Graph {
 sealed class MainRoute(val name: String) {
     data object Login: MainRoute("Login")
     data object Home: MainRoute("Home")
+    data object Profile: MainRoute("Profile")
 }

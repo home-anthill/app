@@ -18,26 +18,36 @@ import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.AuthInterceptor
 import eu.homeanthill.api.SendSavedCookiesInterceptor
 import eu.homeanthill.api.requests.FCMTokenServices
-import eu.homeanthill.api.requests.LoginServices
+import eu.homeanthill.api.requests.ProfileServices
 import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.LoginRepository
+import eu.homeanthill.repository.ProfileRepository
 import eu.homeanthill.ui.screens.home.HomeViewModel
+import eu.homeanthill.ui.screens.profile.ProfileViewModel
 import eu.homeanthill.ui.screens.login.LoginViewModel
 
 
 val viewModelModule = module {
     viewModel { LoginViewModel(loginRepository = get()) }
-    viewModel { HomeViewModel(loginRepository = get(), fcmTokenRepository = get()) }
+    viewModel {
+        HomeViewModel(
+            loginRepository = get(),
+            profileRepository = get(),
+            fcmTokenRepository = get()
+        )
+    }
+    viewModel { ProfileViewModel(profileRepository = get()) }
 }
 
 val repositoryModule = module {
-    single { FCMTokenRepository(fcmTokenService = get()) }
     factory { LoginRepository(context = androidContext()) }
+    single { FCMTokenRepository(fcmTokenService = get()) }
+    single { ProfileRepository(profileService = get()) }
 }
 
 val apiModule = module {
     single { get<Retrofit>().create(FCMTokenServices::class.java) }
-    single { get<Retrofit>().create(LoginServices::class.java) }
+    single { get<Retrofit>().create(ProfileServices::class.java) }
 }
 
 val retrofitModule = module {
