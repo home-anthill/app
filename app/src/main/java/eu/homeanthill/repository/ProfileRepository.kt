@@ -1,8 +1,8 @@
 package eu.homeanthill.repository
 
-import eu.homeanthill.api.model.ProfileAPITokenResponse
 import java.io.IOException
 
+import eu.homeanthill.api.model.ProfileAPITokenResponse
 import eu.homeanthill.api.model.Profile
 import eu.homeanthill.api.requests.ProfileServices
 

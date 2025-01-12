@@ -1,11 +1,5 @@
 package eu.homeanthill.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -16,16 +10,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Profile
@@ -64,28 +53,10 @@ fun TopAppBar(
             IconButton(onClick = {
                 navController?.navigate(route = MainRoute.Profile.name)
             }) {
-                CircleImageWithBorder(profile.github.avatarURL)
+                CircleImage(profile.github.avatarURL, 100.dp)
             }
         }
     })
-}
-
-@Composable
-fun CircleImageWithBorder(imageUrl: String) {
-    Box(
-        modifier = Modifier
-            .size(100.dp)
-            .clip(CircleShape)
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "Circular Image with Border",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-        )
-    }
 }
 
 @Composable

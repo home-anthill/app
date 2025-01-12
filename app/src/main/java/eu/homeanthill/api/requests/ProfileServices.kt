@@ -15,6 +15,8 @@ interface ProfileServices {
     suspend fun getProfile(): Response<Profile>
 
     @Headers("Accept: application/json")
-    @POST("profile/{id}/tokens")
-    suspend fun postRegenApiToken(@Path("id") id: String): Response<ProfileAPITokenResponse>
+    @POST("profiles/{id}/tokens")
+    suspend fun postRegenApiToken(
+        @Path("id") id: String
+    ): Response<ProfileAPITokenResponse>
 }

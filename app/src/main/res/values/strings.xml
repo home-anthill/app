@@ -15,6 +15,9 @@
     <string name="home_permission_required">The notification permission is required for some functionality.</string>
 
     <string name="profile">Profile</string>
+    <string name="profile_regen_apitoken">Regenerate API Token</string>
+    <string name="profile_logout">Logout</string>
+
     <string name="homes">Homes</string>
     <string name="devices">Devices</string>
     <string name="back">Back</string>

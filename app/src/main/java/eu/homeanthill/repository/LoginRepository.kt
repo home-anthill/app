@@ -53,4 +53,15 @@ class LoginRepository(private val context: Context) {
             .putString("profile", json)
             .apply()
     }
+
+    fun logout() {
+        context
+            .getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
+            .edit()
+            .remove("profile")
+            .remove("fcmToken")
+            .remove("jwt")
+            .remove("sessionCookie")
+            .apply()
+    }
 }

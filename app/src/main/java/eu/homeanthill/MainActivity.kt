@@ -97,8 +97,11 @@ class MainActivity : ComponentActivity() {
                         ) {
                             val profileViewModel = koinViewModel<ProfileViewModel>()
                             val profileUiState by profileViewModel.profileUiState.collectAsStateWithLifecycle()
+                            val apiTokenUiState by profileViewModel.apiTokenUiState.collectAsStateWithLifecycle()
                             ProfileScreen(
                                 profileUiState = profileUiState,
+                                apiTokenUiState = apiTokenUiState,
+                                profileViewModel = profileViewModel,
                                 navController = navController
                             )
                         }

@@ -36,7 +36,7 @@ val viewModelModule = module {
             fcmTokenRepository = get()
         )
     }
-    viewModel { ProfileViewModel(profileRepository = get()) }
+    viewModel { ProfileViewModel(loginRepository = get(), profileRepository = get()) }
 }
 
 val repositoryModule = module {

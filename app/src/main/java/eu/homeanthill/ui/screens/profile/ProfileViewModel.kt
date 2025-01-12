@@ -11,9 +11,11 @@ import java.io.IOException
 
 import eu.homeanthill.api.model.ProfileAPITokenResponse
 import eu.homeanthill.api.model.Profile
+import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.ProfileRepository
 
 class ProfileViewModel(
+    private val loginRepository: LoginRepository,
     private val profileRepository: ProfileRepository,
 ) : ViewModel() {
     companion object {
@@ -34,11 +36,30 @@ class ProfileViewModel(
 
     private val _profileUiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Idle(null))
     val profileUiState: StateFlow<ProfileUiState> = _profileUiState
-    private val _apiTokenUiState = MutableStateFlow<ApiTokenUiState>(ApiTokenUiState.Idle(""))
+    private val _apiTokenUiState =
+        MutableStateFlow<ApiTokenUiState>(ApiTokenUiState.Idle("********-****-****-****-************"))
     val apiTokenUiState: StateFlow<ApiTokenUiState> = _apiTokenUiState
 
     init {
         init()
+    }
+
+    suspend fun regenApiToken(id: String?) {
+        if (id == null) {
+            return
+        }
+        _apiTokenUiState.emit(ApiTokenUiState.Loading)
+        delay(250)
+        try {
+            val response: ProfileAPITokenResponse = profileRepository.repoPostRegenAPIToken(id)
+            _apiTokenUiState.emit(ApiTokenUiState.Idle(response.apiToken))
+        } catch (err: IOException) {
+            _apiTokenUiState.emit(ApiTokenUiState.Error(err.message.toString()))
+        }
+    }
+
+    fun logout() {
+        loginRepository.logout()
     }
 
     private fun init() {
@@ -53,18 +74,6 @@ class ProfileViewModel(
                 _profileUiState.emit(ProfileUiState.Error(err.message.toString()))
             }
             return@launch
-        }
-    }
-
-    private suspend fun regenApiToken(id: String) {
-        _apiTokenUiState.emit(ApiTokenUiState.Loading)
-        delay(250)
-        try {
-            val response: ProfileAPITokenResponse = profileRepository.repoPostRegenAPIToken(id)
-            Log.d(TAG, "regenApiToken - response = $response")
-            _apiTokenUiState.emit(ApiTokenUiState.Idle(response.apiToken))
-        } catch (err: IOException) {
-            _apiTokenUiState.emit(ApiTokenUiState.Error(err.message.toString()))
         }
     }
 }
