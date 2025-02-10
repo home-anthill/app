@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.profile
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,16 +18,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-
-import eu.homeanthill.R
-import eu.homeanthill.ui.components.CircleImage
-import eu.homeanthill.ui.components.TopAppBar
-import eu.homeanthill.ui.navigation.MainRoute
 import kotlinx.coroutines.launch
+
+import eu.homeanthill.LoginActivity
+import eu.homeanthill.R
+import eu.homeanthill.ui.components.CircleAsyncImage
 
 @Composable
 fun ProfileScreen(
@@ -36,19 +37,17 @@ fun ProfileScreen(
     navController: NavController,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
-    Scaffold(topBar = {
-        TopAppBar(appbarTitle = stringResource(R.string.profile),
-            onBackPressed = { navController.popBackStack() })
-    }, content = { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 25.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    Scaffold(
+        content = { padding ->
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             when (profileUiState) {
                 is ProfileViewModel.ProfileUiState.Error -> {
                     Text(
@@ -56,11 +55,13 @@ fun ProfileScreen(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+
                 is ProfileViewModel.ProfileUiState.Loading -> {
                     CircularProgressIndicator()
                 }
+
                 is ProfileViewModel.ProfileUiState.Idle -> {
-                    profileUiState.profile?.github?.avatarURL?.let { CircleImage(it, 150.dp) }
+                    profileUiState.profile?.github?.avatarURL?.let { CircleAsyncImage(it, 150.dp) }
                     Spacer(modifier = Modifier.height(30.dp))
                     profileUiState.profile?.github?.login?.let {
                         Text(
@@ -94,9 +95,11 @@ fun ProfileScreen(
                                 fontWeight = FontWeight.Bold,
                             )
                         }
+
                         is ProfileViewModel.ApiTokenUiState.Loading -> {
                             CircularProgressIndicator()
                         }
+
                         is ProfileViewModel.ApiTokenUiState.Idle -> {
                             Text(
                                 text = apiTokenUiState.apiToken,
@@ -121,7 +124,11 @@ fun ProfileScreen(
                     Button(
                         onClick = {
                             profileViewModel.logout()
-                            navController.navigate(route = MainRoute.Login.name)
+                            // go back to the LoginActivity
+                            val i = Intent(context, LoginActivity::class.java)
+                            i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            context.startActivity(i)
                         },
                         enabled = true,
                     ) {

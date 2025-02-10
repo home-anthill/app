@@ -32,7 +32,6 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
 import eu.homeanthill.R
-import eu.homeanthill.ui.components.TopAppBar
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -96,34 +95,11 @@ fun HomeScreen(
     }
 
     Scaffold(
-        topBar = {
-            when (homeUiState) {
-                is HomeViewModel.HomeUiState.Error -> {
-                    Text(
-                        text = "?",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                is HomeViewModel.HomeUiState.Loading -> {
-                    CircularProgressIndicator()
-                }
-
-                is HomeViewModel.HomeUiState.Idle -> {
-                    TopAppBar(
-                        appbarTitle = stringResource(R.string.home),
-                        navController = navController,
-                        profile = homeUiState.profile,
-                    )
-                }
-            }
-        },
         content = { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 8.dp),
+                    .padding(padding),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

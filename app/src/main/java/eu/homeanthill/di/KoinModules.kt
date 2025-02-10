@@ -17,18 +17,22 @@ import retrofit2.converter.gson.GsonConverterFactory
 import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.AuthInterceptor
 import eu.homeanthill.api.SendSavedCookiesInterceptor
+import eu.homeanthill.api.requests.DevicesServices
 import eu.homeanthill.api.requests.FCMTokenServices
+import eu.homeanthill.api.requests.HomesServices
 import eu.homeanthill.api.requests.ProfileServices
+import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.FCMTokenRepository
+import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.ProfileRepository
+import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.home.HomeViewModel
+import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
+import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
-import eu.homeanthill.ui.screens.login.LoginViewModel
-
 
 val viewModelModule = module {
-    viewModel { LoginViewModel(loginRepository = get()) }
     viewModel {
         HomeViewModel(
             loginRepository = get(),
@@ -37,17 +41,24 @@ val viewModelModule = module {
         )
     }
     viewModel { ProfileViewModel(loginRepository = get(), profileRepository = get()) }
+    viewModel { HomesListViewModel(homesRepository = get()) }
+    viewModel { RoomsViewModel(homesRepository = get()) }
+    viewModel { DevicesListViewModel(devicesRepository = get()) }
 }
 
 val repositoryModule = module {
     factory { LoginRepository(context = androidContext()) }
     single { FCMTokenRepository(fcmTokenService = get()) }
     single { ProfileRepository(profileService = get()) }
+    single { HomesRepository(homesService = get()) }
+    single { DevicesRepository(devicesService = get()) }
 }
 
 val apiModule = module {
     single { get<Retrofit>().create(FCMTokenServices::class.java) }
     single { get<Retrofit>().create(ProfileServices::class.java) }
+    single { get<Retrofit>().create(HomesServices::class.java) }
+    single { get<Retrofit>().create(DevicesServices::class.java) }
 }
 
 val retrofitModule = module {

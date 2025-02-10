@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 
 @Composable
-fun CircleImage(imageUrl: String, size: Dp) {
+fun CircleAsyncImage(imageUrl: String, size: Dp) {
     Box(
         modifier = Modifier
             .size(size)

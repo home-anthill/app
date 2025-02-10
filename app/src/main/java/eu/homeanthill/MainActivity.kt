@@ -1,111 +1,144 @@
 package eu.homeanthill
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.material3.TopAppBarDefaults
 import org.koin.androidx.compose.koinViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
 import eu.homeanthill.ui.theme.AppTheme
-import eu.homeanthill.ui.navigation.Graph
-import eu.homeanthill.ui.navigation.MainRoute
+import eu.homeanthill.ui.navigation.AppDrawer
+import eu.homeanthill.ui.navigation.AppNavigationActions
+import eu.homeanthill.ui.navigation.Destinations.DEVICES
+import eu.homeanthill.ui.navigation.Destinations.HOME
+import eu.homeanthill.ui.navigation.Destinations.HOMES
+import eu.homeanthill.ui.navigation.Destinations.PROFILE
+import eu.homeanthill.ui.screens.devices.DevicesScreen
 import eu.homeanthill.ui.screens.home.HomeScreen
 import eu.homeanthill.ui.screens.home.HomeViewModel
-import eu.homeanthill.ui.screens.login.LoginScreen
-import eu.homeanthill.ui.screens.login.LoginViewModel
+import eu.homeanthill.ui.screens.homes.HomesScreen
 import eu.homeanthill.ui.screens.profile.ProfileScreen
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 class MainActivity : ComponentActivity() {
-    companion object {
-        private const val TAG = "MainActivity"
-    }
-
-    public override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        val data: Uri? = intent.data
-        Log.d(TAG, "onNewIntent query = ${data?.query}")
-
-        // these 2 query params must match those on server-side
-        val jwt = data?.getQueryParameter("token")
-        val cookie = data?.getQueryParameter("session_cookie")
-
-        this.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-            .edit()
-            .putString("sessionCookie", cookie)
-            .putString("jwt", jwt)
-            .apply()
-
-        // restart the activity
-        val i = Intent(this@MainActivity, MainActivity::class.java)
-        finish()
-        startActivity(i)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
         enableEdgeToEdge()
         setContent {
             AppTheme(dynamicColor = false) {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    val navController = rememberNavController()
-                    NavHost(
-                        navController = navController,
-                        route = Graph.MAIN,
-                        startDestination = MainRoute.Login.name
-                    ) {
-                        composable(
-                            route = MainRoute.Login.name
-                        ) {
-                            val loginViewModel = koinViewModel<LoginViewModel>()
-                            val loginUiState by loginViewModel.loginUiState.collectAsStateWithLifecycle()
-                            LoginScreen(
-                                loginUiState = loginUiState,
-                                navController = navController,
+                AppNavGraph()
+            }
+        }
+    }
+}
 
-                            )
-                        }
-                        composable(
-                            route = MainRoute.Home.name
-                        ) {
-                            val homeViewModel = koinViewModel<HomeViewModel>()
-                            val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
-                            HomeScreen(
-                                homeUiState = homeUiState,
-                                navController = navController,
-                            )
-                        }
-                        composable(
-                            route = MainRoute.Profile.name
-                        ) {
-                            val profileViewModel = koinViewModel<ProfileViewModel>()
-                            val profileUiState by profileViewModel.profileUiState.collectAsStateWithLifecycle()
-                            val apiTokenUiState by profileViewModel.apiTokenUiState.collectAsStateWithLifecycle()
-                            ProfileScreen(
-                                profileUiState = profileUiState,
-                                apiTokenUiState = apiTokenUiState,
-                                profileViewModel = profileViewModel,
-                                navController = navController
-                            )
-                        }
-                    }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppNavGraph(
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController(),
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+) {
+    val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentNavBackStackEntry?.destination?.route ?: HOME
+    val navigationActions = remember(navController) {
+        AppNavigationActions(navController)
+    }
+    ModalNavigationDrawer(
+        drawerContent = {
+            AppDrawer(
+                route = currentRoute,
+                navigateToHome = { navigationActions.navigateToHome() },
+                navigateToProfile = { navigationActions.navigateToProfile() },
+                navigateToHomes = { navigationActions.navigateToHomes() },
+                navigateToDevices = { navigationActions.navigateToDevices() },
+                closeDrawer = { coroutineScope.launch { drawerState.close() } },
+                modifier = Modifier
+            )
+        },
+        drawerState = drawerState
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(text = currentRoute) },
+                    modifier = Modifier.fillMaxWidth(),
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch { drawerState.open() }
+                            },
+                            content = {
+                                Icon(imageVector = Icons.Default.Menu, contentDescription = null)
+                            }
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
+            },
+            modifier = Modifier
+        ) {
+            NavHost(
+                navController = navController,
+                startDestination = HOME,
+                modifier = modifier.padding(it)
+            ) {
+                composable(HOME) {
+                    val homeViewModel = koinViewModel<HomeViewModel>()
+                    val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
+                    HomeScreen(
+                        homeUiState = homeUiState,
+                        navController = navController,
+                    )
+                }
+                composable(PROFILE) {
+                    val profileViewModel = koinViewModel<ProfileViewModel>()
+                    val profileUiState by profileViewModel.profileUiState.collectAsStateWithLifecycle()
+                    val apiTokenUiState by profileViewModel.apiTokenUiState.collectAsStateWithLifecycle()
+                    ProfileScreen(
+                        profileUiState = profileUiState,
+                        apiTokenUiState = apiTokenUiState,
+                        profileViewModel = profileViewModel,
+                        navController = navController
+                    )
+                }
+                composable(HOMES) {
+                    HomesScreen()
+                }
+                composable(DEVICES) {
+                    DevicesScreen()
                 }
             }
         }
