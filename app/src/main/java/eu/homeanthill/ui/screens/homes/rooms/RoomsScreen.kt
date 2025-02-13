@@ -1,6 +1,5 @@
 package eu.homeanthill.ui.screens.homes.rooms
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,7 +42,6 @@ import kotlinx.coroutines.launch
 
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.Room
-import eu.homeanthill.ui.screens.homes.HomesRoute
 
 @Composable
 fun RoomsScreen(
@@ -54,7 +52,6 @@ fun RoomsScreen(
     val coroutineScope = rememberCoroutineScope()
     val showNewDialog = remember { mutableStateOf(false) }
     val home = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
-    Log.d("___________", " home $home") // TODO not working, why???
 
     if (showNewDialog.value) {
         NewRoomDialog(

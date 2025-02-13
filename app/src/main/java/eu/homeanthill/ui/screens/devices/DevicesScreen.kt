@@ -14,6 +14,8 @@ import org.koin.androidx.compose.koinViewModel
 
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListScreen
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
+import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceScreen
+import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
 
 @Composable
 fun DevicesScreen(
@@ -39,17 +41,17 @@ fun DevicesScreen(
                     navController = navController,
                 )
             }
-//            composable(
-//                route = DevicesRoute.EditDevice.name
-//            ) {
-//                val roomsViewModel = koinViewModel<RoomsViewModel>()
-//                val roomsUiState by roomsViewModel.roomsUiState.collectAsStateWithLifecycle()
-//                RoomsScreen(
-//                    roomsUiState = roomsUiState,
-//                    roomsViewModel = roomsViewModel,
-//                    navController = navController,
-//                )
-//            }
+            composable(
+                route = DevicesRoute.EditDevice.name
+            ) {
+                val editDeviceViewModel = koinViewModel<EditDeviceViewModel>()
+                val editDeviceUiState by editDeviceViewModel.editDeviceUiState.collectAsStateWithLifecycle()
+                EditDeviceScreen(
+                    devicesUiState = editDeviceUiState,
+                    devicesViewModel = editDeviceViewModel,
+                    navController = navController,
+                )
+            }
         }
     }
 }

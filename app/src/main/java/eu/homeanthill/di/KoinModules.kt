@@ -27,6 +27,7 @@ import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.ProfileRepository
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
+import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
 import eu.homeanthill.ui.screens.home.HomeViewModel
 import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
 import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
@@ -44,6 +45,7 @@ val viewModelModule = module {
     viewModel { HomesListViewModel(homesRepository = get()) }
     viewModel { RoomsViewModel(homesRepository = get()) }
     viewModel { DevicesListViewModel(devicesRepository = get()) }
+    viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
 }
 
 val repositoryModule = module {

@@ -1,9 +1,7 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,23 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,12 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import eu.homeanthill.api.model.Device
 
-import eu.homeanthill.api.model.Home
-import eu.homeanthill.ui.screens.homes.HomesRoute
+import eu.homeanthill.ui.screens.devices.DevicesRoute
 
 //data class HomeItemObj(
 //    val id: String = "",
@@ -144,21 +131,16 @@ fun DevicesListScreen(
                             SimpleCard(
                                 device = device,
                                 onEdit = {
-//                                    showEditDialog = showEditDialog.copy(
-//                                        id = home.id,
-//                                        name = home.name,
-//                                        location = home.location,
-//                                        value = true,
-//                                    )
+                                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                                        "device",
+                                        device
+                                    )
+                                    navController.navigate(route = DevicesRoute.EditDevice.name)
                                 },
-                                onRoomsDetails = {
+                                onDetails = {
 //                                    navController.currentBackStackEntry?.savedStateHandle?.set("home", home)
 //                                    navController.navigate(route = HomesRoute.EditHome.name)
                                 },
-                                onDelete = {
-//                                    showCancelDialog =
-//                                        showCancelDialog.copy(id = home.id, value = true)
-                                }
                             )
                         }
                     }
@@ -172,8 +154,7 @@ fun DevicesListScreen(
 fun SimpleCard(
     device: Device,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    onRoomsDetails: () -> Unit,
+    onDetails: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -185,57 +166,33 @@ fun SimpleCard(
             .padding(vertical = 10.dp, horizontal = 20.dp)
             .clip(RoundedCornerShape(16.dp))
     ) {
-        Box {
-            Box(
-                modifier = Modifier.align(Alignment.TopEnd)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp, horizontal = 20.dp)
+        ) {
+            Text(
+                text = device.mac,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = device.model,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.padding(5.dp))
+            TextButton(
+                onClick = { onEdit() },
+                modifier = Modifier.padding(8.dp),
             ) {
-                IconButton(
-                    modifier = Modifier.align(Alignment.TopEnd),
-                    onClick = { expanded = !expanded }
-                ) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                }
-                DropdownMenu(
-                    modifier = Modifier.align(Alignment.TopEnd),
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Edit home") },
-                        onClick = {
-                            onEdit()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("View rooms")},
-                        onClick = {
-                            onRoomsDetails()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete home") },
-                        onClick = {
-                            onDelete()
-                        }
-                    )
-                }
+                Text("Settings")
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp, horizontal = 20.dp)
-                    .align(Alignment.TopStart)
+            TextButton(
+                onClick = { onDetails() },
+                modifier = Modifier.padding(8.dp),
             ) {
-                Text(
-                    text = device.mac,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = device.model,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Text("Play/Values")
             }
         }
     }
