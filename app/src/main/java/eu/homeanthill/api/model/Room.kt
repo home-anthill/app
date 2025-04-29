@@ -11,7 +11,7 @@ data class Room(
     @SerializedName("floor") var floor: Number,
     @SerializedName("createdAt") val createdAt: String,
     @SerializedName("modifiedAt") val modifiedAt: String,
-    @SerializedName("devices") val devices: List<String>,
+    @SerializedName("devices") val devices: List<String>?,
 ): Parcelable
 
 data class RoomRequest(
