@@ -57,38 +57,40 @@ fun DevicesListScreen(
                     }
 
                     is DevicesListViewModel.DevicesUiState.Idle -> {
-                        Text(
-                            text = "Unassigned",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        devicesUiState.deviceList?.unassignedDevices?.forEach { device ->
-                            SimpleCard(
-                                device = device,
-                                onEdit = {
-                                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                                        "device",
-                                        device
-                                    )
-                                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                                        "home",
-                                        null
-                                    )
-                                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                                        "room",
-                                        null
-                                    )
-                                    navController.navigate(route = DevicesRoute.EditDevice.name)
-                                },
-                                onDetails = {
+                        if (devicesUiState.deviceList?.unassignedDevices?.isNotEmpty() == true) {
+                            Text(
+                                text = "Unassigned",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            devicesUiState.deviceList.unassignedDevices.forEach { device ->
+                                SimpleCard(
+                                    device = device,
+                                    onEdit = {
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "device",
+                                            device
+                                        )
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "home",
+                                            null
+                                        )
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "room",
+                                            null
+                                        )
+                                        navController.navigate(route = DevicesRoute.EditDevice.name)
+                                    },
+                                    onDetails = {
 //                                    navController.currentBackStackEntry?.savedStateHandle?.set("home", home)
 //                                    navController.navigate(route = HomesRoute.EditHome.name)
-                                },
-                            )
-                        }
-                        devicesUiState.deviceList?.homeDevices?.forEach { homeWithDevices ->
+                                    },
+                                )
+                            }
                             HorizontalDivider(
                                 thickness = 2.dp, modifier = Modifier.padding(vertical = 20.dp)
                             )
+                        }
+                        devicesUiState.deviceList?.homeDevices?.forEach { homeWithDevices ->
                             Text(
                                 text = homeWithDevices.home.name + " (" + homeWithDevices.home.location + ")",
                                 style = MaterialTheme.typography.titleLarge
@@ -147,6 +149,9 @@ fun DevicesListScreen(
                                     )
                                 }
                             }
+                            HorizontalDivider(
+                                thickness = 2.dp, modifier = Modifier.padding(vertical = 20.dp)
+                            )
                         }
                     }
                 }
