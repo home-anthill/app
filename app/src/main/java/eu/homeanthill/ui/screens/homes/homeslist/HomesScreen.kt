@@ -73,6 +73,9 @@ fun HomesListScreen(
 
     if (showNewDialog.value) {
         NewHomeDialog(
+            dialogText = "New home",
+            saveText = "Save",
+            cancelText = "Cancel",
             onDismissRequest = {
                 showNewDialog.value = false
             },
@@ -86,6 +89,9 @@ fun HomesListScreen(
     }
     if (showEditDialog.value) {
         EditHomeDialog(
+            dialogText = "Edit home",
+            saveText = "Save",
+            cancelText = "Cancel",
             homeEditObj = HomeEditObj(
                 id = showEditDialog.id,
                 name = showEditDialog.name,
@@ -106,6 +112,10 @@ fun HomesListScreen(
     }
     if (showCancelDialog.value) {
         DeleteHomeDialog(
+            dialogTitle = "Delete home",
+            dialogText = "Would you delete want to remove this home?",
+            confirmText = "Yes",
+            dismissText = "No",
             onDismissRequest = {
                 showCancelDialog = showCancelDialog.copy(id = "", value = false)
             },
@@ -114,9 +124,7 @@ fun HomesListScreen(
                     homesViewModel.deleteHome(showCancelDialog.id)
                     showCancelDialog = showCancelDialog.copy(id = "", value = false)
                 }
-            },
-            dialogTitle = "dialogTitle",
-            dialogText = "dialogText",
+            }
         )
     }
     Scaffold(
@@ -260,6 +268,9 @@ fun SimpleCard(
 
 @Composable
 fun NewHomeDialog(
+    dialogText: String,
+    saveText: String,
+    cancelText: String,
     onDismissRequest: () -> Unit,
     onConfirmation: (name: String, location: String) -> Unit,
 ) {
@@ -282,7 +293,7 @@ fun NewHomeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "This is a dialog with buttons and an image.",
+                    text = dialogText,
                     modifier = Modifier.padding(16.dp),
                 )
                 TextField(
@@ -304,13 +315,13 @@ fun NewHomeDialog(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Dismiss")
+                        Text(text = saveText)
                     }
                     TextButton(
                         onClick = { onConfirmation(name, location) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Confirm")
+                        Text(text = cancelText)
                     }
                 }
             }
@@ -320,6 +331,9 @@ fun NewHomeDialog(
 
 @Composable
 fun EditHomeDialog(
+    dialogText: String,
+    saveText: String,
+    cancelText: String,
     homeEditObj: HomeEditObj,
     onDismissRequest: () -> Unit,
     onConfirmation: (id: String, name: String, location: String) -> Unit,
@@ -343,7 +357,7 @@ fun EditHomeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "This is a dialog edit home",
+                    text = dialogText,
                     modifier = Modifier.padding(16.dp),
                 )
                 TextField(
@@ -365,13 +379,13 @@ fun EditHomeDialog(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Dismiss")
+                        Text(text = saveText)
                     }
                     TextButton(
                         onClick = { onConfirmation(homeEditObj.id, name, location) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Confirm")
+                        Text(text = cancelText)
                     }
                 }
             }
@@ -383,6 +397,8 @@ fun EditHomeDialog(
 fun DeleteHomeDialog(
     dialogTitle: String,
     dialogText: String,
+    confirmText: String,
+    dismissText: String,
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit,
 ) {
@@ -402,7 +418,7 @@ fun DeleteHomeDialog(
                     onConfirmation()
                 }
             ) {
-                Text("Confirm")
+                Text(text = confirmText)
             }
         },
         dismissButton = {
@@ -411,7 +427,7 @@ fun DeleteHomeDialog(
                     onDismissRequest()
                 }
             ) {
-                Text("Dismiss")
+                Text(text = dismissText)
             }
         }
     )

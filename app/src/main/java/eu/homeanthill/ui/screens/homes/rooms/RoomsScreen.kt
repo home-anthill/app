@@ -55,6 +55,9 @@ fun RoomsScreen(
 
     if (showNewDialog.value) {
         NewRoomDialog(
+            dialogText = "Create a new room",
+            saveText = "Save",
+            cancelText = "Cancel",
             onDismissRequest = {
                 showNewDialog.value = false
             },
@@ -234,6 +237,9 @@ fun SimpleCard(
 
 @Composable
 fun NewRoomDialog(
+    dialogText: String,
+    saveText: String,
+    cancelText: String,
     onDismissRequest: () -> Unit,
     onConfirmation: (name: String, location: String) -> Unit,
 ) {
@@ -256,7 +262,7 @@ fun NewRoomDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "This is a dialog with buttons and an image.",
+                    text = dialogText,
                     modifier = Modifier.padding(16.dp),
                 )
                 TextField(
@@ -278,13 +284,13 @@ fun NewRoomDialog(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Dismiss")
+                        Text(text = saveText)
                     }
                     TextButton(
                         onClick = { onConfirmation(name, floor) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Confirm")
+                        Text(text = cancelText)
                     }
                 }
             }
