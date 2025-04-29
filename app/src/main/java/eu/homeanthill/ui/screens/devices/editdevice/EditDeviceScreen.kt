@@ -32,6 +32,7 @@ import eu.homeanthill.api.model.Room
 import eu.homeanthill.ui.components.MaterialSpinner
 import eu.homeanthill.ui.components.SpinnerItemObj
 import eu.homeanthill.ui.screens.devices.DevicesRoute
+import eu.homeanthill.ui.screens.homes.homeslist.DeleteHomeDialog
 
 @Composable
 fun EditDeviceScreen(
@@ -40,16 +41,38 @@ fun EditDeviceScreen(
     navController: NavController,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    // inputs
     val device = navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
     val initialHome: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
     val initialRoom: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
 
     var homesOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
     var roomsOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
-
     var selectedHome: Home? by remember { mutableStateOf(initialHome) }
     var selectedRoom: Room? by remember { mutableStateOf(initialRoom) }
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        DeleteHomeDialog(
+            dialogTitle = "Delete device",
+            dialogText = "Would you remove this device?",
+            confirmText = "Yes",
+            dismissText = "No",
+            onDismissRequest = {
+                showDeleteDialog = false
+            },
+            onConfirmation = {
+                coroutineScope.launch {
+                    if (device !== null) {
+                        devicesViewModel.deleteDevice(id = device.id)
+                        navController.navigate(route = DevicesRoute.Devices.name)
+                        showDeleteDialog = false
+                    }
+                }
+            }
+        )
+    }
     Scaffold(
         content = { padding ->
             Column(
@@ -138,12 +161,7 @@ fun EditDeviceScreen(
                         }
                         TextButton(
                             onClick = {
-                                coroutineScope.launch {
-                                    if (device !== null) {
-                                        devicesViewModel.deleteDevice(id = device.id)
-                                        navController.navigate(route = DevicesRoute.Devices.name)
-                                    }
-                                }
+                                showDeleteDialog = true
                             },
                             modifier = Modifier.padding(8.dp),
                         ) {
