@@ -1,7 +1,6 @@
 package eu.homeanthill.ui.screens.devices.editdevice
 
 import java.io.IOException
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,7 +9,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 import eu.homeanthill.api.model.Home
-import eu.homeanthill.api.model.NewHome
 import eu.homeanthill.api.model.PutDevice
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.HomesRepository
@@ -59,7 +57,6 @@ class EditDeviceViewModel(
 
             try {
                 val homes: List<Home> = homesRepository.repoGetHomes()
-                Log.d(TAG, "init - devices homes = $homes")
                 _editDeviceUiState.emit(EditDeviceUiState.Idle(homes))
             } catch (err: IOException) {
                 _editDeviceUiState.emit(EditDeviceUiState.Error(err.message.toString()))

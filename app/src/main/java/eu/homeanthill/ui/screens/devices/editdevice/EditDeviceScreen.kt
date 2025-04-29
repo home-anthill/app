@@ -1,6 +1,5 @@
 package eu.homeanthill.ui.screens.devices.editdevice
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,15 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.launch
+
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.Room
-import eu.homeanthill.api.model.RoomRequest
 import eu.homeanthill.ui.components.MaterialSpinner
 import eu.homeanthill.ui.components.SpinnerItemObj
 import eu.homeanthill.ui.screens.devices.DevicesRoute
-import kotlinx.coroutines.launch
 
 @Composable
 fun EditDeviceScreen(
@@ -43,9 +41,14 @@ fun EditDeviceScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val device = navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
+    val initialHome: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
+    val initialRoom: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
 
-    var selectedHome: Home? by remember { mutableStateOf(null) }
-    var selectedRoom: Room? by remember { mutableStateOf(null) }
+    var homesOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
+    var roomsOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
+
+    var selectedHome: Home? by remember { mutableStateOf(initialHome) }
+    var selectedRoom: Room? by remember { mutableStateOf(initialRoom) }
 
     Scaffold(
         content = { padding ->
@@ -83,51 +86,55 @@ fun EditDeviceScreen(
                     }
 
                     is EditDeviceViewModel.EditDeviceUiState.Idle -> {
+                        homesOption = devicesUiState.homes.map { home ->
+                            SpinnerItemObj(home.id, home.name)
+                        }
                         MaterialSpinner(
                             title = "home",
-                            options = devicesUiState.homes.map {
-                                SpinnerItemObj(it.id, it.name)
-                            },
+                            options = homesOption,
                             onSelect = { option ->
-                                selectedHome = devicesUiState.homes.find { it.id === option.key }
-                                Log.d("*********", "$selectedHome")
+                                selectedHome = devicesUiState.homes.find { home -> home.id == option.key }
+                                selectedRoom = null
                             },
-                            modifier = Modifier.padding(10.dp)
+                            modifier = Modifier.padding(10.dp),
+                            selectedOption = if (selectedHome == null) { null } else { SpinnerItemObj(selectedHome!!.id, selectedHome!!.name) },
                         )
                         if (selectedHome !== null && selectedHome!!.rooms !== null && selectedHome!!.rooms!!.isNotEmpty()) {
+                            roomsOption = selectedHome!!.rooms!!.map { room ->
+                                SpinnerItemObj(room.id, room.name)
+                            }
                             MaterialSpinner(
                                 title = "room",
-                                options = selectedHome!!.rooms!!.map {
-                                    SpinnerItemObj(it.id, it.name)
-                                },
+                                options = roomsOption,
                                 onSelect = { option ->
                                     selectedRoom =
-                                        selectedHome!!.rooms!!.find { it.id === option.key }
-                                    Log.d("*********", "$selectedRoom")
+                                        selectedHome!!.rooms!!.find { room -> room.id == option.key }
                                 },
-                                modifier = Modifier.padding(10.dp)
+                                modifier = Modifier.padding(10.dp),
+                                selectedOption = if (selectedRoom == null) { null } else { SpinnerItemObj(selectedRoom!!.id, selectedRoom!!.name) },
                             )
                         } else {
                             selectedRoom = null
-                            Log.d("*********", "selectedRoom reset to null")
                         }
 
-                        TextButton(
-                            onClick = {
-                                if (device !== null && selectedHome !== null && selectedRoom !== null) {
-                                    coroutineScope.launch {
-                                        devicesViewModel.assignDevice(
-                                            id = device.id,
-                                            homeId = selectedHome!!.id,
-                                            roomId = selectedRoom!!.id
-                                        )
-                                        navController.navigate(route = DevicesRoute.Devices.name)
+                        if (selectedHome != null && selectedRoom != null) {
+                            TextButton(
+                                onClick = {
+                                    if (device !== null && selectedHome !== null && selectedRoom !== null) {
+                                        coroutineScope.launch {
+                                            devicesViewModel.assignDevice(
+                                                id = device.id,
+                                                homeId = selectedHome!!.id,
+                                                roomId = selectedRoom!!.id
+                                            )
+                                            navController.navigate(route = DevicesRoute.Devices.name)
+                                        }
                                     }
-                                }
-                            },
-                            modifier = Modifier.padding(8.dp),
-                        ) {
-                            Text("Assign")
+                                },
+                                modifier = Modifier.padding(8.dp),
+                            ) {
+                                Text("Assign")
+                            }
                         }
                         TextButton(
                             onClick = {

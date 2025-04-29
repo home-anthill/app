@@ -44,7 +44,7 @@ val viewModelModule = module {
     viewModel { ProfileViewModel(loginRepository = get(), profileRepository = get()) }
     viewModel { HomesListViewModel(homesRepository = get()) }
     viewModel { RoomsViewModel(homesRepository = get()) }
-    viewModel { DevicesListViewModel(devicesRepository = get()) }
+    viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
     viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
 }
 

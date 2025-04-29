@@ -1,6 +1,5 @@
 package eu.homeanthill.ui.components
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
@@ -31,11 +30,10 @@ fun MaterialSpinner(
     title: String,
     options: List<SpinnerItemObj>,
     onSelect: (option: SpinnerItemObj) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectedOption: SpinnerItemObj? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedOption by remember { mutableStateOf(options[0]) }
-    onSelect(selectedOption)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -44,7 +42,7 @@ fun MaterialSpinner(
     ) {
         TextField(
             modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-            value = selectedOption.value,
+            value = selectedOption?.value ?: SpinnerItemObj("---", "---").value,
             onValueChange = {},
             readOnly = true,
             singleLine = true,
@@ -57,8 +55,7 @@ fun MaterialSpinner(
                 DropdownMenuItem(
                     text = { Text(option.value, style = MaterialTheme.typography.bodyLarge) },
                     onClick = {
-                        selectedOption = option
-                        onSelect(selectedOption)
+                        onSelect(option)
                         expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -77,10 +74,11 @@ fun MaterialSpinnerPreview() {
     MaterialTheme {
         Column {
             MaterialSpinner(
-                "Data Models",
+                "Spinner",
                 dataModels,
-                { newValue -> Log.d("MaterialSpinner", "New Value = $newValue") },
-                Modifier.padding(10.dp)
+                {},
+                Modifier.padding(10.dp),
+                SpinnerItemObj(key = "123", value = "Foo"),
             )
         }
     }
