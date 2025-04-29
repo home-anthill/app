@@ -16,6 +16,8 @@ import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListScreen
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceScreen
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
+import eu.homeanthill.ui.screens.devices.sensor.SensorScreen
+import eu.homeanthill.ui.screens.devices.sensor.SensorViewModel
 
 @Composable
 fun DevicesScreen(
@@ -49,6 +51,17 @@ fun DevicesScreen(
                 EditDeviceScreen(
                     devicesUiState = editDeviceUiState,
                     devicesViewModel = editDeviceViewModel,
+                    navController = navController,
+                )
+            }
+            composable(
+                route = DevicesRoute.Sensor.name
+            ) {
+                val sensorViewModel = koinViewModel<SensorViewModel>()
+                val sensorUiState by sensorViewModel.sensorUiState.collectAsStateWithLifecycle()
+                SensorScreen(
+                    sensorUiState = sensorUiState,
+                    sensorViewModel = sensorViewModel,
                     navController = navController,
                 )
             }

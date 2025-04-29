@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
 // ------------------------------------------
-// Classes to represent aggregated data to represent the list of devices groped by homes and rooms
+// Classes with aggregated data to represent the list of devices groped by homes and rooms
 @Parcelize
 data class MyDevicesList(
     @SerializedName("unassignedDevices") val unassignedDevices: List<Device>,
@@ -50,6 +50,8 @@ data class Feature(
     @SerializedName("unit") val unit: String,
 ) : Parcelable
 
+// ------------------------------------------
+// API request body classes
 @Parcelize
 data class PutDevice(
     @SerializedName("homeId") val homeId: String,

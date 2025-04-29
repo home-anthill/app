@@ -5,6 +5,7 @@ import java.io.IOException
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PutDevice
+import eu.homeanthill.api.model.Value
 import eu.homeanthill.api.requests.DevicesServices
 
 class DevicesRepository(private val devicesService: DevicesServices) {
@@ -32,6 +33,15 @@ class DevicesRepository(private val devicesService: DevicesServices) {
             return result.body()!!
         } else {
             throw Exception(IOException("Error repoDeleteDevice"))
+        }
+    }
+
+    suspend fun repoGetValues(id: String): List<Value> {
+        val result = devicesService.getValues(id)
+        if (result.isSuccessful) {
+            return result.body()!!
+        } else {
+            throw Exception(IOException("Error repoGetValues"))
         }
     }
 }

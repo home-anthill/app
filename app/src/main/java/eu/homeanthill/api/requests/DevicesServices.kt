@@ -9,8 +9,10 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 import eu.homeanthill.api.model.Device
+import eu.homeanthill.api.model.DeviceValue
 import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PutDevice
+import eu.homeanthill.api.model.Value
 
 interface DevicesServices {
     @Headers("Accept: application/json")
@@ -29,4 +31,10 @@ interface DevicesServices {
     suspend fun deleteDevice(
         @Path("id") id: String
     ): Response<GenericMessageResponse>
+
+    @Headers("Accept: application/json")
+    @GET("devices/{id}/values")
+    suspend fun getValues(
+        @Path("id") id: String
+    ): Response<List<Value>>
 }

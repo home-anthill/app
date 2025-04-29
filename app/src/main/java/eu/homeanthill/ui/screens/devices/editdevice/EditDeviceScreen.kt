@@ -42,14 +42,14 @@ fun EditDeviceScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     // inputs
-    val device = navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
-    val initialHome: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
-    val initialRoom: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
+    val device: Device? = navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
+    val home: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
+    val room: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
 
     var homesOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
     var roomsOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
-    var selectedHome: Home? by remember { mutableStateOf(initialHome) }
-    var selectedRoom: Room? by remember { mutableStateOf(initialRoom) }
+    var selectedHome: Home? by remember { mutableStateOf(home) }
+    var selectedRoom: Room? by remember { mutableStateOf(room) }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
