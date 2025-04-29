@@ -69,7 +69,7 @@ fun HomesListScreen(
     val coroutineScope = rememberCoroutineScope()
     val showNewDialog = remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(value = HomeEditObj()) }
-    var showCancelDialog by remember { mutableStateOf(value = HomeItemObj()) }
+    var showDeleteDialog by remember { mutableStateOf(value = HomeItemObj()) }
 
     if (showNewDialog.value) {
         NewHomeDialog(
@@ -110,19 +110,19 @@ fun HomesListScreen(
             },
         )
     }
-    if (showCancelDialog.value) {
+    if (showDeleteDialog.value) {
         DeleteHomeDialog(
             dialogTitle = "Delete home",
-            dialogText = "Would you delete want to remove this home?",
+            dialogText = "Would you remove this home?",
             confirmText = "Yes",
             dismissText = "No",
             onDismissRequest = {
-                showCancelDialog = showCancelDialog.copy(id = "", value = false)
+                showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
             },
             onConfirmation = {
                 coroutineScope.launch {
-                    homesViewModel.deleteHome(showCancelDialog.id)
-                    showCancelDialog = showCancelDialog.copy(id = "", value = false)
+                    homesViewModel.deleteHome(showDeleteDialog.id)
+                    showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
                 }
             }
         )
@@ -166,8 +166,8 @@ fun HomesListScreen(
                                     navController.navigate(route = HomesRoute.EditHome.name)
                                 },
                                 onDelete = {
-                                    showCancelDialog =
-                                        showCancelDialog.copy(id = home.id, value = true)
+                                    showDeleteDialog =
+                                        showDeleteDialog.copy(id = home.id, value = true)
                                 }
                             )
                         }
@@ -315,13 +315,13 @@ fun NewHomeDialog(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text(text = saveText)
+                        Text(text = cancelText)
                     }
                     TextButton(
                         onClick = { onConfirmation(name, location) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text(text = cancelText)
+                        Text(text = saveText)
                     }
                 }
             }
@@ -379,13 +379,13 @@ fun EditHomeDialog(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text(text = saveText)
+                        Text(text = cancelText)
                     }
                     TextButton(
                         onClick = { onConfirmation(homeEditObj.id, name, location) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text(text = cancelText)
+                        Text(text = saveText)
                     }
                 }
             }

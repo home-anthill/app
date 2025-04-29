@@ -284,13 +284,13 @@ fun NewRoomDialog(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text(text = saveText)
+                        Text(text = cancelText)
                     }
                     TextButton(
                         onClick = { onConfirmation(name, floor) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text(text = cancelText)
+                        Text(text = saveText)
                     }
                 }
             }
