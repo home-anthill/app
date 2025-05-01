@@ -20,15 +20,19 @@ import eu.homeanthill.api.SendSavedCookiesInterceptor
 import eu.homeanthill.api.requests.DevicesServices
 import eu.homeanthill.api.requests.FCMTokenServices
 import eu.homeanthill.api.requests.HomesServices
+import eu.homeanthill.api.requests.OnlineServices
 import eu.homeanthill.api.requests.ProfileServices
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.repository.LoginRepository
+import eu.homeanthill.repository.OnlineRepository
 import eu.homeanthill.repository.ProfileRepository
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
-import eu.homeanthill.ui.screens.devices.sensor.SensorViewModel
+import eu.homeanthill.ui.screens.devices.sensorValues.SensorValuesViewModel
+import eu.homeanthill.ui.screens.devices.deviceValues.DeviceValuesViewModel
+import eu.homeanthill.ui.screens.devices.onlineValues.OnlineValuesViewModel
 import eu.homeanthill.ui.screens.home.HomeViewModel
 import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
 import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
@@ -47,7 +51,9 @@ val viewModelModule = module {
     viewModel { RoomsViewModel(homesRepository = get()) }
     viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
     viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
-    viewModel { SensorViewModel(devicesRepository = get()) }
+    viewModel { SensorValuesViewModel(devicesRepository = get()) }
+    viewModel { DeviceValuesViewModel(devicesRepository = get()) }
+    viewModel { OnlineValuesViewModel(onlineRepository = get()) }
 }
 
 val repositoryModule = module {
@@ -56,6 +62,7 @@ val repositoryModule = module {
     single { ProfileRepository(profileService = get()) }
     single { HomesRepository(homesService = get()) }
     single { DevicesRepository(devicesService = get()) }
+    single { OnlineRepository(onlineService = get()) }
 }
 
 val apiModule = module {
@@ -63,6 +70,7 @@ val apiModule = module {
     single { get<Retrofit>().create(ProfileServices::class.java) }
     single { get<Retrofit>().create(HomesServices::class.java) }
     single { get<Retrofit>().create(DevicesServices::class.java) }
+    single { get<Retrofit>().create(OnlineServices::class.java) }
 }
 
 val retrofitModule = module {

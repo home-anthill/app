@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
@@ -38,6 +38,11 @@ import eu.homeanthill.ui.screens.devices.DevicesRoute
 private fun isSensor(device: Device): Boolean {
     val controller = device.features.find { feature -> feature.type == "controller" }
     return controller == null
+}
+
+private fun isPowerOutage(device: Device): Boolean {
+    Log.d("_____", "${device.model}")
+   return device.model == "poweroutage"
 }
 
 @Composable
@@ -93,22 +98,24 @@ fun DevicesListScreen(
                                         navController.navigate(route = DevicesRoute.EditDevice.name)
                                     },
                                     onDetails = {
-                                        if (isSensor(device)) {
-                                            navController.currentBackStackEntry?.savedStateHandle?.set(
-                                                "device",
-                                                device
-                                            )
-                                            navController.currentBackStackEntry?.savedStateHandle?.set(
-                                                "home",
-                                                null
-                                            )
-                                            navController.currentBackStackEntry?.savedStateHandle?.set(
-                                                "room",
-                                                null
-                                            )
-                                            navController.navigate(route = DevicesRoute.Sensor.name)
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "device",
+                                            device
+                                        )
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "home",
+                                            null
+                                        )
+                                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                                            "room",
+                                            null
+                                        )
+                                        if (isPowerOutage(device)) {
+                                            navController.navigate(route = DevicesRoute.OnlineValues.name)
+                                        } else if (isSensor(device)) {
+                                            navController.navigate(route = DevicesRoute.SensorValues.name)
                                         } else {
-                                            // TODO case of controller device
+                                            navController.navigate(route = DevicesRoute.DeviceValues.name)
                                         }
                                     },
                                 )
@@ -146,7 +153,19 @@ fun DevicesListScreen(
                                             navController.navigate(route = DevicesRoute.EditDevice.name)
                                         },
                                         onDetails = {
-                                            // TODO controller
+                                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                "device",
+                                                device
+                                            )
+                                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                "home",
+                                                null
+                                            )
+                                            navController.currentBackStackEntry?.savedStateHandle?.set(
+                                                "room",
+                                                null
+                                            )
+                                            navController.navigate(route = DevicesRoute.DeviceValues.name)
                                         },
                                     )
                                 }
@@ -181,7 +200,12 @@ fun DevicesListScreen(
                                                 "room",
                                                 roomWithDevices.room
                                             )
-                                            navController.navigate(route = DevicesRoute.Sensor.name)
+                                            Log.d("_________", "is power outage = $sensor")
+                                            if (isPowerOutage(sensor)) {
+                                                navController.navigate(route = DevicesRoute.OnlineValues.name)
+                                            } else {
+                                                navController.navigate(route = DevicesRoute.SensorValues.name)
+                                            }
                                         },
                                     )
                                 }

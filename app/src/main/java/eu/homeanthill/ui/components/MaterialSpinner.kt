@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
@@ -33,6 +34,10 @@ fun MaterialSpinner(
     modifier: Modifier = Modifier,
     selectedOption: SpinnerItemObj? = null,
 ) {
+    if (title == "mode") {
+        Log.d("MaterialSpinner", "options = $options")
+        Log.d("MaterialSpinner", "selectedOption = $selectedOption")
+    }
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(

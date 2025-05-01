@@ -6,13 +6,15 @@ import retrofit2.http.Headers
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.PUT
+import retrofit2.http.POST
 import retrofit2.http.Path
 
 import eu.homeanthill.api.model.Device
-import eu.homeanthill.api.model.DeviceValue
 import eu.homeanthill.api.model.GenericMessageResponse
+import eu.homeanthill.api.model.PostSetDeviceValue
 import eu.homeanthill.api.model.PutDevice
-import eu.homeanthill.api.model.Value
+import eu.homeanthill.api.model.SensorValue
+import eu.homeanthill.api.model.ControllerValue
 
 interface DevicesServices {
     @Headers("Accept: application/json")
@@ -34,7 +36,21 @@ interface DevicesServices {
 
     @Headers("Accept: application/json")
     @GET("devices/{id}/values")
-    suspend fun getValues(
+    suspend fun getSensorValues(
         @Path("id") id: String
-    ): Response<List<Value>>
+    ): Response<List<SensorValue>>
+
+    // FIXME this api should be removed to reuse the getSensorValues after migrating devices to a list of features
+    @Headers("Accept: application/json")
+    @GET("devices/{id}/values")
+    suspend fun getControllerValues(
+        @Path("id") id: String
+    ): Response<ControllerValue>
+
+    @Headers("Accept: application/json")
+    @POST("devices/{id}/values")
+    suspend fun postSetValues(
+        @Path("id") id: String,
+        @Body body: PostSetDeviceValue
+    ): Response<GenericMessageResponse>
 }

@@ -1,4 +1,4 @@
-package eu.homeanthill.ui.screens.devices.sensor
+package eu.homeanthill.ui.screens.devices.sensorValues
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,27 +22,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 import eu.homeanthill.api.model.Device
-import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.FeatureValue
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.Room
+import eu.homeanthill.ui.screens.devices.sensorValues.SensorValuesViewModel
 
 @Composable
-fun SensorScreen(
-    sensorUiState: SensorViewModel.SensorUiState,
-    sensorViewModel: SensorViewModel,
+fun SensorValuesScreen(
+    sensorValuesUiState: SensorValuesViewModel.SensorValuesUiState,
+    sensorValuesViewModel: SensorValuesViewModel,
     navController: NavController,
 ) {
-    val coroutineScope = rememberCoroutineScope()
     // inputs
     val device: Device? =
         navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
@@ -50,7 +47,7 @@ fun SensorScreen(
     val room: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
 
     if (device != null) {
-        sensorViewModel.initDeviceValues(device)
+        sensorValuesViewModel.initDeviceValues(device)
     }
 
     Scaffold(
@@ -87,22 +84,22 @@ fun SensorScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-                when (sensorUiState) {
-                    is SensorViewModel.SensorUiState.Error -> {
+                when (sensorValuesUiState) {
+                    is SensorValuesViewModel.SensorValuesUiState.Error -> {
                         Text(
-                            text = sensorUiState.errorMessage,
+                            text = sensorValuesUiState.errorMessage,
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
 
-                    is SensorViewModel.SensorUiState.Loading -> {
+                    is SensorValuesViewModel.SensorValuesUiState.Loading -> {
                         CircularProgressIndicator()
                     }
 
-                    is SensorViewModel.SensorUiState.Idle -> {
-                        sensorUiState.deviceValue?.featureValues?.forEach { featureValue ->
-                            FeatureValueCard(
-                                sensorViewModel = sensorViewModel,
+                    is SensorValuesViewModel.SensorValuesUiState.Idle -> {
+                        sensorValuesUiState.deviceValue?.featureValues?.forEach { featureValue ->
+                            eu.homeanthill.ui.screens.devices.sensorValues.FeatureValueCard(
+                                sensorValuesViewModel = sensorValuesViewModel,
                                 featureValue = featureValue,
                             )
                         }
@@ -116,7 +113,7 @@ fun SensorScreen(
 
 @Composable
 fun FeatureValueCard(
-    sensorViewModel: SensorViewModel,
+    sensorValuesViewModel: SensorValuesViewModel,
     featureValue: FeatureValue
 ) {
     Card(
@@ -143,36 +140,37 @@ fun FeatureValueCard(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "Temperature",
                         )
+
                     "humidity" ->
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "Humidity",
                         )
+
                     "light" ->
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "Light",
                         )
+
                     "motion" ->
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "Motion",
                         )
+
                     "airquality" ->
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "AirQuality",
                         )
+
                     "airpressure" ->
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = "AirPressure",
                         )
-                    "poweroutage" ->
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = "PowerOutage",
-                        )
+
                     else ->
                         Icon(
                             imageVector = Icons.Rounded.Warning,
@@ -193,7 +191,7 @@ fun FeatureValueCard(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = sensorViewModel.getPrettyDateFromUnixEpoch(featureValue.modifiedAt),
+                text = sensorValuesViewModel.getPrettyDateFromUnixEpoch(featureValue.modifiedAt),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth()
             )

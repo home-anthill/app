@@ -51,10 +51,9 @@ data class Feature(
 ) : Parcelable
 
 // ------------------------------------------
-// API request body classes
+// classes used as body for API requests
 @Parcelize
 data class PutDevice(
     @SerializedName("homeId") val homeId: String,
     @SerializedName("roomId") val roomId: String,
 ) : Parcelable
-

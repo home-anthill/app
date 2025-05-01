@@ -7,5 +7,7 @@ object Graph {
 sealed class DevicesRoute(val name: String) {
     data object Devices: DevicesRoute("Devices")
     data object EditDevice: DevicesRoute("EditDevice")
-    data object Sensor: DevicesRoute("Sensor")
+    data object SensorValues: DevicesRoute("SensorValues")
+    data object OnlineValues: DevicesRoute("OnlineValues")
+    data object DeviceValues: DevicesRoute("DeviceValues")
 }
