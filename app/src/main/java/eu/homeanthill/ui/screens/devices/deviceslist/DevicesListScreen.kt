@@ -29,8 +29,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import eu.homeanthill.R
 
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.ui.screens.devices.DevicesRoute
@@ -41,7 +44,6 @@ private fun isSensor(device: Device): Boolean {
 }
 
 private fun isPowerOutage(device: Device): Boolean {
-    Log.d("_____", "${device.model}")
    return device.model == "poweroutage"
 }
 
@@ -200,7 +202,6 @@ fun DevicesListScreen(
                                                 "room",
                                                 roomWithDevices.room
                                             )
-                                            Log.d("_________", "is power outage = $sensor")
                                             if (isPowerOutage(sensor)) {
                                                 navController.navigate(route = DevicesRoute.OnlineValues.name)
                                             } else {
@@ -271,7 +272,7 @@ fun SimpleCard(
                 ) {
                     if (isSensor(device)) {
                         Icon(
-                            imageVector = Icons.Rounded.Menu,
+                            imageVector = ImageVector.vectorResource(R.drawable.auto_stories_24px),
                             contentDescription = "Values",
                         )
                     } else {

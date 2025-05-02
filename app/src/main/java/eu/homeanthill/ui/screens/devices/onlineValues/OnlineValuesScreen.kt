@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.onlineValues
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -27,8 +29,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import eu.homeanthill.R
 
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Home
@@ -138,7 +144,7 @@ fun OnlineValueCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Settings,
+                    imageVector = ImageVector.vectorResource(R.drawable.bolt_24px),
                     contentDescription = "PowerOutage",
                 )
                 Text(
@@ -149,15 +155,13 @@ fun OnlineValueCard(
             }
             Spacer(modifier = Modifier.height(6.dp))
             if (onlineValuesViewModel.isOffline(onlineValue.modifiedAt, onlineValue.currentTime)) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = "PowerOutage",
-                )
+                Canvas(modifier = Modifier.size(30.dp), onDraw = {
+                    drawCircle(color = Color.Red)
+                })
             } else {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = "PowerOutage",
-                )
+                Canvas(modifier = Modifier.size(30.dp), onDraw = {
+                    drawCircle(color = Color.Green)
+                })
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text(

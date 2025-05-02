@@ -27,8 +27,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import eu.homeanthill.R
 
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.FeatureValue
@@ -139,45 +142,46 @@ fun FeatureValueCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 when (featureValue.feature.name) {
+                    // icons taken from https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&icon.platform=android&icon.set=Material+Symbols
                     "temperature" ->
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            imageVector = ImageVector.vectorResource(R.drawable.device_thermostat_24px),
                             contentDescription = "Temperature",
                         )
 
                     "humidity" ->
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            imageVector = ImageVector.vectorResource(R.drawable.invert_colors_24px),
                             contentDescription = "Humidity",
                         )
 
                     "light" ->
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            imageVector = ImageVector.vectorResource(R.drawable.light_mode_24px),
                             contentDescription = "Light",
                         )
 
                     "motion" ->
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            imageVector = ImageVector.vectorResource(R.drawable.directions_run_24px),
                             contentDescription = "Motion",
                         )
 
                     "airquality" ->
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            imageVector = ImageVector.vectorResource(R.drawable.cloud_24px),
                             contentDescription = "AirQuality",
                         )
 
                     "airpressure" ->
                         Icon(
-                            imageVector = Icons.Rounded.Settings,
+                            imageVector = ImageVector.vectorResource(R.drawable.compress_24px),
                             contentDescription = "AirPressure",
                         )
 
                     else ->
                         Icon(
-                            imageVector = Icons.Rounded.Warning,
+                            imageVector = ImageVector.vectorResource(R.drawable.warning_24px),
                             contentDescription = "Unsupported feature",
                         )
                 }
