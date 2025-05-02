@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.sensorValues
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,8 +48,10 @@ fun SensorValuesScreen(
     val home: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
     val room: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
 
-    if (device != null) {
-        sensorValuesViewModel.initDeviceValues(device)
+    LaunchedEffect(Unit) {
+        if (device != null) {
+            sensorValuesViewModel.initDeviceValues(device)
+        }
     }
 
     Scaffold(
@@ -185,7 +189,7 @@ fun FeatureValueCard(
             }
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "${featureValue.value} ${featureValue.feature.unit}",
+                text = sensorValuesViewModel.getValue(featureValue),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxWidth()
             )

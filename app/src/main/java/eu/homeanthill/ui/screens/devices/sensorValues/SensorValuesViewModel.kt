@@ -18,7 +18,6 @@ import eu.homeanthill.api.model.DeviceValue
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.FeatureValue
 
-
 class SensorValuesViewModel(
     private val devicesRepository: DevicesRepository
 ) : ViewModel() {
@@ -40,6 +39,40 @@ class SensorValuesViewModel(
         val sdf = SimpleDateFormat.getDateInstance()
         val netDate = Date(unixEpoch.toLong())
         return sdf.format(netDate)
+    }
+
+    private fun getMotionValue(value: Number): String {
+        return if (value == 0) {
+            "False"
+        } else {
+            "True"
+        }
+    }
+
+    private fun getAirQualityValue(value: Number): String {
+        return when (value) {
+            0 -> "Extreme pollution"
+            1 -> "High pollution"
+            2 -> "Mid pollution"
+            3 -> "Low pollution"
+            else -> "Unknown"
+        }
+    }
+
+    private fun toFixed(value: Number, precision: Int): String {
+        return String.format("%.${precision}f", value.toDouble())
+    }
+
+    fun getValue(featureValue: FeatureValue): String {
+        return when (featureValue.feature.name) {
+            "temperature" -> "${toFixed(featureValue.value, 2)} ${featureValue.feature.unit}"
+            "humidity" -> "${toFixed(featureValue.value, 2)} ${featureValue.feature.unit}"
+            "light" -> "${toFixed(featureValue.value, 0)} ${featureValue.feature.unit}"
+            "motion" -> getMotionValue(featureValue.value)
+            "airquality" -> "${getAirQualityValue(featureValue.value)} ${featureValue.feature.unit}"
+            "airpressure" -> "${toFixed(featureValue.value, 0)} ${featureValue.feature.unit}"
+            else -> "${featureValue.value} ${featureValue.feature.unit}"
+        }
     }
 
     fun initDeviceValues(device: Device) {
