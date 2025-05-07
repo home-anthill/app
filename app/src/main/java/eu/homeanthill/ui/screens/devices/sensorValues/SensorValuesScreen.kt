@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -127,19 +128,20 @@ fun FeatureValueCard(
         elevation = CardDefaults.cardElevation(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
             .padding(vertical = 10.dp, horizontal = 20.dp)
             .clip(RoundedCornerShape(16.dp))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 20.dp)
+                .padding(vertical = 20.dp, horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 when (featureValue.feature.name) {
                     // icons taken from https://fonts.google.com/icons?icon.size=24&icon.color=%23e3e3e3&icon.platform=android&icon.set=Material+Symbols
@@ -147,61 +149,66 @@ fun FeatureValueCard(
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.device_thermostat_24px),
                             contentDescription = "Temperature",
+                            modifier = Modifier.size(45.dp)
                         )
 
                     "humidity" ->
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.invert_colors_24px),
                             contentDescription = "Humidity",
+                            modifier = Modifier.size(45.dp)
                         )
 
                     "light" ->
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.light_mode_24px),
                             contentDescription = "Light",
+                            modifier = Modifier.size(45.dp)
                         )
 
                     "motion" ->
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.directions_run_24px),
                             contentDescription = "Motion",
+                            modifier = Modifier.size(45.dp)
                         )
 
                     "airquality" ->
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.cloud_24px),
                             contentDescription = "AirQuality",
+                            modifier = Modifier.size(45.dp)
                         )
 
                     "airpressure" ->
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.compress_24px),
                             contentDescription = "AirPressure",
+                            modifier = Modifier.size(45.dp)
                         )
 
                     else ->
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.warning_24px),
                             contentDescription = "Unsupported feature",
+                            modifier = Modifier.size(45.dp)
                         )
                 }
+                Spacer(Modifier.weight(1f))
                 Text(
                     text = featureValue.feature.name.uppercase(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.fillMaxWidth()
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = sensorValuesViewModel.getValue(featureValue),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.fillMaxWidth()
+                style = MaterialTheme.typography.headlineLarge,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = sensorValuesViewModel.getPrettyDateFromUnixEpoch(featureValue.modifiedAt),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth()
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }

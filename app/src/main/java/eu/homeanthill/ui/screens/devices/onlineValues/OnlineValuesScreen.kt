@@ -129,45 +129,67 @@ fun OnlineValueCard(
         elevation = CardDefaults.cardElevation(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
             .padding(vertical = 10.dp, horizontal = 20.dp)
             .clip(RoundedCornerShape(16.dp))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 20.dp)
+                .padding(vertical = 20.dp, horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.bolt_24px),
                     contentDescription = "PowerOutage",
+                    modifier = Modifier.size(45.dp)
                 )
+                Spacer(Modifier.weight(1f))
                 Text(
                     text = "POWEROUTAGE",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.fillMaxWidth()
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            if (onlineValuesViewModel.isOffline(onlineValue.modifiedAt, onlineValue.currentTime)) {
-                Canvas(modifier = Modifier.size(30.dp), onDraw = {
-                    drawCircle(color = Color.Red)
-                })
-            } else {
-                Canvas(modifier = Modifier.size(30.dp), onDraw = {
-                    drawCircle(color = Color.Green)
-                })
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (onlineValuesViewModel.isOffline(
+                        onlineValue.modifiedAt,
+                        onlineValue.currentTime
+                    )
+                ) {
+                    Canvas(modifier = Modifier.size(30.dp), onDraw = {
+                        drawCircle(color = Color.Red)
+                    })
+                    Text(
+                        text = "Offline",
+                        style = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                } else {
+                    Canvas(modifier = Modifier.size(30.dp), onDraw = {
+                        drawCircle(color = Color.Green)
+                    })
+                    Text(
+                        text = "Online",
+                        style = MaterialTheme.typography.headlineLarge,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = onlineValuesViewModel.getPrettyDateFromUnixEpoch(onlineValue.modifiedAt),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth()
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }

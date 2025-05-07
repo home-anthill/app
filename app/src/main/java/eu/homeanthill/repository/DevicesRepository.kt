@@ -16,7 +16,7 @@ class DevicesRepository(private val devicesService: DevicesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetDevices"))
+            throw IOException("Error repoGetDevices")
         }
     }
 
@@ -25,7 +25,7 @@ class DevicesRepository(private val devicesService: DevicesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoAssignDeviceToHomeRoom"))
+            throw IOException("Error repoAssignDeviceToHomeRoom")
         }
     }
 
@@ -34,7 +34,7 @@ class DevicesRepository(private val devicesService: DevicesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoDeleteDevice"))
+            throw IOException("Error repoDeleteDevice")
         }
     }
 
@@ -43,7 +43,7 @@ class DevicesRepository(private val devicesService: DevicesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetSensorValues"))
+            throw IOException("Error repoGetSensorValues")
         }
     }
 
@@ -52,7 +52,7 @@ class DevicesRepository(private val devicesService: DevicesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetControllerValues"))
+            throw IOException("Error repoGetControllerValues")
         }
     }
 
@@ -61,7 +61,7 @@ class DevicesRepository(private val devicesService: DevicesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPostSetValues"))
+            throw IOException("Error repoPostSetValues")
         }
     }
 }

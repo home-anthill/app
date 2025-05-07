@@ -41,7 +41,7 @@ class SensorValuesViewModel(
         return sdf.format(netDate)
     }
 
-    private fun getMotionValue(value: Number): String {
+    private fun getMotionValue(value: Int): String {
         return if (value == 0) {
             "False"
         } else {
@@ -49,7 +49,7 @@ class SensorValuesViewModel(
         }
     }
 
-    private fun getAirQualityValue(value: Number): String {
+    private fun getAirQualityValue(value: Int): String {
         return when (value) {
             0 -> "Extreme pollution"
             1 -> "High pollution"
@@ -68,8 +68,8 @@ class SensorValuesViewModel(
             "temperature" -> "${toFixed(featureValue.value, 2)} ${featureValue.feature.unit}"
             "humidity" -> "${toFixed(featureValue.value, 2)} ${featureValue.feature.unit}"
             "light" -> "${toFixed(featureValue.value, 0)} ${featureValue.feature.unit}"
-            "motion" -> getMotionValue(featureValue.value)
-            "airquality" -> "${getAirQualityValue(featureValue.value)} ${featureValue.feature.unit}"
+            "motion" -> getMotionValue(featureValue.value.toInt())
+            "airquality" -> getAirQualityValue(featureValue.value.toInt())
             "airpressure" -> "${toFixed(featureValue.value, 0)} ${featureValue.feature.unit}"
             else -> "${featureValue.value} ${featureValue.feature.unit}"
         }

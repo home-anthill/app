@@ -1,19 +1,17 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
@@ -33,8 +31,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import eu.homeanthill.R
 
+import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.ui.screens.devices.DevicesRoute
 
@@ -161,11 +159,11 @@ fun DevicesListScreen(
                                             )
                                             navController.currentBackStackEntry?.savedStateHandle?.set(
                                                 "home",
-                                                null
+                                                homeWithDevices.home
                                             )
                                             navController.currentBackStackEntry?.savedStateHandle?.set(
                                                 "room",
-                                                null
+                                                roomWithDevices.room
                                             )
                                             navController.navigate(route = DevicesRoute.DeviceValues.name)
                                         },
@@ -232,7 +230,6 @@ fun SimpleCard(
         elevation = CardDefaults.cardElevation(10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
             .padding(vertical = 10.dp, horizontal = 20.dp)
             .clip(RoundedCornerShape(16.dp))
     ) {
@@ -264,6 +261,7 @@ fun SimpleCard(
                     Icon(
                         imageVector = Icons.Rounded.Settings,
                         contentDescription = "Settings",
+                        modifier = Modifier.size(30.dp)
                     )
                 }
                 TextButton(
@@ -274,11 +272,13 @@ fun SimpleCard(
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.auto_stories_24px),
                             contentDescription = "Values",
+                            modifier = Modifier.size(30.dp)
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Rounded.PlayArrow,
                             contentDescription = "Play",
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                 }

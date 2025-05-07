@@ -12,7 +12,7 @@ class ProfileRepository(private val profileService: ProfileServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetProfile"))
+            throw IOException("Error repoGetProfile")
         }
     }
 
@@ -21,7 +21,7 @@ class ProfileRepository(private val profileService: ProfileServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPostRegenAPIToken"))
+            throw IOException("Error repoPostRegenAPIToken")
         }
     }
 }

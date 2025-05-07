@@ -11,7 +11,7 @@ class OnlineRepository(private val onlineService: OnlineServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetOnlineValues"))
+            throw IOException("Error repoGetOnlineValues")
         }
     }
 }

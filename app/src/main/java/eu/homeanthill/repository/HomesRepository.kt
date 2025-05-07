@@ -16,7 +16,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetHomes"))
+            throw IOException("Error repoGetHomes")
         }
     }
 
@@ -25,7 +25,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPostHome"))
+            throw IOException("Error repoPostHome")
         }
     }
 
@@ -34,7 +34,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPutHome"))
+            throw IOException("Error repoPutHome")
         }
     }
 
@@ -43,7 +43,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoDeleteHome"))
+            throw IOException("Error repoDeleteHome")
         }
     }
 
@@ -52,7 +52,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoGetRooms"))
+            throw IOException("Error repoGetRooms")
         }
     }
 
@@ -61,7 +61,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPostRoom"))
+            throw IOException("Error repoPostRoom")
         }
     }
 
@@ -70,7 +70,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPutRoom"))
+            throw IOException("Error repoPutRoom")
         }
     }
 
@@ -79,7 +79,7 @@ class HomesRepository(private val homesService: HomesServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoDeleteRoom"))
+            throw IOException("Error repoDeleteRoom")
         }
     }
 }

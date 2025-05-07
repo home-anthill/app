@@ -13,7 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,13 +35,17 @@ import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.PostSetDeviceValue
 import eu.homeanthill.api.model.Room
 import eu.homeanthill.ui.components.MaterialSpinner
+import eu.homeanthill.ui.components.SwitchWithLabel
 
 @Composable
 fun DeviceValuesScreen(
+    sendUiState: DeviceValuesViewModel.SendUiState,
     deviceValuesViewModel: DeviceValuesViewModel,
     navController: NavController,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     // inputs
     val device: Device? =
         navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
@@ -64,6 +70,9 @@ fun DeviceValuesScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         content = { padding ->
             Column(
                 modifier = Modifier
@@ -101,17 +110,19 @@ fun DeviceValuesScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 20.dp, horizontal = 20.dp)
+                            .padding(vertical = 20.dp, horizontal = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Spacer(modifier = Modifier.height(6.dp))
-                        Switch(
-                            checked = on,
-                            onCheckedChange = {
+                        SwitchWithLabel(
+                            label = "On/Off",
+                            state = on,
+                            onStateChange = {
                                 on = it
                             }
                         )
                         MaterialSpinner(
-                            title = "temperature",
+                            title = "Temperature",
                             options = deviceValuesViewModel.getTemperatures(),
                             onSelect = { option ->
                                 temperature =
@@ -121,7 +132,7 @@ fun DeviceValuesScreen(
                             selectedOption = deviceValuesViewModel.getTemperatures()[temperature - 17],
                         )
                         MaterialSpinner(
-                            title = "mode",
+                            title = "Mode",
                             options = deviceValuesViewModel.getModes(),
                             onSelect = { option ->
                                 mode = deviceValuesViewModel.getModeValue(option.value)
@@ -130,7 +141,7 @@ fun DeviceValuesScreen(
                             selectedOption = deviceValuesViewModel.getModes()[mode - 1]
                         )
                         MaterialSpinner(
-                            title = "fanSpeed",
+                            title = "Fan speed",
                             options = deviceValuesViewModel.getFanSpeeds(),
                             onSelect = { option ->
                                 fanSpeed =
@@ -140,13 +151,12 @@ fun DeviceValuesScreen(
                             selectedOption = deviceValuesViewModel.getFanSpeeds()[fanSpeed - 1]
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
                         Text(
                             text = deviceValuesViewModel.getPrettyDateFromUnixEpoch(modifiedAt),
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.fillMaxWidth()
+                            style = MaterialTheme.typography.bodyMedium,
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         TextButton(
                             onClick = {
                                 coroutineScope.launch {
@@ -161,9 +171,34 @@ fun DeviceValuesScreen(
                                     )
                                 }
                             },
-                            modifier = Modifier.padding(8.dp),
                         ) {
                             Text(text = "Send")
+                        }
+                    }
+                }
+            }
+            when (sendUiState) {
+                is DeviceValuesViewModel.SendUiState.Error -> {
+                    LaunchedEffect(snackbarHostState) {
+                        snackbarHostState
+                            .showSnackbar(
+                                message = "Cannot update device state!",
+                                duration = SnackbarDuration.Long
+                            )
+                    }
+                }
+
+                is DeviceValuesViewModel.SendUiState.Loading -> {
+                }
+
+                is DeviceValuesViewModel.SendUiState.Idle -> {
+                    if (sendUiState.result != null) {
+                        LaunchedEffect(snackbarHostState) {
+                            snackbarHostState
+                                .showSnackbar(
+                                    message = "Device state update successfully!",
+                                    duration = SnackbarDuration.Short
+                                )
                         }
                     }
                 }

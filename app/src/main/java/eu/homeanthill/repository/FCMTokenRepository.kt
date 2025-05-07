@@ -12,7 +12,7 @@ class FCMTokenRepository(private val fcmTokenService: FCMTokenServices) {
         if (result.isSuccessful) {
             return result.body()!!
         } else {
-            throw Exception(IOException("Error repoPostFCMToken"))
+            throw IOException("Error repoPostFCMToken")
         }
     }
 }
