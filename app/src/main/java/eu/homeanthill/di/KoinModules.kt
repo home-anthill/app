@@ -15,6 +15,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 import eu.homeanthill.BuildConfig
+import eu.homeanthill.api.AppAuthenticator
 import eu.homeanthill.api.AuthInterceptor
 import eu.homeanthill.api.SendSavedCookiesInterceptor
 import eu.homeanthill.api.requests.DevicesServices
@@ -33,14 +34,14 @@ import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
 import eu.homeanthill.ui.screens.devices.sensorValues.SensorValuesViewModel
 import eu.homeanthill.ui.screens.devices.deviceValues.DeviceValuesViewModel
 import eu.homeanthill.ui.screens.devices.onlineValues.OnlineValuesViewModel
-import eu.homeanthill.ui.screens.home.HomeViewModel
+import eu.homeanthill.ui.screens.main.MainViewModel
 import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
 import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 val viewModelModule = module {
     viewModel {
-        HomeViewModel(
+        MainViewModel(
             loginRepository = get(),
             profileRepository = get(),
             fcmTokenRepository = get()
@@ -86,6 +87,10 @@ val retrofitModule = module {
         return AuthInterceptor(loginRepository)
     }
 
+    fun provideAppAuthenticator(loginRepository: LoginRepository): AppAuthenticator {
+        return AppAuthenticator(loginRepository)
+    }
+
     fun provideSendSavedCookiesInterceptor(context: Context): SendSavedCookiesInterceptor {
         return SendSavedCookiesInterceptor(context)
     }
@@ -93,16 +98,16 @@ val retrofitModule = module {
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         authInterceptor: AuthInterceptor,
+        qppAuthenticator: AppAuthenticator,
         sendSavedCookiesInterceptor: SendSavedCookiesInterceptor,
     ): OkHttpClient {
         return OkHttpClient()
             .newBuilder()
             .cookieJar(JavaNetCookieJar(CookieManager()))
-            .addInterceptor(loggingInterceptor).addInterceptor(sendSavedCookiesInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(sendSavedCookiesInterceptor)
             .addInterceptor(authInterceptor)
-//            .apply {
-//                // TODO add a custom `authenticator()` to intercept 401 and force logout
-//            }
+            .authenticator(qppAuthenticator)
             .build()
     }
 
@@ -120,10 +125,12 @@ val retrofitModule = module {
         provideOkHttpClient(
             loggingInterceptor = get(),
             authInterceptor = get(),
+            qppAuthenticator = get(),
             sendSavedCookiesInterceptor = get(),
         )
     }
     single { provideRetrofit(factory = get(), okHttpClient = get()) }
     single { provideAuthInterceptor(loginRepository = get()) }
+    single { provideAppAuthenticator(loginRepository = get()) }
     single { provideSendSavedCookiesInterceptor(context = androidContext()) }
 }

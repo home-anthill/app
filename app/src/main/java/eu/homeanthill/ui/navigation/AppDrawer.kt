@@ -26,6 +26,8 @@ import com.google.gson.Gson
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Profile
+import eu.homeanthill.mainKey
+import eu.homeanthill.profileKey
 import eu.homeanthill.ui.components.CircleAsyncImage
 import eu.homeanthill.ui.navigation.Destinations.DEVICES
 import eu.homeanthill.ui.navigation.Destinations.HOME
@@ -44,8 +46,8 @@ fun AppDrawer(
     closeDrawer: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sharedPreference = context.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-    val json: String? = sharedPreference.getString("profile", null)
+    val sharedPreference = context.getSharedPreferences(mainKey, Context.MODE_PRIVATE)
+    val json: String? = sharedPreference.getString(profileKey, null)
     val profile: Profile? = if (json != null) Gson().fromJson(json, Profile::class.java) else null
 
     ModalDrawerSheet(modifier = Modifier) {

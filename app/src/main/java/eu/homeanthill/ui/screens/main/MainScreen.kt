@@ -1,4 +1,4 @@
-package eu.homeanthill.ui.screens.home
+package eu.homeanthill.ui.screens.main
 
 import android.Manifest
 import android.content.Intent
@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -20,8 +22,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,16 +36,16 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
 import eu.homeanthill.R
+import eu.homeanthill.ui.navigation.Destinations
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun HomeScreen(
-    homeUiState: HomeViewModel.HomeUiState,
+fun MainScreen(
+    mainUiState: MainViewModel.MainUiState,
     navController: NavController,
 ) {
     val context = LocalContext.current
 
-    // Permission request
     val notificationPermission = rememberPermissionState(
         permission = Manifest.permission.POST_NOTIFICATIONS
     )
@@ -104,21 +108,28 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (notificationPermission.status.isGranted) {
-                    when (homeUiState) {
-                        is HomeViewModel.HomeUiState.Error -> {
+                    when (mainUiState) {
+                        is MainViewModel.MainUiState.Error -> {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.cloud_off_24dp),
+                                contentDescription = "Connection error",
+                                modifier = Modifier.size(150.dp),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
                             Text(
-                                text = homeUiState.errorMessage,
+                                text = mainUiState.errorMessage,
                                 color = MaterialTheme.colorScheme.error,
                             )
                         }
 
-                        is HomeViewModel.HomeUiState.Loading -> {
+                        is MainViewModel.MainUiState.Loading -> {
                             CircularProgressIndicator()
                         }
 
-                        is HomeViewModel.HomeUiState.Idle -> {
-                            homeUiState.profile?.let {
-                                Text(text = it.toString())
+                        is MainViewModel.MainUiState.Idle -> {
+                            navController.navigate(Destinations.DEVICES) {
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     }

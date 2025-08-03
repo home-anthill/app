@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
+import androidx.core.net.toUri
+
 import eu.homeanthill.ui.theme.AppTheme
 
 class LoginActivity : ComponentActivity() {
@@ -41,11 +44,14 @@ class LoginActivity : ComponentActivity() {
             return
         }
 
-        this.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-            .edit()
-            .putString("sessionCookie", cookie)
-            .putString("jwt", jwt)
-            .apply()
+        val unixTime = System.currentTimeMillis() / 1000L
+
+        this.getSharedPreferences(mainKey, MODE_PRIVATE)
+            .edit {
+                putString(cookieKey, cookie)
+                    .putString(jwtKey, jwt)
+                    .putLong(loginTimestampKey, unixTime)
+            }
 
         // restart the activity
         val i = Intent(this@LoginActivity, MainActivity::class.java)
@@ -58,8 +64,8 @@ class LoginActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
 
-        val jwt = this.getSharedPreferences("home-anthill", Context.MODE_PRIVATE)
-            .getString("jwt", null)
+        val jwt = this.getSharedPreferences(mainKey, MODE_PRIVATE)
+            .getString(jwtKey, null)
 
         if (jwt != null) {
             val i = Intent(this@LoginActivity, MainActivity::class.java)
@@ -85,7 +91,7 @@ class LoginActivity : ComponentActivity() {
                                 onClick = {
                                     val intent = Intent(
                                         Intent.ACTION_VIEW,
-                                        Uri.parse(BuildConfig.API_BASE_URL + "login_app")
+                                        (BuildConfig.API_BASE_URL + "login_app").toUri()
                                     )
                                     context.startActivity(intent)
                                 },

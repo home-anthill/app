@@ -124,11 +124,6 @@ fun ProfileScreen(
                     Button(
                         onClick = {
                             profileViewModel.logout()
-                            // go back to the LoginActivity
-                            val i = Intent(context, LoginActivity::class.java)
-                            i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            context.startActivity(i)
                         },
                         enabled = true,
                     ) {

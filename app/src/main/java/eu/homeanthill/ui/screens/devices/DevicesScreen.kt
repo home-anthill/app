@@ -85,8 +85,10 @@ fun DevicesScreen(
             ) {
                 val deviceValuesViewModel = koinViewModel<DeviceValuesViewModel>()
                 val sendUiState by deviceValuesViewModel.sendUiState.collectAsStateWithLifecycle()
+                val getValueUiState by deviceValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
                 DeviceValuesScreen(
                     sendUiState = sendUiState,
+                    getValueUiState = getValueUiState,
                     deviceValuesViewModel = deviceValuesViewModel,
                     navController = navController,
                 )

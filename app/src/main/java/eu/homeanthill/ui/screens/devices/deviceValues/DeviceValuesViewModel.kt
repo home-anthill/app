@@ -3,17 +3,17 @@ package eu.homeanthill.ui.screens.devices.deviceValues
 import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.Date
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.IOException
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.api.model.ControllerValue
 import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PostSetDeviceValue
 import eu.homeanthill.ui.components.SpinnerItemObj
-import kotlinx.coroutines.flow.StateFlow
 
 class DeviceValuesViewModel(
     private val devicesRepository: DevicesRepository
@@ -24,13 +24,19 @@ class DeviceValuesViewModel(
 
     sealed class SendUiState {
         data class Idle(val result: String?) : SendUiState()
-        data object Loading : SendUiState()
         data class Error(val errorMessage: String) : SendUiState()
+    }
+
+    sealed class GetValueUiState {
+        data class Idle(val result: ControllerValue?) : GetValueUiState()
+        data object Loading : GetValueUiState()
+        data class Error(val errorMessage: String) : GetValueUiState()
     }
 
     private val _sendUiState = MutableStateFlow<SendUiState>(SendUiState.Idle(null))
     val sendUiState: StateFlow<SendUiState> = _sendUiState
-
+    private val _getValueUiState = MutableStateFlow<GetValueUiState>(GetValueUiState.Idle(null))
+    val getValueUiState: StateFlow<GetValueUiState> = _getValueUiState
 
     private val temps = IntRange(17, 30).step(1).toList().toIntArray()
     private val modes = arrayOf("Cool", "Auto", "Heat", "Fan", "Dry")
@@ -70,22 +76,26 @@ class DeviceValuesViewModel(
     }
 
     suspend fun send(id: String, body: PostSetDeviceValue) {
-        _sendUiState.emit(SendUiState.Loading)
-        delay(200)
-
         try {
             val sendResponse: GenericMessageResponse = devicesRepository.repoPostSetValues(id, body)
-            Log.d(TAG, "send - sendResponse = $sendResponse")
             _sendUiState.emit(SendUiState.Idle(sendResponse.message))
         } catch (err: IOException) {
-            Log.e(TAG, "send - sendResponse = $err")
+            Log.e(TAG, "send - error = $err")
             _sendUiState.emit(SendUiState.Error(err.message.toString()))
         }
     }
 
-    suspend fun getValue(id: String): ControllerValue {
-        val value: ControllerValue = devicesRepository.repoGetControllerValues(id)
-        Log.d(TAG, "getValue - value = $value")
-        return value
+    suspend fun getValue(id: String): ControllerValue? {
+        _getValueUiState.emit(GetValueUiState.Loading)
+        delay(200)
+        try {
+            val value: ControllerValue = devicesRepository.repoGetControllerValues(id)
+            _getValueUiState.emit(GetValueUiState.Idle(value))
+            return value
+        } catch (err: IOException) {
+            Log.e(TAG, "getValue - error = $err")
+            _getValueUiState.emit(GetValueUiState.Error(err.message.toString()))
+        }
+        return null
     }
 }

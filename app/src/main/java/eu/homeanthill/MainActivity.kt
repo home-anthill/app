@@ -43,8 +43,8 @@ import eu.homeanthill.ui.navigation.Destinations.HOME
 import eu.homeanthill.ui.navigation.Destinations.HOMES
 import eu.homeanthill.ui.navigation.Destinations.PROFILE
 import eu.homeanthill.ui.screens.devices.DevicesScreen
-import eu.homeanthill.ui.screens.home.HomeScreen
-import eu.homeanthill.ui.screens.home.HomeViewModel
+import eu.homeanthill.ui.screens.main.MainScreen
+import eu.homeanthill.ui.screens.main.MainViewModel
 import eu.homeanthill.ui.screens.homes.HomesScreen
 import eu.homeanthill.ui.screens.profile.ProfileScreen
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
@@ -116,10 +116,10 @@ fun AppNavGraph(
                 modifier = modifier.padding(it)
             ) {
                 composable(HOME) {
-                    val homeViewModel = koinViewModel<HomeViewModel>()
-                    val homeUiState by homeViewModel.homeUiState.collectAsStateWithLifecycle()
-                    HomeScreen(
-                        homeUiState = homeUiState,
+                    val homeViewModel = koinViewModel<MainViewModel>()
+                    val homeUiState by homeViewModel.mainUiState.collectAsStateWithLifecycle()
+                    MainScreen(
+                        mainUiState = homeUiState,
                         navController = navController,
                     )
                 }

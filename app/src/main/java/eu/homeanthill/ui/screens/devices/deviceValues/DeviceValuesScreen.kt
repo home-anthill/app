@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import eu.homeanthill.ui.components.SwitchWithLabel
 @Composable
 fun DeviceValuesScreen(
     sendUiState: DeviceValuesViewModel.SendUiState,
+    getValueUiState: DeviceValuesViewModel.GetValueUiState,
     deviceValuesViewModel: DeviceValuesViewModel,
     navController: NavController,
 ) {
@@ -61,11 +63,13 @@ fun DeviceValuesScreen(
     LaunchedEffect(Unit) {
         if (device != null) {
             val value = deviceValuesViewModel.getValue(device.id)
-            on = value.on
-            temperature = value.temperature
-            mode = value.mode
-            fanSpeed = value.fanSpeed
-            modifiedAt = value.modifiedAt
+            if (value != null) {
+                on = value.on
+                temperature = value.temperature
+                mode = value.mode
+                fanSpeed = value.fanSpeed
+                modifiedAt = value.modifiedAt
+            }
         }
     }
 
@@ -106,73 +110,91 @@ fun DeviceValuesScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-                if (device != null) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp, horizontal = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        SwitchWithLabel(
-                            label = "On/Off",
-                            state = on,
-                            onStateChange = {
-                                on = it
-                            }
-                        )
-                        MaterialSpinner(
-                            title = "Temperature",
-                            options = deviceValuesViewModel.getTemperatures(),
-                            onSelect = { option ->
-                                temperature =
-                                    deviceValuesViewModel.getTemperatureValue(option.value)
-                            },
-                            modifier = Modifier.padding(10.dp),
-                            selectedOption = deviceValuesViewModel.getTemperatures()[temperature - 17],
-                        )
-                        MaterialSpinner(
-                            title = "Mode",
-                            options = deviceValuesViewModel.getModes(),
-                            onSelect = { option ->
-                                mode = deviceValuesViewModel.getModeValue(option.value)
-                            },
-                            modifier = Modifier.padding(10.dp),
-                            selectedOption = deviceValuesViewModel.getModes()[mode - 1]
-                        )
-                        MaterialSpinner(
-                            title = "Fan speed",
-                            options = deviceValuesViewModel.getFanSpeeds(),
-                            onSelect = { option ->
-                                fanSpeed =
-                                    deviceValuesViewModel.getFanSpeedValue(option.value)
-                            },
-                            modifier = Modifier.padding(10.dp),
-                            selectedOption = deviceValuesViewModel.getFanSpeeds()[fanSpeed - 1]
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
+                when (getValueUiState) {
+                    is DeviceValuesViewModel.GetValueUiState.Error -> {
+                        Spacer(modifier = Modifier.height(100.dp))
                         Text(
-                            text = deviceValuesViewModel.getPrettyDateFromUnixEpoch(modifiedAt),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Can't load current values",
+                            style = MaterialTheme.typography.bodyLarge
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        TextButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    deviceValuesViewModel.send(
-                                        id = device.id,
-                                        PostSetDeviceValue(
-                                            on = on,
-                                            temperature = temperature,
-                                            mode = mode,
-                                            fanSpeed = fanSpeed
-                                        )
-                                    )
+                    }
+
+                    is DeviceValuesViewModel.GetValueUiState.Loading -> {
+                        CircularProgressIndicator()
+                    }
+
+                    is DeviceValuesViewModel.GetValueUiState.Idle -> {
+                        if (device != null) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp, horizontal = 20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                SwitchWithLabel(
+                                    label = "On/Off",
+                                    state = on,
+                                    onStateChange = {
+                                        on = it
+                                    }
+                                )
+                                MaterialSpinner(
+                                    title = "Temperature",
+                                    options = deviceValuesViewModel.getTemperatures(),
+                                    onSelect = { option ->
+                                        temperature =
+                                            deviceValuesViewModel.getTemperatureValue(option.value)
+                                    },
+                                    modifier = Modifier.padding(10.dp),
+                                    selectedOption = deviceValuesViewModel.getTemperatures()[temperature - 17],
+                                )
+                                MaterialSpinner(
+                                    title = "Mode",
+                                    options = deviceValuesViewModel.getModes(),
+                                    onSelect = { option ->
+                                        mode = deviceValuesViewModel.getModeValue(option.value)
+                                    },
+                                    modifier = Modifier.padding(10.dp),
+                                    selectedOption = deviceValuesViewModel.getModes()[mode - 1]
+                                )
+                                MaterialSpinner(
+                                    title = "Fan speed",
+                                    options = deviceValuesViewModel.getFanSpeeds(),
+                                    onSelect = { option ->
+                                        fanSpeed =
+                                            deviceValuesViewModel.getFanSpeedValue(option.value)
+                                    },
+                                    modifier = Modifier.padding(10.dp),
+                                    selectedOption = deviceValuesViewModel.getFanSpeeds()[fanSpeed - 1]
+                                )
+
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Text(
+                                    text = deviceValuesViewModel.getPrettyDateFromUnixEpoch(
+                                        modifiedAt
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                TextButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            deviceValuesViewModel.send(
+                                                id = device.id,
+                                                PostSetDeviceValue(
+                                                    on = on,
+                                                    temperature = temperature,
+                                                    mode = mode,
+                                                    fanSpeed = fanSpeed
+                                                )
+                                            )
+                                        }
+                                    },
+                                ) {
+                                    Text(text = "Send")
                                 }
-                            },
-                        ) {
-                            Text(text = "Send")
+                            }
                         }
                     }
                 }
@@ -186,9 +208,6 @@ fun DeviceValuesScreen(
                                 duration = SnackbarDuration.Long
                             )
                     }
-                }
-
-                is DeviceValuesViewModel.SendUiState.Loading -> {
                 }
 
                 is DeviceValuesViewModel.SendUiState.Idle -> {

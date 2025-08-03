@@ -59,7 +59,7 @@ class ProfileViewModel(
     }
 
     fun logout() {
-        loginRepository.logout()
+        loginRepository.logoutAndRedirect()
     }
 
     private fun init() {
