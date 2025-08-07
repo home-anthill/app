@@ -3,6 +3,7 @@ package eu.homeanthill.ui.screens.devices.deviceValues
 import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import java.io.IOException
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,7 +47,7 @@ class DeviceValuesViewModel(
         if (unixEpoch == "") {
             return ""
         }
-        val sdf = SimpleDateFormat.getDateInstance()
+        val sdf = SimpleDateFormat("HH:mm:ss dd/MM/yyyy", Locale.ITALY)
         val netDate = Date(unixEpoch.toLong())
         return sdf.format(netDate)
     }

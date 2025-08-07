@@ -17,6 +17,7 @@ import eu.homeanthill.repository.OnlineRepository
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class OnlineValuesViewModel(
     private val onlineRepository: OnlineRepository
@@ -39,7 +40,7 @@ class OnlineValuesViewModel(
         val unixEpoch = LocalDateTime.parse(isoDate, DateTimeFormatter.ISO_DATE_TIME)
             .toInstant(ZoneOffset.ofTotalSeconds(0))
             .toEpochMilli()
-        val sdf = SimpleDateFormat.getDateInstance()
+        val sdf = SimpleDateFormat("HH:mm:ss dd/MM/yyyy", Locale.ITALY)
         val netDate = Date(unixEpoch)
         return sdf.format(netDate)
     }

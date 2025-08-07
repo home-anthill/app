@@ -4,6 +4,7 @@ import android.util.Log
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,7 @@ class SensorValuesViewModel(
     val sensorValuesUiState: StateFlow<SensorValuesUiState> = _sensorValuesUiState
 
     fun getPrettyDateFromUnixEpoch(unixEpoch: String): String {
-        val sdf = SimpleDateFormat.getDateInstance()
+        val sdf = SimpleDateFormat("HH:mm:ss dd/MM/yyyy", Locale.ITALY)
         val netDate = Date(unixEpoch.toLong())
         return sdf.format(netDate)
     }
