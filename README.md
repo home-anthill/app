@@ -19,7 +19,7 @@ GitHub releases [HERE](https://github.com/home-anthill/app/releases)
 
 Versions:
 
-- ??/??/2025 - 1.0.0
+- 02/09/2025 - 1.0.0
 
 
 ## :sparkling_heart: A big thank you to :sparkling_heart:
