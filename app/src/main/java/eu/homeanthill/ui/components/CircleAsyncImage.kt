@@ -13,18 +13,18 @@ import coil3.compose.AsyncImage
 
 @Composable
 fun CircleAsyncImage(imageUrl: String, size: Dp) {
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "image",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-        )
-    }
+  Box(
+    modifier = Modifier
+      .size(size)
+      .clip(CircleShape)
+  ) {
+    AsyncImage(
+      model = imageUrl,
+      contentDescription = "image",
+      contentScale = ContentScale.Crop,
+      modifier = Modifier
+        .fillMaxSize()
+        .clip(CircleShape)
+    )
+  }
 }

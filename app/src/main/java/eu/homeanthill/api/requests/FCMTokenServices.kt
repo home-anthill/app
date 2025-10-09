@@ -7,7 +7,7 @@ import retrofit2.http.Headers
 import retrofit2.http.POST
 
 interface FCMTokenServices {
-    @Headers("Accept: application/json")
-    @POST("fcmtoken")
-    suspend fun postFCMToken(@Body fcmTokenRequest: Map<String, String>): Response<FCMTokenResponse>
+  @Headers("Accept: application/json")
+  @POST("fcmtoken")
+  suspend fun postFCMToken(@Body fcmTokenRequest: Map<String, String>): Response<FCMTokenResponse>
 }

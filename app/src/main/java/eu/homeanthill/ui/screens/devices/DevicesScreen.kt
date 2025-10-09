@@ -26,73 +26,73 @@ import eu.homeanthill.ui.screens.devices.deviceValues.DeviceValuesViewModel
 @Composable
 fun DevicesScreen(
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+  Surface(
+    modifier = Modifier.fillMaxSize(),
+    color = MaterialTheme.colorScheme.background,
+  ) {
+    val navController = rememberNavController()
+    NavHost(
+      navController = navController,
+      route = Graph.DEVICES_GRAPH,
+      startDestination = DevicesRoute.Devices.name
     ) {
-        val navController = rememberNavController()
-        NavHost(
-            navController = navController,
-            route = Graph.DEVICES_GRAPH,
-            startDestination = DevicesRoute.Devices.name
-        ) {
-            composable(
-                route = DevicesRoute.Devices.name
-            ) {
-                val devicesListViewModel = koinViewModel<DevicesListViewModel>()
-                val devicesListUiState by devicesListViewModel.devicesUiState.collectAsStateWithLifecycle()
-                DevicesListScreen(
-                    devicesUiState = devicesListUiState,
-                    devicesViewModel = devicesListViewModel,
-                    navController = navController,
-                )
-            }
-            composable(
-                route = DevicesRoute.EditDevice.name
-            ) {
-                val editDeviceViewModel = koinViewModel<EditDeviceViewModel>()
-                val editDeviceUiState by editDeviceViewModel.editDeviceUiState.collectAsStateWithLifecycle()
-                EditDeviceScreen(
-                    devicesUiState = editDeviceUiState,
-                    devicesViewModel = editDeviceViewModel,
-                    navController = navController,
-                )
-            }
-            composable(
-                route = DevicesRoute.SensorValues.name
-            ) {
-                val sensorValuesViewModel = koinViewModel<SensorValuesViewModel>()
-                val sensorValuesUiState by sensorValuesViewModel.sensorValuesUiState.collectAsStateWithLifecycle()
-                SensorValuesScreen(
-                    sensorValuesUiState = sensorValuesUiState,
-                    sensorValuesViewModel = sensorValuesViewModel,
-                    navController = navController,
-                )
-            }
-            composable(
-                route = DevicesRoute.OnlineValues.name
-            ) {
-                val onlineValuesViewModel = koinViewModel<OnlineValuesViewModel>()
-                val onlineValuesUiState by onlineValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
-                OnlineValuesScreen(
-                    onlineValuesUiState = onlineValuesUiState,
-                    onlineValuesViewModel = onlineValuesViewModel,
-                    navController = navController,
-                )
-            }
-            composable(
-                route = DevicesRoute.DeviceValues.name
-            ) {
-                val deviceValuesViewModel = koinViewModel<DeviceValuesViewModel>()
-                val sendUiState by deviceValuesViewModel.sendUiState.collectAsStateWithLifecycle()
-                val getValueUiState by deviceValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
-                DeviceValuesScreen(
-                    sendUiState = sendUiState,
-                    getValueUiState = getValueUiState,
-                    deviceValuesViewModel = deviceValuesViewModel,
-                    navController = navController,
-                )
-            }
-        }
+      composable(
+        route = DevicesRoute.Devices.name
+      ) {
+        val devicesListViewModel = koinViewModel<DevicesListViewModel>()
+        val devicesListUiState by devicesListViewModel.devicesUiState.collectAsStateWithLifecycle()
+        DevicesListScreen(
+          devicesUiState = devicesListUiState,
+          devicesViewModel = devicesListViewModel,
+          navController = navController,
+        )
+      }
+      composable(
+        route = DevicesRoute.EditDevice.name
+      ) {
+        val editDeviceViewModel = koinViewModel<EditDeviceViewModel>()
+        val editDeviceUiState by editDeviceViewModel.editDeviceUiState.collectAsStateWithLifecycle()
+        EditDeviceScreen(
+          devicesUiState = editDeviceUiState,
+          devicesViewModel = editDeviceViewModel,
+          navController = navController,
+        )
+      }
+      composable(
+        route = DevicesRoute.SensorValues.name
+      ) {
+        val sensorValuesViewModel = koinViewModel<SensorValuesViewModel>()
+        val sensorValuesUiState by sensorValuesViewModel.sensorValuesUiState.collectAsStateWithLifecycle()
+        SensorValuesScreen(
+          sensorValuesUiState = sensorValuesUiState,
+          sensorValuesViewModel = sensorValuesViewModel,
+          navController = navController,
+        )
+      }
+      composable(
+        route = DevicesRoute.OnlineValues.name
+      ) {
+        val onlineValuesViewModel = koinViewModel<OnlineValuesViewModel>()
+        val onlineValuesUiState by onlineValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
+        OnlineValuesScreen(
+          onlineValuesUiState = onlineValuesUiState,
+          onlineValuesViewModel = onlineValuesViewModel,
+          navController = navController,
+        )
+      }
+      composable(
+        route = DevicesRoute.DeviceValues.name
+      ) {
+        val deviceValuesViewModel = koinViewModel<DeviceValuesViewModel>()
+        val sendUiState by deviceValuesViewModel.sendUiState.collectAsStateWithLifecycle()
+        val getValueUiState by deviceValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
+        DeviceValuesScreen(
+          sendUiState = sendUiState,
+          getValueUiState = getValueUiState,
+          deviceValuesViewModel = deviceValuesViewModel,
+          navController = navController,
+        )
+      }
     }
+  }
 }

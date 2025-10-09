@@ -37,105 +37,105 @@ import eu.homeanthill.ui.navigation.Destinations.PROFILE
 
 @Composable
 fun AppDrawer(
-    route: String,
-    modifier: Modifier = Modifier,
-    navigateToHome: () -> Unit = {},
-    navigateToProfile: () -> Unit = {},
-    navigateToHomes: () -> Unit = {},
-    navigateToDevices: () -> Unit = {},
-    closeDrawer: () -> Unit = {}
+  route: String,
+  modifier: Modifier = Modifier,
+  navigateToHome: () -> Unit = {},
+  navigateToProfile: () -> Unit = {},
+  navigateToHomes: () -> Unit = {},
+  navigateToDevices: () -> Unit = {},
+  closeDrawer: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val sharedPreference = context.getSharedPreferences(mainKey, Context.MODE_PRIVATE)
-    val json: String? = sharedPreference.getString(profileKey, null)
-    val profile: Profile? = if (json != null) Gson().fromJson(json, Profile::class.java) else null
+  val context = LocalContext.current
+  val sharedPreference = context.getSharedPreferences(mainKey, Context.MODE_PRIVATE)
+  val json: String? = sharedPreference.getString(profileKey, null)
+  val profile: Profile? = if (json != null) Gson().fromJson(json, Profile::class.java) else null
 
-    ModalDrawerSheet(modifier = Modifier) {
-        DrawerHeader(modifier, profile)
-        Spacer(modifier = Modifier.padding(5.dp))
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(id = R.string.home),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            },
-            selected = route == HOME,
-            onClick = {
-                navigateToHome()
-                closeDrawer()
-            },
-            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
-            shape = MaterialTheme.shapes.small
+  ModalDrawerSheet(modifier = Modifier) {
+    DrawerHeader(modifier, profile)
+    Spacer(modifier = Modifier.padding(5.dp))
+    NavigationDrawerItem(
+      label = {
+        Text(
+          text = stringResource(id = R.string.home),
+          style = MaterialTheme.typography.labelMedium
         )
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(id = R.string.profile),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            },
-            selected = route == PROFILE,
-            onClick = {
-                navigateToProfile()
-                closeDrawer()
-            },
-            icon = { Icon(imageVector = Icons.Default.Person, contentDescription = null) },
-            shape = MaterialTheme.shapes.small
+      },
+      selected = route == HOME,
+      onClick = {
+        navigateToHome()
+        closeDrawer()
+      },
+      icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
+      shape = MaterialTheme.shapes.small
+    )
+    NavigationDrawerItem(
+      label = {
+        Text(
+          text = stringResource(id = R.string.profile),
+          style = MaterialTheme.typography.labelMedium
         )
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(id = R.string.homes),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            },
-            selected = route == HOMES,
-            onClick = {
-                navigateToHomes()
-                closeDrawer()
-            },
-            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
-            shape = MaterialTheme.shapes.small
+      },
+      selected = route == PROFILE,
+      onClick = {
+        navigateToProfile()
+        closeDrawer()
+      },
+      icon = { Icon(imageVector = Icons.Default.Person, contentDescription = null) },
+      shape = MaterialTheme.shapes.small
+    )
+    NavigationDrawerItem(
+      label = {
+        Text(
+          text = stringResource(id = R.string.homes),
+          style = MaterialTheme.typography.labelMedium
         )
-        NavigationDrawerItem(
-            label = {
-                Text(
-                    text = stringResource(id = R.string.devices),
-                    style = MaterialTheme.typography.labelMedium
-                )
-            },
-            selected = route == DEVICES,
-            onClick = {
-                navigateToDevices()
-                closeDrawer()
-            },
-            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
-            shape = MaterialTheme.shapes.small
+      },
+      selected = route == HOMES,
+      onClick = {
+        navigateToHomes()
+        closeDrawer()
+      },
+      icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
+      shape = MaterialTheme.shapes.small
+    )
+    NavigationDrawerItem(
+      label = {
+        Text(
+          text = stringResource(id = R.string.devices),
+          style = MaterialTheme.typography.labelMedium
         )
-    }
+      },
+      selected = route == DEVICES,
+      onClick = {
+        navigateToDevices()
+        closeDrawer()
+      },
+      icon = { Icon(imageVector = Icons.Default.Home, contentDescription = null) },
+      shape = MaterialTheme.shapes.small
+    )
+  }
 }
 
 @Composable
 fun DrawerHeader(modifier: Modifier, profile: Profile?) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.Start,
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.secondary)
-            .padding(15.dp)
-            .fillMaxWidth()
-    ) {
-        if (profile?.github?.avatarURL != null) {
-            CircleAsyncImage(profile.github.avatarURL, 70.dp)
-        }
-        Spacer(modifier = Modifier.padding(5.dp))
-        Text(
-            text = stringResource(id = R.string.app_name),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
+  Column(
+    verticalArrangement = Arrangement.Center,
+    horizontalAlignment = Alignment.Start,
+    modifier = modifier
+      .background(MaterialTheme.colorScheme.secondary)
+      .padding(15.dp)
+      .fillMaxWidth()
+  ) {
+    if (profile?.github?.avatarURL != null) {
+      CircleAsyncImage(profile.github.avatarURL, 70.dp)
     }
+    Spacer(modifier = Modifier.padding(5.dp))
+    Text(
+      text = stringResource(id = R.string.app_name),
+      textAlign = TextAlign.Center,
+      style = MaterialTheme.typography.bodyLarge,
+      color = MaterialTheme.colorScheme.onPrimary,
+    )
+  }
 }
 

@@ -20,38 +20,38 @@ import eu.homeanthill.ui.screens.homes.rooms.RoomsScreen
 @Composable
 fun HomesScreen(
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+  Surface(
+    modifier = Modifier.fillMaxSize(),
+    color = MaterialTheme.colorScheme.background,
+  ) {
+    val navController = rememberNavController()
+    NavHost(
+      navController = navController,
+      route = Graph.HOMES_GRAPH,
+      startDestination = HomesRoute.Homes.name
     ) {
-        val navController = rememberNavController()
-        NavHost(
-            navController = navController,
-            route = Graph.HOMES_GRAPH,
-            startDestination = HomesRoute.Homes.name
-        ) {
-            composable(
-                route = HomesRoute.Homes.name
-            ) {
-                val homesListViewModel = koinViewModel<HomesListViewModel>()
-                val homesListUiState by homesListViewModel.homesUiState.collectAsStateWithLifecycle()
-                HomesListScreen(
-                    homesUiState = homesListUiState,
-                    homesViewModel = homesListViewModel,
-                    navController = navController,
-                )
-            }
-            composable(
-                route = HomesRoute.EditHome.name
-            ) {
-                val roomsViewModel = koinViewModel<RoomsViewModel>()
-                val roomsUiState by roomsViewModel.roomsUiState.collectAsStateWithLifecycle()
-                RoomsScreen(
-                    roomsUiState = roomsUiState,
-                    roomsViewModel = roomsViewModel,
-                    navController = navController,
-                )
-            }
-        }
+      composable(
+        route = HomesRoute.Homes.name
+      ) {
+        val homesListViewModel = koinViewModel<HomesListViewModel>()
+        val homesListUiState by homesListViewModel.homesUiState.collectAsStateWithLifecycle()
+        HomesListScreen(
+          homesUiState = homesListUiState,
+          homesViewModel = homesListViewModel,
+          navController = navController,
+        )
+      }
+      composable(
+        route = HomesRoute.EditHome.name
+      ) {
+        val roomsViewModel = koinViewModel<RoomsViewModel>()
+        val roomsUiState by roomsViewModel.roomsUiState.collectAsStateWithLifecycle()
+        RoomsScreen(
+          roomsUiState = roomsUiState,
+          roomsViewModel = roomsViewModel,
+          navController = navController,
+        )
+      }
     }
+  }
 }

@@ -10,13 +10,13 @@ import eu.homeanthill.api.model.ProfileAPITokenResponse
 import retrofit2.http.Path
 
 interface ProfileServices {
-    @Headers("Accept: application/json")
-    @GET("profile")
-    suspend fun getProfile(): Response<Profile>
+  @Headers("Accept: application/json")
+  @GET("profile")
+  suspend fun getProfile(): Response<Profile>
 
-    @Headers("Accept: application/json")
-    @POST("profiles/{id}/tokens")
-    suspend fun postRegenApiToken(
-        @Path("id") id: String
-    ): Response<ProfileAPITokenResponse>
+  @Headers("Accept: application/json")
+  @POST("profiles/{id}/tokens")
+  suspend fun postRegenApiToken(
+    @Path("id") id: String
+  ): Response<ProfileAPITokenResponse>
 }

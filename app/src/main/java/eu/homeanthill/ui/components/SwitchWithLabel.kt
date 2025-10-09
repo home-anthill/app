@@ -17,24 +17,25 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SwitchWithLabel(label: String, state: Boolean, onStateChange: (Boolean) -> Unit) {
-    val interactionSource = remember { MutableInteractionSource() }
-    Row(
-        modifier = Modifier
-            .clickable(
-                interactionSource = interactionSource,
-                // This is for removing ripple when Row is clicked
-                indication = null, role = Role.Switch, onClick = {
-                    onStateChange(!state)
-                })
-            .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Switch(
-            checked = state, onCheckedChange = {
-                onStateChange(it)
-            })
-        Spacer(modifier = Modifier.padding(start = 10.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-    }
+  val interactionSource = remember { MutableInteractionSource() }
+  Row(
+    modifier = Modifier
+      .clickable(
+        interactionSource = interactionSource,
+        // This is for removing ripple when Row is clicked
+        indication = null, role = Role.Switch, onClick = {
+          onStateChange(!state)
+        })
+      .padding(8.dp), verticalAlignment = Alignment.CenterVertically
+  ) {
+    Switch(
+      checked = state, onCheckedChange = {
+        onStateChange(it)
+      })
+    Spacer(modifier = Modifier.padding(start = 10.dp))
+    Text(
+      text = label,
+      style = MaterialTheme.typography.bodyLarge,
+    )
+  }
 }

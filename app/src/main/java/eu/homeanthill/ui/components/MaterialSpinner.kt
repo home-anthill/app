@@ -21,70 +21,70 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 data class SpinnerItemObj(
-    var key: String,
-    var value: String,
+  var key: String,
+  var value: String,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaterialSpinner(
-    title: String,
-    options: List<SpinnerItemObj>,
-    onSelect: (option: SpinnerItemObj) -> Unit,
-    modifier: Modifier = Modifier,
-    selectedOption: SpinnerItemObj? = null,
+  title: String,
+  options: List<SpinnerItemObj>,
+  onSelect: (option: SpinnerItemObj) -> Unit,
+  modifier: Modifier = Modifier,
+  selectedOption: SpinnerItemObj? = null,
 ) {
-    if (title == "mode") {
-        Log.d("MaterialSpinner", "options = $options")
-        Log.d("MaterialSpinner", "selectedOption = $selectedOption")
-    }
-    var expanded by remember { mutableStateOf(false) }
+  if (title == "mode") {
+    Log.d("MaterialSpinner", "options = $options")
+    Log.d("MaterialSpinner", "selectedOption = $selectedOption")
+  }
+  var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = Modifier.then(modifier)
-    ) {
-        TextField(
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-            value = selectedOption?.value ?: SpinnerItemObj("---", "---").value,
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            label = { Text(title, style = MaterialTheme.typography.labelSmall) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+  ExposedDropdownMenuBox(
+    expanded = expanded,
+    onExpandedChange = { expanded = it },
+    modifier = Modifier.then(modifier)
+  ) {
+    TextField(
+      modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+      value = selectedOption?.value ?: SpinnerItemObj("---", "---").value,
+      onValueChange = {},
+      readOnly = true,
+      singleLine = true,
+      label = { Text(title, style = MaterialTheme.typography.labelSmall) },
+      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+      colors = ExposedDropdownMenuDefaults.textFieldColors(),
+    )
+    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+      options.forEach { option ->
+        DropdownMenuItem(
+          text = { Text(option.value, style = MaterialTheme.typography.bodyLarge) },
+          onClick = {
+            onSelect(option)
+            expanded = false
+          },
+          contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.value, style = MaterialTheme.typography.bodyLarge) },
-                    onClick = {
-                        onSelect(option)
-                        expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                )
-            }
-        }
+      }
     }
+  }
 }
 
 @Preview(widthDp = 320, heightDp = 500, showBackground = true)
 @Composable
 fun MaterialSpinnerPreview() {
-    val dataModels = listOf(
-        SpinnerItemObj(key = "123", value = "Foo"), SpinnerItemObj(key = "321", value = "Bar")
-    )
-    MaterialTheme {
-        Column {
-            MaterialSpinner(
-                "Spinner",
-                dataModels,
-                {},
-                Modifier.padding(10.dp),
-                SpinnerItemObj(key = "123", value = "Foo"),
-            )
-        }
+  val dataModels = listOf(
+    SpinnerItemObj(key = "123", value = "Foo"), SpinnerItemObj(key = "321", value = "Bar")
+  )
+  MaterialTheme {
+    Column {
+      MaterialSpinner(
+        "Spinner",
+        dataModels,
+        {},
+        Modifier.padding(10.dp),
+        SpinnerItemObj(key = "123", value = "Foo"),
+      )
     }
+  }
 }

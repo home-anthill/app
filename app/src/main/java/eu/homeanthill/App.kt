@@ -14,19 +14,19 @@ import eu.homeanthill.di.viewModelModule
 
 class App : Application() {
 
-    override fun onCreate() {
-        super.onCreate()
-        startKoin {
-            androidLogger(Level.DEBUG)
-            androidContext(this@App)
-            modules(
-                listOf(
-                    retrofitModule,
-                    apiModule,
-                    repositoryModule,
-                    viewModelModule,
-                )
-            )
-        }
+  override fun onCreate() {
+    super.onCreate()
+    startKoin {
+      androidLogger(Level.DEBUG)
+      androidContext(this@App)
+      modules(
+        listOf(
+          retrofitModule,
+          apiModule,
+          repositoryModule,
+          viewModelModule,
+        )
+      )
     }
+  }
 }

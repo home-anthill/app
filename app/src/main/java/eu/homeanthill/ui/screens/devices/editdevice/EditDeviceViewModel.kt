@@ -14,53 +14,53 @@ import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.HomesRepository
 
 class EditDeviceViewModel(
-    private val homesRepository: HomesRepository,
-    private val devicesRepository: DevicesRepository
+  private val homesRepository: HomesRepository,
+  private val devicesRepository: DevicesRepository
 ) : ViewModel() {
-    companion object {
-        private const val TAG = "EditDeviceViewModel"
-    }
+  companion object {
+    private const val TAG = "EditDeviceViewModel"
+  }
 
-    sealed class EditDeviceUiState {
-        data class Idle(val homes: List<Home>) : EditDeviceUiState()
-        data object Loading : EditDeviceUiState()
-        data class Error(val errorMessage: String) : EditDeviceUiState()
-    }
+  sealed class EditDeviceUiState {
+    data class Idle(val homes: List<Home>) : EditDeviceUiState()
+    data object Loading : EditDeviceUiState()
+    data class Error(val errorMessage: String) : EditDeviceUiState()
+  }
 
-    private val _editDeviceUiState = MutableStateFlow<EditDeviceUiState>(
-        EditDeviceUiState.Idle(
-            emptyList()
-        )
+  private val _editDeviceUiState = MutableStateFlow<EditDeviceUiState>(
+    EditDeviceUiState.Idle(
+      emptyList()
     )
-    val editDeviceUiState: StateFlow<EditDeviceUiState> = _editDeviceUiState
+  )
+  val editDeviceUiState: StateFlow<EditDeviceUiState> = _editDeviceUiState
 
-    init {
-        init()
+  init {
+    init()
+  }
+
+  suspend fun assignDevice(id: String, homeId: String, roomId: String) {
+    devicesRepository.repoAssignDeviceToHomeRoom(
+      id = id,
+      body = PutDevice(homeId = homeId, roomId = roomId)
+    )
+    init()
+  }
+
+  suspend fun deleteDevice(id: String) {
+    devicesRepository.repoDeleteDevice(id = id)
+  }
+
+  private fun init() {
+    viewModelScope.launch {
+      _editDeviceUiState.emit(EditDeviceUiState.Loading)
+      delay(500)
+
+      try {
+        val homes: List<Home> = homesRepository.repoGetHomes()
+        _editDeviceUiState.emit(EditDeviceUiState.Idle(homes))
+      } catch (err: IOException) {
+        _editDeviceUiState.emit(EditDeviceUiState.Error(err.message.toString()))
+      }
     }
-
-    suspend fun assignDevice(id: String, homeId: String, roomId: String) {
-        devicesRepository.repoAssignDeviceToHomeRoom(
-            id = id,
-            body = PutDevice(homeId = homeId, roomId = roomId)
-        )
-        init()
-    }
-
-    suspend fun deleteDevice(id: String) {
-        devicesRepository.repoDeleteDevice(id = id)
-    }
-
-    private fun init() {
-        viewModelScope.launch {
-            _editDeviceUiState.emit(EditDeviceUiState.Loading)
-            delay(500)
-
-            try {
-                val homes: List<Home> = homesRepository.repoGetHomes()
-                _editDeviceUiState.emit(EditDeviceUiState.Idle(homes))
-            } catch (err: IOException) {
-                _editDeviceUiState.emit(EditDeviceUiState.Error(err.message.toString()))
-            }
-        }
-    }
+  }
 }

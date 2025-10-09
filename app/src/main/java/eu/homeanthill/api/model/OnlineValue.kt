@@ -6,7 +6,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class OnlineValue(
-    @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("modifiedAt") val modifiedAt: String,
-    @SerializedName("currentTime") val currentTime: String,
+  @SerializedName("createdAt") val createdAt: String,
+  @SerializedName("modifiedAt") val modifiedAt: String,
+  @SerializedName("currentTime") val currentTime: String,
 ) : Parcelable

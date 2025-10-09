@@ -11,46 +11,38 @@ import retrofit2.http.Path
 
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.GenericMessageResponse
-import eu.homeanthill.api.model.PostSetDeviceValue
 import eu.homeanthill.api.model.PutDevice
-import eu.homeanthill.api.model.SensorValue
-import eu.homeanthill.api.model.ControllerValue
+import eu.homeanthill.api.model.DeviceFeatureValueResponse
+import eu.homeanthill.api.model.PostSetFeatureDeviceValue
 
 interface DevicesServices {
-    @Headers("Accept: application/json")
-    @GET("devices")
-    suspend fun getDevices(): Response<List<Device>>
+  @Headers("Accept: application/json")
+  @GET("devices")
+  suspend fun getDevices(): Response<List<Device>>
 
-    @Headers("Accept: application/json")
-    @PUT("devices/{id}")
-    suspend fun putAssignDeviceToHomeRoom(
-        @Path("id") id: String,
-        @Body body: PutDevice,
-    ): Response<GenericMessageResponse>
+  @Headers("Accept: application/json")
+  @PUT("devices/{id}")
+  suspend fun putAssignDeviceToHomeRoom(
+    @Path("id") id: String,
+    @Body body: PutDevice,
+  ): Response<GenericMessageResponse>
 
-    @Headers("Accept: application/json")
-    @DELETE("devices/{id}")
-    suspend fun deleteDevice(
-        @Path("id") id: String
-    ): Response<GenericMessageResponse>
+  @Headers("Accept: application/json")
+  @DELETE("devices/{id}")
+  suspend fun deleteDevice(
+    @Path("id") id: String
+  ): Response<GenericMessageResponse>
 
-    @Headers("Accept: application/json")
-    @GET("devices/{id}/values")
-    suspend fun getSensorValues(
-        @Path("id") id: String
-    ): Response<List<SensorValue>>
+  @Headers("Accept: application/json")
+  @GET("devices/{id}/values")
+  suspend fun getDeviceValues(
+    @Path("id") id: String
+  ): Response<List<DeviceFeatureValueResponse>>
 
-    // FIXME this api should be removed to reuse the getSensorValues after migrating devices to a list of features
-    @Headers("Accept: application/json")
-    @GET("devices/{id}/values")
-    suspend fun getControllerValues(
-        @Path("id") id: String
-    ): Response<ControllerValue>
-
-    @Headers("Accept: application/json")
-    @POST("devices/{id}/values")
-    suspend fun postSetValues(
-        @Path("id") id: String,
-        @Body body: PostSetDeviceValue
-    ): Response<GenericMessageResponse>
+  @Headers("Accept: application/json")
+  @POST("devices/{id}/values")
+  suspend fun postSetValues(
+    @Path("id") id: String,
+    @Body body: List<PostSetFeatureDeviceValue>
+  ): Response<GenericMessageResponse>
 }

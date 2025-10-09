@@ -50,97 +50,97 @@ import eu.homeanthill.ui.screens.profile.ProfileScreen
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            AppTheme(dynamicColor = false) {
-                AppNavGraph()
-            }
-        }
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
+    setContent {
+      AppTheme(dynamicColor = false) {
+        AppNavGraph()
+      }
     }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavGraph(
-    modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-    coroutineScope: CoroutineScope = rememberCoroutineScope(),
-    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+  modifier: Modifier = Modifier,
+  navController: NavHostController = rememberNavController(),
+  coroutineScope: CoroutineScope = rememberCoroutineScope(),
+  drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
 ) {
-    val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = currentNavBackStackEntry?.destination?.route ?: HOME
-    val navigationActions = remember(navController) {
-        AppNavigationActions(navController)
-    }
-    ModalNavigationDrawer(
-        drawerContent = {
-            AppDrawer(
-                route = currentRoute,
-                navigateToHome = { navigationActions.navigateToHome() },
-                navigateToProfile = { navigationActions.navigateToProfile() },
-                navigateToHomes = { navigationActions.navigateToHomes() },
-                navigateToDevices = { navigationActions.navigateToDevices() },
-                closeDrawer = { coroutineScope.launch { drawerState.close() } },
-                modifier = Modifier
+  val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
+  val currentRoute = currentNavBackStackEntry?.destination?.route ?: HOME
+  val navigationActions = remember(navController) {
+    AppNavigationActions(navController)
+  }
+  ModalNavigationDrawer(
+    drawerContent = {
+      AppDrawer(
+        route = currentRoute,
+        navigateToHome = { navigationActions.navigateToHome() },
+        navigateToProfile = { navigationActions.navigateToProfile() },
+        navigateToHomes = { navigationActions.navigateToHomes() },
+        navigateToDevices = { navigationActions.navigateToDevices() },
+        closeDrawer = { coroutineScope.launch { drawerState.close() } },
+        modifier = Modifier
+      )
+    },
+    drawerState = drawerState
+  ) {
+    Scaffold(
+      topBar = {
+        TopAppBar(
+          title = { Text(text = currentRoute) },
+          modifier = Modifier.fillMaxWidth(),
+          navigationIcon = {
+            IconButton(
+              onClick = {
+                coroutineScope.launch { drawerState.open() }
+              },
+              content = {
+                Icon(imageVector = Icons.Default.Menu, contentDescription = null)
+              }
             )
-        },
-        drawerState = drawerState
+          },
+          colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+          )
+        )
+      },
+      modifier = Modifier
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(text = currentRoute) },
-                    modifier = Modifier.fillMaxWidth(),
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch { drawerState.open() }
-                            },
-                            content = {
-                                Icon(imageVector = Icons.Default.Menu, contentDescription = null)
-                            }
-                        )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-            },
-            modifier = Modifier
-        ) {
-            NavHost(
-                navController = navController,
-                startDestination = HOME,
-                modifier = modifier.padding(it)
-            ) {
-                composable(HOME) {
-                    val homeViewModel = koinViewModel<MainViewModel>()
-                    val homeUiState by homeViewModel.mainUiState.collectAsStateWithLifecycle()
-                    MainScreen(
-                        mainUiState = homeUiState,
-                        navController = navController,
-                    )
-                }
-                composable(PROFILE) {
-                    val profileViewModel = koinViewModel<ProfileViewModel>()
-                    val profileUiState by profileViewModel.profileUiState.collectAsStateWithLifecycle()
-                    val apiTokenUiState by profileViewModel.apiTokenUiState.collectAsStateWithLifecycle()
-                    ProfileScreen(
-                        profileUiState = profileUiState,
-                        apiTokenUiState = apiTokenUiState,
-                        profileViewModel = profileViewModel,
-                        navController = navController
-                    )
-                }
-                composable(HOMES) {
-                    HomesScreen()
-                }
-                composable(DEVICES) {
-                    DevicesScreen()
-                }
-            }
+      NavHost(
+        navController = navController,
+        startDestination = HOME,
+        modifier = modifier.padding(it)
+      ) {
+        composable(HOME) {
+          val homeViewModel = koinViewModel<MainViewModel>()
+          val homeUiState by homeViewModel.mainUiState.collectAsStateWithLifecycle()
+          MainScreen(
+            mainUiState = homeUiState,
+            navController = navController,
+          )
         }
+        composable(PROFILE) {
+          val profileViewModel = koinViewModel<ProfileViewModel>()
+          val profileUiState by profileViewModel.profileUiState.collectAsStateWithLifecycle()
+          val apiTokenUiState by profileViewModel.apiTokenUiState.collectAsStateWithLifecycle()
+          ProfileScreen(
+            profileUiState = profileUiState,
+            apiTokenUiState = apiTokenUiState,
+            profileViewModel = profileViewModel,
+            navController = navController
+          )
+        }
+        composable(HOMES) {
+          HomesScreen()
+        }
+        composable(DEVICES) {
+          DevicesScreen()
+        }
+      }
     }
+  }
 }

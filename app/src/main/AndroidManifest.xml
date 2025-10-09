@@ -47,8 +47,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.HomeAnthill">
-        </activity>
+            android:theme="@style/Theme.HomeAnthill"></activity>
     </application>
 
 </manifest>

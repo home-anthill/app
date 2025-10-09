@@ -8,9 +8,9 @@ import retrofit2.http.Path
 import eu.homeanthill.api.model.OnlineValue
 
 interface OnlineServices {
-    @Headers("Accept: application/json")
-    @GET("online/{id}")
-    suspend fun getOnlineValues(
-        @Path("id") id: String
-    ): Response<OnlineValue>
+  @Headers("Accept: application/json")
+  @GET("online/{id}")
+  suspend fun getOnlineValues(
+    @Path("id") id: String
+  ): Response<OnlineValue>
 }

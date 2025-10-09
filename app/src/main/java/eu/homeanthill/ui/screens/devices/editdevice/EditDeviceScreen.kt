@@ -36,140 +36,149 @@ import eu.homeanthill.ui.screens.homes.homeslist.DeleteHomeDialog
 
 @Composable
 fun EditDeviceScreen(
-    devicesUiState: EditDeviceViewModel.EditDeviceUiState,
-    devicesViewModel: EditDeviceViewModel,
-    navController: NavController,
+  devicesUiState: EditDeviceViewModel.EditDeviceUiState,
+  devicesViewModel: EditDeviceViewModel,
+  navController: NavController,
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    // inputs
-    val device: Device? = navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
-    val home: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
-    val room: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
+  val coroutineScope = rememberCoroutineScope()
+  // inputs
+  val device: Device? =
+    navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
+  val home: Home? = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
+  val room: Room? = navController.previousBackStackEntry?.savedStateHandle?.get<Room>("room")
 
-    var homesOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
-    var roomsOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
-    var selectedHome: Home? by remember { mutableStateOf(home) }
-    var selectedRoom: Room? by remember { mutableStateOf(room) }
+  var homesOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
+  var roomsOption: List<SpinnerItemObj> by remember { mutableStateOf(listOf()) }
+  var selectedHome: Home? by remember { mutableStateOf(home) }
+  var selectedRoom: Room? by remember { mutableStateOf(room) }
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
+  var showDeleteDialog by remember { mutableStateOf(false) }
 
-    if (showDeleteDialog) {
-        DeleteHomeDialog(
-            dialogTitle = "Delete device",
-            dialogText = "Would you remove this device?",
-            confirmText = "Yes",
-            dismissText = "No",
-            onDismissRequest = {
-                showDeleteDialog = false
-            },
-            onConfirmation = {
-                coroutineScope.launch {
-                    if (device !== null) {
-                        devicesViewModel.deleteDevice(id = device.id)
-                        navController.navigate(route = DevicesRoute.Devices.name)
-                        showDeleteDialog = false
-                    }
-                }
-            }
-        )
-    }
-    Scaffold(
-        content = { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                if (device !== null) {
-                    Text(
-                        text = device.mac,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = device.model,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                when (devicesUiState) {
-                    is EditDeviceViewModel.EditDeviceUiState.Error -> {
-                        Text(
-                            text = devicesUiState.errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    is EditDeviceViewModel.EditDeviceUiState.Loading -> {
-                        CircularProgressIndicator()
-                    }
-
-                    is EditDeviceViewModel.EditDeviceUiState.Idle -> {
-                        homesOption = devicesUiState.homes.map { home ->
-                            SpinnerItemObj(home.id, home.name)
-                        }
-                        MaterialSpinner(
-                            title = "home",
-                            options = homesOption,
-                            onSelect = { option ->
-                                selectedHome = devicesUiState.homes.find { home -> home.id == option.key }
-                                selectedRoom = null
-                            },
-                            modifier = Modifier.padding(10.dp),
-                            selectedOption = if (selectedHome == null) { null } else { SpinnerItemObj(selectedHome!!.id, selectedHome!!.name) },
-                        )
-                        if (selectedHome !== null && selectedHome!!.rooms !== null && selectedHome!!.rooms!!.isNotEmpty()) {
-                            roomsOption = selectedHome!!.rooms!!.map { room ->
-                                SpinnerItemObj(room.id, room.name)
-                            }
-                            MaterialSpinner(
-                                title = "room",
-                                options = roomsOption,
-                                onSelect = { option ->
-                                    selectedRoom =
-                                        selectedHome!!.rooms!!.find { room -> room.id == option.key }
-                                },
-                                modifier = Modifier.padding(10.dp),
-                                selectedOption = if (selectedRoom == null) { null } else { SpinnerItemObj(selectedRoom!!.id, selectedRoom!!.name) },
-                            )
-                        } else {
-                            selectedRoom = null
-                        }
-
-                        if (selectedHome != null && selectedRoom != null) {
-                            TextButton(
-                                onClick = {
-                                    if (device !== null && selectedHome !== null && selectedRoom !== null) {
-                                        coroutineScope.launch {
-                                            devicesViewModel.assignDevice(
-                                                id = device.id,
-                                                homeId = selectedHome!!.id,
-                                                roomId = selectedRoom!!.id
-                                            )
-                                            navController.navigate(route = DevicesRoute.Devices.name)
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.padding(8.dp),
-                            ) {
-                                Text("Assign")
-                            }
-                        }
-                        TextButton(
-                            onClick = {
-                                showDeleteDialog = true
-                            },
-                            modifier = Modifier.padding(8.dp),
-                        ) {
-                            Text("Remove this device")
-                        }
-                    }
-                }
-            }
-        },
+  if (showDeleteDialog) {
+    DeleteHomeDialog(
+      dialogTitle = "Delete device",
+      dialogText = "Would you remove this device?",
+      confirmText = "Yes",
+      dismissText = "No",
+      onDismissRequest = {
+        showDeleteDialog = false
+      },
+      onConfirmation = {
+        coroutineScope.launch {
+          if (device !== null) {
+            devicesViewModel.deleteDevice(id = device.id)
+            navController.navigate(route = DevicesRoute.Devices.name)
+            showDeleteDialog = false
+          }
+        }
+      }
     )
+  }
+  Scaffold(
+    content = { padding ->
+      Column(
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(padding)
+          .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+      ) {
+        if (device !== null) {
+          Text(
+            text = device.mac,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge,
+          )
+          Text(
+            text = device.model,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge,
+          )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        when (devicesUiState) {
+          is EditDeviceViewModel.EditDeviceUiState.Error -> {
+            Text(
+              text = devicesUiState.errorMessage,
+              color = MaterialTheme.colorScheme.error,
+            )
+          }
+
+          is EditDeviceViewModel.EditDeviceUiState.Loading -> {
+            CircularProgressIndicator()
+          }
+
+          is EditDeviceViewModel.EditDeviceUiState.Idle -> {
+            homesOption = devicesUiState.homes.map { home ->
+              SpinnerItemObj(home.id, home.name)
+            }
+            MaterialSpinner(
+              title = "home",
+              options = homesOption,
+              onSelect = { option ->
+                selectedHome = devicesUiState.homes.find { home -> home.id == option.key }
+                selectedRoom = null
+              },
+              modifier = Modifier.padding(10.dp),
+              selectedOption = if (selectedHome == null) {
+                null
+              } else {
+                SpinnerItemObj(selectedHome!!.id, selectedHome!!.name)
+              },
+            )
+            if (selectedHome !== null && selectedHome!!.rooms !== null && selectedHome!!.rooms!!.isNotEmpty()) {
+              roomsOption = selectedHome!!.rooms!!.map { room ->
+                SpinnerItemObj(room.id, room.name)
+              }
+              MaterialSpinner(
+                title = "room",
+                options = roomsOption,
+                onSelect = { option ->
+                  selectedRoom =
+                    selectedHome!!.rooms!!.find { room -> room.id == option.key }
+                },
+                modifier = Modifier.padding(10.dp),
+                selectedOption = if (selectedRoom == null) {
+                  null
+                } else {
+                  SpinnerItemObj(selectedRoom!!.id, selectedRoom!!.name)
+                },
+              )
+            } else {
+              selectedRoom = null
+            }
+
+            if (selectedHome != null && selectedRoom != null) {
+              TextButton(
+                onClick = {
+                  if (device !== null && selectedHome !== null && selectedRoom !== null) {
+                    coroutineScope.launch {
+                      devicesViewModel.assignDevice(
+                        id = device.id,
+                        homeId = selectedHome!!.id,
+                        roomId = selectedRoom!!.id
+                      )
+                      navController.navigate(route = DevicesRoute.Devices.name)
+                    }
+                  }
+                },
+                modifier = Modifier.padding(8.dp),
+              ) {
+                Text("Assign")
+              }
+            }
+            TextButton(
+              onClick = {
+                showDeleteDialog = true
+              },
+              modifier = Modifier.padding(8.dp),
+            ) {
+              Text("Remove this device")
+            }
+          }
+        }
+      }
+    },
+  )
 }

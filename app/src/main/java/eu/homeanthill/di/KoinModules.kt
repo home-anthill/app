@@ -40,97 +40,97 @@ import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 val viewModelModule = module {
-    viewModel {
-        MainViewModel(
-            loginRepository = get(),
-            profileRepository = get(),
-            fcmTokenRepository = get()
-        )
-    }
-    viewModel { ProfileViewModel(loginRepository = get(), profileRepository = get()) }
-    viewModel { HomesListViewModel(homesRepository = get()) }
-    viewModel { RoomsViewModel(homesRepository = get()) }
-    viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
-    viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
-    viewModel { SensorValuesViewModel(devicesRepository = get()) }
-    viewModel { DeviceValuesViewModel(devicesRepository = get()) }
-    viewModel { OnlineValuesViewModel(onlineRepository = get()) }
+  viewModel {
+    MainViewModel(
+      loginRepository = get(),
+      profileRepository = get(),
+      fcmTokenRepository = get()
+    )
+  }
+  viewModel { ProfileViewModel(loginRepository = get(), profileRepository = get()) }
+  viewModel { HomesListViewModel(homesRepository = get()) }
+  viewModel { RoomsViewModel(homesRepository = get()) }
+  viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
+  viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
+  viewModel { SensorValuesViewModel(devicesRepository = get()) }
+  viewModel { DeviceValuesViewModel(devicesRepository = get()) }
+  viewModel { OnlineValuesViewModel(onlineRepository = get()) }
 }
 
 val repositoryModule = module {
-    factory { LoginRepository(context = androidContext()) }
-    single { FCMTokenRepository(fcmTokenService = get()) }
-    single { ProfileRepository(profileService = get()) }
-    single { HomesRepository(homesService = get()) }
-    single { DevicesRepository(devicesService = get()) }
-    single { OnlineRepository(onlineService = get()) }
+  factory { LoginRepository(context = androidContext()) }
+  single { FCMTokenRepository(fcmTokenService = get()) }
+  single { ProfileRepository(profileService = get()) }
+  single { HomesRepository(homesService = get()) }
+  single { DevicesRepository(devicesService = get()) }
+  single { OnlineRepository(onlineService = get()) }
 }
 
 val apiModule = module {
-    single { get<Retrofit>().create(FCMTokenServices::class.java) }
-    single { get<Retrofit>().create(ProfileServices::class.java) }
-    single { get<Retrofit>().create(HomesServices::class.java) }
-    single { get<Retrofit>().create(DevicesServices::class.java) }
-    single { get<Retrofit>().create(OnlineServices::class.java) }
+  single { get<Retrofit>().create(FCMTokenServices::class.java) }
+  single { get<Retrofit>().create(ProfileServices::class.java) }
+  single { get<Retrofit>().create(HomesServices::class.java) }
+  single { get<Retrofit>().create(DevicesServices::class.java) }
+  single { get<Retrofit>().create(OnlineServices::class.java) }
 }
 
 val retrofitModule = module {
-    fun provideGson(): Gson {
-        return GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).create()
-    }
+  fun provideGson(): Gson {
+    return GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).create()
+  }
 
-    fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS)
-    }
+  fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
+    return HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS)
+  }
 
-    fun provideAuthInterceptor(loginRepository: LoginRepository): AuthInterceptor {
-        return AuthInterceptor(loginRepository)
-    }
+  fun provideAuthInterceptor(loginRepository: LoginRepository): AuthInterceptor {
+    return AuthInterceptor(loginRepository)
+  }
 
-    fun provideAppAuthenticator(loginRepository: LoginRepository): AppAuthenticator {
-        return AppAuthenticator(loginRepository)
-    }
+  fun provideAppAuthenticator(loginRepository: LoginRepository): AppAuthenticator {
+    return AppAuthenticator(loginRepository)
+  }
 
-    fun provideSendSavedCookiesInterceptor(context: Context): SendSavedCookiesInterceptor {
-        return SendSavedCookiesInterceptor(context)
-    }
+  fun provideSendSavedCookiesInterceptor(context: Context): SendSavedCookiesInterceptor {
+    return SendSavedCookiesInterceptor(context)
+  }
 
-    fun provideOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor,
-        authInterceptor: AuthInterceptor,
-        qppAuthenticator: AppAuthenticator,
-        sendSavedCookiesInterceptor: SendSavedCookiesInterceptor,
-    ): OkHttpClient {
-        return OkHttpClient()
-            .newBuilder()
-            .cookieJar(JavaNetCookieJar(CookieManager()))
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(sendSavedCookiesInterceptor)
-            .addInterceptor(authInterceptor)
-            .authenticator(qppAuthenticator)
-            .build()
-    }
+  fun provideOkHttpClient(
+    loggingInterceptor: HttpLoggingInterceptor,
+    authInterceptor: AuthInterceptor,
+    qppAuthenticator: AppAuthenticator,
+    sendSavedCookiesInterceptor: SendSavedCookiesInterceptor,
+  ): OkHttpClient {
+    return OkHttpClient()
+      .newBuilder()
+      .cookieJar(JavaNetCookieJar(CookieManager()))
+      .addInterceptor(loggingInterceptor)
+      .addInterceptor(sendSavedCookiesInterceptor)
+      .addInterceptor(authInterceptor)
+      .authenticator(qppAuthenticator)
+      .build()
+  }
 
-    fun provideRetrofit(factory: Gson, okHttpClient: OkHttpClient): Retrofit {
-        val retrofitBuilder =
-            Retrofit.Builder().baseUrl(BuildConfig.API_BASE_URL).client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create(factory))
+  fun provideRetrofit(factory: Gson, okHttpClient: OkHttpClient): Retrofit {
+    val retrofitBuilder =
+      Retrofit.Builder().baseUrl(BuildConfig.API_BASE_URL).client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create(factory))
 
-        return retrofitBuilder.build()
-    }
+    return retrofitBuilder.build()
+  }
 
-    single { provideGson() }
-    single { provideHttpLoggingInterceptor() }
-    single {
-        provideOkHttpClient(
-            loggingInterceptor = get(),
-            authInterceptor = get(),
-            qppAuthenticator = get(),
-            sendSavedCookiesInterceptor = get(),
-        )
-    }
-    single { provideRetrofit(factory = get(), okHttpClient = get()) }
-    single { provideAuthInterceptor(loginRepository = get()) }
-    single { provideAppAuthenticator(loginRepository = get()) }
-    single { provideSendSavedCookiesInterceptor(context = androidContext()) }
+  single { provideGson() }
+  single { provideHttpLoggingInterceptor() }
+  single {
+    provideOkHttpClient(
+      loggingInterceptor = get(),
+      authInterceptor = get(),
+      qppAuthenticator = get(),
+      sendSavedCookiesInterceptor = get(),
+    )
+  }
+  single { provideRetrofit(factory = get(), okHttpClient = get()) }
+  single { provideAuthInterceptor(loginRepository = get()) }
+  single { provideAppAuthenticator(loginRepository = get()) }
+  single { provideSendSavedCookiesInterceptor(context = androidContext()) }
 }

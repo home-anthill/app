@@ -11,75 +11,75 @@ import java.io.IOException
 import eu.homeanthill.api.requests.HomesServices
 
 class HomesRepository(private val homesService: HomesServices) {
-    suspend fun repoGetHomes(): List<Home> {
-        val result = homesService.getHomes()
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoGetHomes")
-        }
+  suspend fun repoGetHomes(): List<Home> {
+    val result = homesService.getHomes()
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoGetHomes")
     }
+  }
 
-    suspend fun repoPostHome(body: NewHome): Home {
-        val result = homesService.postHome(body)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoPostHome")
-        }
+  suspend fun repoPostHome(body: NewHome): Home {
+    val result = homesService.postHome(body)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoPostHome")
     }
+  }
 
-    suspend fun repoPutHome(id: String, body: UpdateHome): GenericMessageResponse {
-        val result = homesService.putHome(id, body)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoPutHome")
-        }
+  suspend fun repoPutHome(id: String, body: UpdateHome): GenericMessageResponse {
+    val result = homesService.putHome(id, body)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoPutHome")
     }
+  }
 
-    suspend fun repoDeleteHome(id: String): GenericMessageResponse {
-        val result = homesService.deleteHome(id)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoDeleteHome")
-        }
+  suspend fun repoDeleteHome(id: String): GenericMessageResponse {
+    val result = homesService.deleteHome(id)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoDeleteHome")
     }
+  }
 
-    suspend fun repoGetRooms(id: String): List<Room> {
-        val result = homesService.getRooms(id)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoGetRooms")
-        }
+  suspend fun repoGetRooms(id: String): List<Room> {
+    val result = homesService.getRooms(id)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoGetRooms")
     }
+  }
 
-    suspend fun repoPostRoom(id: String, body: RoomRequest): Room {
-        val result = homesService.postRoom(id, body)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoPostRoom")
-        }
+  suspend fun repoPostRoom(id: String, body: RoomRequest): Room {
+    val result = homesService.postRoom(id, body)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoPostRoom")
     }
+  }
 
-    suspend fun repoPutRoom(id: String, rid: String, body: RoomRequest): GenericMessageResponse {
-        val result = homesService.putRoom(id, rid, body)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoPutRoom")
-        }
+  suspend fun repoPutRoom(id: String, rid: String, body: RoomRequest): GenericMessageResponse {
+    val result = homesService.putRoom(id, rid, body)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoPutRoom")
     }
+  }
 
-    suspend fun repoDeleteRoom(id: String, rid: String): GenericMessageResponse {
-        val result = homesService.deleteRoom(id, rid)
-        if (result.isSuccessful) {
-            return result.body()!!
-        } else {
-            throw IOException("Error repoDeleteRoom")
-        }
+  suspend fun repoDeleteRoom(id: String, rid: String): GenericMessageResponse {
+    val result = homesService.deleteRoom(id, rid)
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoDeleteRoom")
     }
+  }
 }

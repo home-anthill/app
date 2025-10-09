@@ -45,98 +45,98 @@ import eu.homeanthill.api.model.Room
 
 @Composable
 fun RoomsScreen(
-    roomsUiState: RoomsViewModel.RoomsUiState,
-    roomsViewModel: RoomsViewModel,
-    navController: NavController,
+  roomsUiState: RoomsViewModel.RoomsUiState,
+  roomsViewModel: RoomsViewModel,
+  navController: NavController,
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val showNewDialog = remember { mutableStateOf(false) }
-    val home = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
+  val coroutineScope = rememberCoroutineScope()
+  val showNewDialog = remember { mutableStateOf(false) }
+  val home = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
 
-    if (showNewDialog.value) {
-        NewRoomDialog(
-            dialogText = "Create a new room",
-            saveText = "Save",
-            cancelText = "Cancel",
-            onDismissRequest = {
-                showNewDialog.value = false
-            },
-            onConfirmation = { name, floor ->
-                coroutineScope.launch {
-                    if (home == null) {
-                        return@launch
-                    }
-                    roomsViewModel.createRoom(home.id, name, floor.toInt())
-                    showNewDialog.value = false
-                }
-            },
-        )
-    }
+  if (showNewDialog.value) {
+    NewRoomDialog(
+      dialogText = "Create a new room",
+      saveText = "Save",
+      cancelText = "Cancel",
+      onDismissRequest = {
+        showNewDialog.value = false
+      },
+      onConfirmation = { name, floor ->
+        coroutineScope.launch {
+          if (home == null) {
+            return@launch
+          }
+          roomsViewModel.createRoom(home.id, name, floor.toInt())
+          showNewDialog.value = false
+        }
+      },
+    )
+  }
 
-    Scaffold(
-        content = { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                when (roomsUiState) {
-                    is RoomsViewModel.RoomsUiState.Error -> {
-                        Text(
-                            text = roomsUiState.errorMessage,
-                            color = MaterialTheme.colorScheme.error,
+  Scaffold(
+    content = { padding ->
+      Column(
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(padding)
+          .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+      ) {
+        when (roomsUiState) {
+          is RoomsViewModel.RoomsUiState.Error -> {
+            Text(
+              text = roomsUiState.errorMessage,
+              color = MaterialTheme.colorScheme.error,
+            )
+          }
+
+          is RoomsViewModel.RoomsUiState.Loading -> {
+            CircularProgressIndicator()
+          }
+
+          is RoomsViewModel.RoomsUiState.Idle -> {
+            val currHome = roomsUiState.homes.find { h -> h.id == home?.id }
+
+            if (currHome !== null) {
+              Text(
+                text = currHome.name,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge,
+              )
+              Text(
+                text = currHome.location,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge,
+              )
+              Spacer(modifier = Modifier.height(10.dp))
+
+              // iterate over rooms
+              if (currHome.rooms !== null) {
+                currHome.rooms?.forEach { r ->
+                  SimpleCard(
+                    room = r,
+                    onEdit = { name, floor ->
+                      coroutineScope.launch {
+                        roomsViewModel.updateRoom(
+                          id = currHome.id,
+                          rid = r.id,
+                          name,
+                          floor.toInt()
                         )
-                    }
-
-                    is RoomsViewModel.RoomsUiState.Loading -> {
-                        CircularProgressIndicator()
-                    }
-
-                    is RoomsViewModel.RoomsUiState.Idle -> {
-                        val currHome = roomsUiState.homes.find { h -> h.id == home?.id }
-
-                        if (currHome !== null) {
-                            Text(
-                                text = currHome.name,
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            Text(
-                                text = currHome.location,
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // iterate over rooms
-                            if (currHome.rooms !== null) {
-                                currHome.rooms?.forEach { r ->
-                                    SimpleCard(
-                                        room = r,
-                                        onEdit = { name, floor ->
-                                            coroutineScope.launch {
-                                                roomsViewModel.updateRoom(
-                                                    id = currHome.id,
-                                                    rid = r.id,
-                                                    name,
-                                                    floor.toInt()
-                                                )
-                                            }
-                                        },
-                                        onDelete = {
-                                            coroutineScope.launch {
-                                                roomsViewModel.deleteRoom(
-                                                    id = currHome.id,
-                                                    rid = r.id
-                                                )
-                                            }
-                                        },
-                                    )
-                                }
-                            }
+                      }
+                    },
+                    onDelete = {
+                      coroutineScope.launch {
+                        roomsViewModel.deleteRoom(
+                          id = currHome.id,
+                          rid = r.id
+                        )
+                      }
+                    },
+                  )
+                }
+              }
 //                            TextButton(
 //                                onClick = {
 //                                    coroutineScope.launch {
@@ -158,142 +158,142 @@ fun RoomsScreen(
 //                            ) {
 //                                Text(text = "Cancel")
 //                            }
-                        }
-                    }
-                }
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    showNewDialog.value = true
-                },
-            ) {
-                Icon(Icons.Filled.Add, "Floating action button.")
-            }
+          }
         }
-    )
+      }
+    },
+    floatingActionButton = {
+      FloatingActionButton(
+        onClick = {
+          showNewDialog.value = true
+        },
+      ) {
+        Icon(Icons.Filled.Add, "Floating action button.")
+      }
+    }
+  )
 }
 
 @Composable
 fun SimpleCard(
-    room: Room,
-    onEdit: (name: String, floor: String) -> Unit,
-    onDelete: () -> Unit,
+  room: Room,
+  onEdit: (name: String, floor: String) -> Unit,
+  onDelete: () -> Unit,
 ) {
-    var name: String by remember { mutableStateOf(room.name) }
-    var floor: String by remember { mutableStateOf(room.floor.toString()) }
+  var name: String by remember { mutableStateOf(room.name) }
+  var floor: String by remember { mutableStateOf(room.floor.toString()) }
 
-    Card(
-        elevation = CardDefaults.cardElevation(10.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(250.dp)
-            .padding(vertical = 10.dp, horizontal = 20.dp)
-            .clip(RoundedCornerShape(16.dp))
+  Card(
+    elevation = CardDefaults.cardElevation(10.dp),
+    modifier = Modifier
+      .fillMaxWidth()
+      .height(250.dp)
+      .padding(vertical = 10.dp, horizontal = 20.dp)
+      .clip(RoundedCornerShape(16.dp))
+  ) {
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 20.dp, horizontal = 20.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 20.dp)
-        ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                TextField(
+      Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+      ) {
+        TextField(
 
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                )
-                TextField(
-                    value = floor,
-                    onValueChange = { floor = it },
-                    label = { Text("Floor") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.Top,
-            ) {
-                TextButton(
-                    onClick = { onDelete() },
-                    modifier = Modifier.padding(8.dp),
-                ) {
-                    Text("Delete")
-                }
-                TextButton(
-                    onClick = { onEdit(name, floor) },
-                    modifier = Modifier.padding(8.dp),
-                ) {
-                    Text("Save")
-                }
-            }
+          value = name,
+          onValueChange = { name = it },
+          label = { Text("Name") },
+        )
+        TextField(
+          value = floor,
+          onValueChange = { floor = it },
+          label = { Text("Floor") },
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+      }
+      Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Top,
+      ) {
+        TextButton(
+          onClick = { onDelete() },
+          modifier = Modifier.padding(8.dp),
+        ) {
+          Text("Delete")
         }
+        TextButton(
+          onClick = { onEdit(name, floor) },
+          modifier = Modifier.padding(8.dp),
+        ) {
+          Text("Save")
+        }
+      }
     }
+  }
 }
 
 @Composable
 fun NewRoomDialog(
-    dialogText: String,
-    saveText: String,
-    cancelText: String,
-    onDismissRequest: () -> Unit,
-    onConfirmation: (name: String, location: String) -> Unit,
+  dialogText: String,
+  saveText: String,
+  cancelText: String,
+  onDismissRequest: () -> Unit,
+  onConfirmation: (name: String, location: String) -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
-    var floor by remember { mutableStateOf("") }
+  var name by remember { mutableStateOf("") }
+  var floor by remember { mutableStateOf("") }
 
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        // Draw a rectangle shape with rounded corners inside the dialog
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(375.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
+  Dialog(onDismissRequest = { onDismissRequest() }) {
+    // Draw a rectangle shape with rounded corners inside the dialog
+    Card(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(375.dp)
+        .padding(16.dp),
+      shape = RoundedCornerShape(16.dp),
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+      ) {
+        Text(
+          text = dialogText,
+          modifier = Modifier.padding(16.dp),
+        )
+        TextField(
+          value = name,
+          onValueChange = { name = it },
+          label = { Text("Name") }
+        )
+        TextField(
+          value = floor,
+          onValueChange = { floor = it },
+          label = { Text("Floor") }
+        )
+        Row(
+          modifier = Modifier
+            .fillMaxWidth(),
+          horizontalArrangement = Arrangement.Center,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = dialogText,
-                    modifier = Modifier.padding(16.dp),
-                )
-                TextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") }
-                )
-                TextField(
-                    value = floor,
-                    onValueChange = { floor = it },
-                    label = { Text("Floor") }
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    TextButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text(text = cancelText)
-                    }
-                    TextButton(
-                        onClick = { onConfirmation(name, floor) },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text(text = saveText)
-                    }
-                }
-            }
+          TextButton(
+            onClick = { onDismissRequest() },
+            modifier = Modifier.padding(8.dp),
+          ) {
+            Text(text = cancelText)
+          }
+          TextButton(
+            onClick = { onConfirmation(name, floor) },
+            modifier = Modifier.padding(8.dp),
+          ) {
+            Text(text = saveText)
+          }
         }
+      }
     }
+  }
 }

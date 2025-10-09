@@ -26,83 +26,83 @@ import androidx.core.net.toUri
 import eu.homeanthill.ui.theme.AppTheme
 
 class LoginActivity : ComponentActivity() {
-    companion object {
-        private const val TAG = "LoginActivity"
+  companion object {
+    private const val TAG = "LoginActivity"
+  }
+
+  public override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    val data: Uri? = intent.data
+    Log.d(TAG, "onNewIntent query = ${data?.query}")
+
+    // these 2 query params must match those on server-side
+    val jwt = data?.getQueryParameter("token")
+    val cookie = data?.getQueryParameter("session_cookie")
+
+    if (jwt === null || cookie === null) {
+      Log.e(TAG, "onNewIntent either jwt or cookie are missing")
+      return
     }
 
-    public override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        val data: Uri? = intent.data
-        Log.d(TAG, "onNewIntent query = ${data?.query}")
+    val unixTime = System.currentTimeMillis() / 1000L
 
-        // these 2 query params must match those on server-side
-        val jwt = data?.getQueryParameter("token")
-        val cookie = data?.getQueryParameter("session_cookie")
+    this.getSharedPreferences(mainKey, MODE_PRIVATE)
+      .edit {
+        putString(cookieKey, cookie)
+          .putString(jwtKey, jwt)
+          .putLong(loginTimestampKey, unixTime)
+      }
 
-        if (jwt === null || cookie === null) {
-            Log.e(TAG, "onNewIntent either jwt or cookie are missing")
-            return
-        }
+    // restart the activity
+    val i = Intent(this@LoginActivity, MainActivity::class.java)
+    // set the new task and clear flags
+    i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    startActivity(i)
+  }
 
-        val unixTime = System.currentTimeMillis() / 1000L
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
 
-        this.getSharedPreferences(mainKey, MODE_PRIVATE)
-            .edit {
-                putString(cookieKey, cookie)
-                    .putString(jwtKey, jwt)
-                    .putLong(loginTimestampKey, unixTime)
+    val jwt = this.getSharedPreferences(mainKey, MODE_PRIVATE)
+      .getString(jwtKey, null)
+
+    if (jwt != null) {
+      val i = Intent(this@LoginActivity, MainActivity::class.java)
+      finish()
+      startActivity(i)
+    }
+    enableEdgeToEdge()
+    setContent {
+      val context = LocalContext.current
+      AppTheme(dynamicColor = false) {
+        Scaffold(
+          topBar = {},
+          content = { padding ->
+            Column(
+              modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 8.dp),
+              verticalArrangement = Arrangement.Center,
+              horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+              Button(
+                onClick = {
+                  val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    (BuildConfig.API_BASE_URL + "login_app").toUri()
+                  )
+                  context.startActivity(intent)
+                },
+                enabled = true,
+              ) {
+                Text(text = stringResource(R.string.login_button))
+              }
             }
-
-        // restart the activity
-        val i = Intent(this@LoginActivity, MainActivity::class.java)
-        // set the new task and clear flags
-        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(i)
+          }
+        )
+      }
     }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
-
-        val jwt = this.getSharedPreferences(mainKey, MODE_PRIVATE)
-            .getString(jwtKey, null)
-
-        if (jwt != null) {
-            val i = Intent(this@LoginActivity, MainActivity::class.java)
-            finish()
-            startActivity(i)
-        }
-        enableEdgeToEdge()
-        setContent {
-            val context = LocalContext.current
-            AppTheme(dynamicColor = false) {
-                Scaffold(
-                    topBar = {},
-                    content = { padding ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(padding)
-                                .padding(horizontal = 8.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Button(
-                                onClick = {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        (BuildConfig.API_BASE_URL + "login_app").toUri()
-                                    )
-                                    context.startActivity(intent)
-                                },
-                                enabled = true,
-                            ) {
-                                Text(text = stringResource(R.string.login_button))
-                            }
-                        }
-                    }
-                )
-            }
-        }
-    }
+  }
 }
