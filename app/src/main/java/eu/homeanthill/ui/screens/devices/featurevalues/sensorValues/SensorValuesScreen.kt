@@ -1,6 +1,5 @@
-package eu.homeanthill.ui.screens.devices.sensorValues
+package eu.homeanthill.ui.screens.devices.featurevalues.sensorValues
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -102,7 +101,7 @@ fun SensorValuesScreen(
 
           is SensorValuesViewModel.ValuesUiState.Idle -> {
             sensorValuesUiState.deviceValue?.featureValues?.forEach { featureValue ->
-              eu.homeanthill.ui.screens.devices.sensorValues.FeatureValueCard(
+              FeatureValueCard(
                 sensorValuesViewModel = sensorValuesViewModel,
                 featureValue = featureValue,
               )

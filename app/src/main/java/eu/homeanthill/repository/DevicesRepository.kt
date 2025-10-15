@@ -1,6 +1,5 @@
 package eu.homeanthill.repository
 
-import android.util.Log
 import java.io.IOException
 
 import eu.homeanthill.api.model.Device

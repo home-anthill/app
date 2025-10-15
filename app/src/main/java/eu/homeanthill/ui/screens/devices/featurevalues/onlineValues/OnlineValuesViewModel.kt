@@ -1,9 +1,13 @@
-package eu.homeanthill.ui.screens.devices.onlineValues
+package eu.homeanthill.ui.screens.devices.featurevalues.onlineValues
 
 import android.util.Log
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,10 +18,6 @@ import kotlinx.coroutines.launch
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.OnlineValue
 import eu.homeanthill.repository.OnlineRepository
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class OnlineValuesViewModel(
   private val onlineRepository: OnlineRepository

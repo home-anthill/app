@@ -1,4 +1,4 @@
-package eu.homeanthill.ui.screens.devices.sensorValues
+package eu.homeanthill.ui.screens.devices.featurevalues.sensorValues
 
 import android.util.Log
 import java.io.IOException

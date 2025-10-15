@@ -39,7 +39,7 @@ class LoginActivity : ComponentActivity() {
     val jwt = data?.getQueryParameter("token")
     val cookie = data?.getQueryParameter("session_cookie")
 
-    if (jwt === null || cookie === null) {
+    if (jwt == null || cookie == null) {
       Log.e(TAG, "onNewIntent either jwt or cookie are missing")
       return
     }

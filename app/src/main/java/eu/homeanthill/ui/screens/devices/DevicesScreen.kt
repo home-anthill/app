@@ -16,12 +16,12 @@ import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListScreen
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceScreen
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
-import eu.homeanthill.ui.screens.devices.sensorValues.SensorValuesScreen
-import eu.homeanthill.ui.screens.devices.sensorValues.SensorValuesViewModel
-import eu.homeanthill.ui.screens.devices.onlineValues.OnlineValuesScreen
-import eu.homeanthill.ui.screens.devices.onlineValues.OnlineValuesViewModel
-import eu.homeanthill.ui.screens.devices.deviceValues.DeviceValuesScreen
-import eu.homeanthill.ui.screens.devices.deviceValues.DeviceValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesScreen
+import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesScreen
+import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.DeviceValuesScreen
+import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesViewModel
 
 @Composable
 fun DevicesScreen(
@@ -83,13 +83,13 @@ fun DevicesScreen(
       composable(
         route = DevicesRoute.DeviceValues.name
       ) {
-        val deviceValuesViewModel = koinViewModel<DeviceValuesViewModel>()
-        val sendUiState by deviceValuesViewModel.sendUiState.collectAsStateWithLifecycle()
-        val getValueUiState by deviceValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
+        val controllerValuesViewModel = koinViewModel<ControllerValuesViewModel>()
+        val sendUiState by controllerValuesViewModel.sendUiState.collectAsStateWithLifecycle()
+        val getValueUiState by controllerValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
         DeviceValuesScreen(
           sendUiState = sendUiState,
           getValueUiState = getValueUiState,
-          deviceValuesViewModel = deviceValuesViewModel,
+          controllerValuesViewModel = controllerValuesViewModel,
           navController = navController,
         )
       }

@@ -27,7 +27,7 @@ data class DeviceFeatureValueResponse(
   @SerializedName("featureUuid") val featureUuid: String,
   @SerializedName("type") val type: String,
   @SerializedName("name") val name: String,
-  @SerializedName("value") val value: Number,
+  @SerializedName("value") var value: Number,
   @SerializedName("createdAt") val createdAt: String,
   @SerializedName("modifiedAt") val modifiedAt: String,
 ) : Parcelable

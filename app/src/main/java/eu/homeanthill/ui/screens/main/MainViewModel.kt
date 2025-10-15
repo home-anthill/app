@@ -46,7 +46,7 @@ class MainViewModel(
 
       var fcmToken: String? = loginRepository.getFCMToken()
       Log.d(TAG, "init - fcmToken = $fcmToken")
-      if (fcmToken === null) {
+      if (fcmToken == null) {
         // register this device
         val registeredFCMToken: String? = registerDeviceToFirebase()
         Log.d(TAG, "init - registeredFCMToken = $registeredFCMToken")

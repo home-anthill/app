@@ -41,8 +41,10 @@ private fun isSensor(device: Device): Boolean {
   return controller == null
 }
 
-private fun isPowerOutage(device: Device): Boolean {
-  return device.model == "poweroutage"
+private fun isOnline(device: Device): Boolean {
+  return device.features.find { feature ->
+    feature.type == "sensor" && feature.name == "online"
+  } != null
 }
 
 @Composable
@@ -110,7 +112,7 @@ fun DevicesListScreen(
                       "room",
                       null
                     )
-                    if (isPowerOutage(device)) {
+                    if (isOnline(device)) {
                       navController.navigate(route = DevicesRoute.OnlineValues.name)
                     } else if (isSensor(device)) {
                       navController.navigate(route = DevicesRoute.SensorValues.name)
@@ -200,7 +202,7 @@ fun DevicesListScreen(
                         "room",
                         roomWithDevices.room
                       )
-                      if (isPowerOutage(sensor)) {
+                      if (isOnline(sensor)) {
                         navController.navigate(route = DevicesRoute.OnlineValues.name)
                       } else {
                         navController.navigate(route = DevicesRoute.SensorValues.name)

@@ -1,4 +1,4 @@
-package eu.homeanthill.ui.screens.devices.deviceValues
+package eu.homeanthill.ui.screens.devices.featurevalues.controllerValues
 
 import android.util.Log
 import java.text.SimpleDateFormat
@@ -16,7 +16,7 @@ import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PostSetFeatureDeviceValue
 import eu.homeanthill.ui.components.SpinnerItemObj
 
-class DeviceValuesViewModel(
+class ControllerValuesViewModel(
   private val devicesRepository: DevicesRepository
 ) : ViewModel() {
   companion object {
@@ -40,6 +40,7 @@ class DeviceValuesViewModel(
   val getValueUiState: StateFlow<ValuesUiState> = _getValuesUiState
 
   private val setpoints = IntRange(17, 30).step(1).toList().toIntArray()
+  private val tolerances = IntRange(0, 10).step(1).toList().toIntArray()
   private val modes = arrayOf("Cool", "Auto", "Heat", "Fan", "Dry")
   private val fanSpeeds = arrayOf("Min", "Med", "Max", "Auto", "Auto0")
 
@@ -52,12 +53,48 @@ class DeviceValuesViewModel(
     return sdf.format(netDate)
   }
 
+  fun getSetpointByFeatureUuid(featureValues: List<DeviceFeatureValueResponse>, uuid: String): SpinnerItemObj {
+    val v: DeviceFeatureValueResponse? = featureValues.find{it -> it.featureUuid == uuid }
+    Log.d("TAG", "getSetpointByFeatureUuid - v=$v")
+    if (v == null || v.value.toInt() == -999) {
+      return SpinnerItemObj(setpoints[0].toString(), setpoints[0].toString())
+    }
+    val res = setpoints[v.value.toInt()-setpoints[0]]
+    return SpinnerItemObj(res.toString(), res.toString())
+  }
+
   fun getSetpoints(): List<SpinnerItemObj> {
     return setpoints.map { t -> SpinnerItemObj(t.toString(), t.toString()) }
   }
 
   fun getSetpointValue(name: String): Int {
-    return setpoints.indexOfFirst { temp -> temp == name.toInt() } + 17
+    return setpoints.indexOfFirst { temp -> temp == name.toInt() } + setpoints[0]
+  }
+
+  fun getToleranceByFeatureUuid(featureValues: List<DeviceFeatureValueResponse>, uuid: String): SpinnerItemObj {
+    val v: DeviceFeatureValueResponse? = featureValues.find{it -> it.featureUuid == uuid }
+    if (v == null || v.value.toInt() == -999) {
+      return SpinnerItemObj(tolerances[0].toString(), tolerances[0].toString())
+    }
+    val res = tolerances[v.value.toInt()]
+    return SpinnerItemObj(res.toString(), res.toString())
+  }
+
+  fun getTolerances(): List<SpinnerItemObj> {
+    return tolerances.map { t -> SpinnerItemObj(t.toString(), t.toString()) }
+  }
+
+  fun getToleranceValue(name: String): Int {
+    return tolerances.indexOfFirst { temp -> temp == name.toInt() }
+  }
+
+  fun getModeByFeatureUuid(featureValues: List<DeviceFeatureValueResponse>, uuid: String): SpinnerItemObj {
+    val v: DeviceFeatureValueResponse? = featureValues.find{it -> it.featureUuid == uuid }
+    if (v == null || v.value.toInt() == -999) {
+      return SpinnerItemObj(modes[0], modes[0])
+    }
+    val res = modes[v.value.toInt()-1]
+    return SpinnerItemObj(res, res)
   }
 
   fun getModes(): List<SpinnerItemObj> {
@@ -66,6 +103,15 @@ class DeviceValuesViewModel(
 
   fun getModeValue(name: String): Int {
     return modes.indexOfFirst { mode -> mode == name } + 1
+  }
+
+  fun getFanSpeedByFeatureUuid(featureValues: List<DeviceFeatureValueResponse>, uuid: String): SpinnerItemObj {
+    val v: DeviceFeatureValueResponse? = featureValues.find{it -> it.featureUuid == uuid }
+    if (v == null || v.value.toInt() == -999) {
+      return SpinnerItemObj(fanSpeeds[0], fanSpeeds[0])
+    }
+    val res = fanSpeeds[v.value.toInt()-1]
+    return SpinnerItemObj(res, res)
   }
 
   fun getFanSpeeds(): List<SpinnerItemObj> {
