@@ -33,6 +33,7 @@ import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesViewModel
 import eu.homeanthill.ui.screens.main.MainViewModel
 import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
@@ -52,9 +53,10 @@ val viewModelModule = module {
   viewModel { RoomsViewModel(homesRepository = get()) }
   viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
   viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
-  viewModel { SensorValuesViewModel(devicesRepository = get()) }
+  viewModel { SensorValuesViewModel() }
   viewModel { ControllerValuesViewModel(devicesRepository = get()) }
   viewModel { OnlineValuesViewModel(onlineRepository = get()) }
+  viewModel { FeaturesViewModel(devicesRepository = get()) }
 }
 
 val repositoryModule = module {

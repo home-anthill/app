@@ -114,10 +114,8 @@ fun DevicesListScreen(
                     )
                     if (isOnline(device)) {
                       navController.navigate(route = DevicesRoute.OnlineValues.name)
-                    } else if (isSensor(device)) {
-                      navController.navigate(route = DevicesRoute.SensorValues.name)
                     } else {
-                      navController.navigate(route = DevicesRoute.DeviceValues.name)
+                      navController.navigate(route = DevicesRoute.FeatureValues.name)
                     }
                   },
                 )
@@ -167,7 +165,7 @@ fun DevicesListScreen(
                         "room",
                         roomWithDevices.room
                       )
-                      navController.navigate(route = DevicesRoute.DeviceValues.name)
+                      navController.navigate(route = DevicesRoute.FeatureValues.name)
                     },
                   )
                 }
@@ -205,7 +203,7 @@ fun DevicesListScreen(
                       if (isOnline(sensor)) {
                         navController.navigate(route = DevicesRoute.OnlineValues.name)
                       } else {
-                        navController.navigate(route = DevicesRoute.SensorValues.name)
+                        navController.navigate(route = DevicesRoute.FeatureValues.name)
                       }
                     },
                   )

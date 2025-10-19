@@ -1,7 +1,6 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
 import java.io.IOException
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -120,8 +119,6 @@ class DevicesListViewModel(
           // 2) add assigned devices with homes and rooms to `result.homeDevices`
           homeDevices = getHomeDevices(homes, devices),
         )
-        Log.d(TAG, "init - ############################# result = $result")
-
         _deviceUiState.emit(DevicesUiState.Idle(result))
       } catch (err: IOException) {
         _deviceUiState.emit(DevicesUiState.Error(err.message.toString()))

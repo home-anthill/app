@@ -9,16 +9,26 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class DeviceValue(
   @SerializedName("device") val device: Device,
-  @SerializedName("featureValues") val featureValues: List<FeatureValue>,
+  @SerializedName("sensorFeatureValues") val sensorFeatureValues: List<FeatureValue>,
+  @SerializedName("controllerFeatureValues") val controllerFeatureValues: List<FeatureValue>,
 ) : Parcelable
 
 @Parcelize
 data class FeatureValue(
   @SerializedName("feature") val feature: Feature,
   @SerializedName("value") val value: Number,
-  @SerializedName("createdAt") val createdAt: String,
-  @SerializedName("modifiedAt") val modifiedAt: String,
+  @SerializedName("createdAt") val createdAt: Number,
+  @SerializedName("modifiedAt") val modifiedAt: Number,
 ) : Parcelable
+
+
+// ------------------------------------------
+// temporary object to return the PostSetFeatureDeviceValue API
+// response to the main FeatureScreen to show a SnackBar
+data class SendValueResult(
+  val message: String,
+  val isError: Boolean,
+)
 
 // ------------------------------------------
 // classes used as body for API requests
@@ -28,8 +38,8 @@ data class DeviceFeatureValueResponse(
   @SerializedName("type") val type: String,
   @SerializedName("name") val name: String,
   @SerializedName("value") var value: Number,
-  @SerializedName("createdAt") val createdAt: String,
-  @SerializedName("modifiedAt") val modifiedAt: String,
+  @SerializedName("createdAt") val createdAt: Number,
+  @SerializedName("modifiedAt") val modifiedAt: Number,
 ) : Parcelable
 
 @Parcelize

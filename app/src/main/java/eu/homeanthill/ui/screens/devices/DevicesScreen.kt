@@ -16,12 +16,10 @@ import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListScreen
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceScreen
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
-import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesScreen
-import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesScreen
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesViewModel
-import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.DeviceValuesScreen
-import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesScreen
+import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesViewModel
 
 @Composable
 fun DevicesScreen(
@@ -59,17 +57,6 @@ fun DevicesScreen(
         )
       }
       composable(
-        route = DevicesRoute.SensorValues.name
-      ) {
-        val sensorValuesViewModel = koinViewModel<SensorValuesViewModel>()
-        val sensorValuesUiState by sensorValuesViewModel.sensorValuesUiState.collectAsStateWithLifecycle()
-        SensorValuesScreen(
-          sensorValuesUiState = sensorValuesUiState,
-          sensorValuesViewModel = sensorValuesViewModel,
-          navController = navController,
-        )
-      }
-      composable(
         route = DevicesRoute.OnlineValues.name
       ) {
         val onlineValuesViewModel = koinViewModel<OnlineValuesViewModel>()
@@ -81,15 +68,13 @@ fun DevicesScreen(
         )
       }
       composable(
-        route = DevicesRoute.DeviceValues.name
+        route = DevicesRoute.FeatureValues.name
       ) {
-        val controllerValuesViewModel = koinViewModel<ControllerValuesViewModel>()
-        val sendUiState by controllerValuesViewModel.sendUiState.collectAsStateWithLifecycle()
-        val getValueUiState by controllerValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
-        DeviceValuesScreen(
-          sendUiState = sendUiState,
-          getValueUiState = getValueUiState,
-          controllerValuesViewModel = controllerValuesViewModel,
+        val featureValuesViewModel = koinViewModel<FeaturesViewModel>()
+        val featureValuesUiState by featureValuesViewModel.featureValuesUiState.collectAsStateWithLifecycle()
+        FeaturesScreen(
+          featureValuesUiState = featureValuesUiState,
+          featureValuesViewModel = featureValuesViewModel,
           navController = navController,
         )
       }
