@@ -31,10 +31,12 @@ import org.koin.androidx.compose.koinViewModel
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.Room
-import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerFeatureValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesScreen
-import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesScreen
-import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValues
+import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValues
+import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValuesViewModel
 
 @Composable
 fun FeaturesScreen(
@@ -107,22 +109,35 @@ fun FeaturesScreen(
           }
 
           is FeaturesViewModel.FeatureValuesUiState.Idle -> {
+
+            val hasOnline = device?.features?.find { feature ->
+              feature.type == "sensor" && feature.name == "online"
+            } != null
             if (featureValuesUiState.deviceValue?.sensorFeatureValues?.isEmpty() == false) {
-              val sensorValuesViewModel = koinViewModel<SensorValuesViewModel>()
-              SensorValuesScreen(
+              if (hasOnline) {
+                val onlineFeatureValuesViewModel = koinViewModel<OnlineFeatureValuesViewModel>()
+                val onlineValuesUiState by onlineFeatureValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
+                OnlineFeatureValues(
+                  device = device,
+                  onlineValuesUiState = onlineValuesUiState,
+                  onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
+                )
+              }
+
+              val sensorFeatureValuesViewModel = koinViewModel<SensorFeatureValuesViewModel>()
+              SensorFeatureValues(
                 featureValues = featureValuesUiState.deviceValue.sensorFeatureValues,
-                sensorValuesViewModel = sensorValuesViewModel,
+                sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
               )
             }
 
-            val controllerValuesViewModel = koinViewModel<ControllerValuesViewModel>()
-            val getValueUiState by controllerValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
-
             if (featureValuesUiState.deviceValue?.controllerFeatureValues?.isEmpty() == false) {
+              val controllerFeatureValuesViewModel = koinViewModel<ControllerFeatureValuesViewModel>()
+              val getValueUiState by controllerFeatureValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
               ControllerValuesScreen(
                 device = device,
                 getValueUiState = getValueUiState,
-                controllerValuesViewModel = controllerValuesViewModel,
+                controllerFeatureValuesViewModel = controllerFeatureValuesViewModel,
                 onSendResult = { result ->
                   coroutineScope.launch {
                     if (result.isError) {

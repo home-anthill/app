@@ -8,5 +8,4 @@ sealed class DevicesRoute(val name: String) {
   data object Devices : DevicesRoute("Devices")
   data object EditDevice : DevicesRoute("EditDevice")
   data object FeatureValues : DevicesRoute("FeatureValues")
-  data object OnlineValues : DevicesRoute("OnlineValues")
 }

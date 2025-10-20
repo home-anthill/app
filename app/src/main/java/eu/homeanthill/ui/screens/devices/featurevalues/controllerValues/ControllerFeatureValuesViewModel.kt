@@ -18,7 +18,7 @@ import eu.homeanthill.api.model.SendValueResult
 import eu.homeanthill.ui.components.SpinnerItemObj
 
 
-class ControllerValuesViewModel(
+class ControllerFeatureValuesViewModel(
   private val devicesRepository: DevicesRepository
 ) : ViewModel() {
   companion object {

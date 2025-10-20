@@ -16,8 +16,6 @@ import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListScreen
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceScreen
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
-import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesScreen
-import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesScreen
 import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesViewModel
 
@@ -53,17 +51,6 @@ fun DevicesScreen(
         EditDeviceScreen(
           devicesUiState = editDeviceUiState,
           devicesViewModel = editDeviceViewModel,
-          navController = navController,
-        )
-      }
-      composable(
-        route = DevicesRoute.OnlineValues.name
-      ) {
-        val onlineValuesViewModel = koinViewModel<OnlineValuesViewModel>()
-        val onlineValuesUiState by onlineValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
-        OnlineValuesScreen(
-          onlineValuesUiState = onlineValuesUiState,
-          onlineValuesViewModel = onlineValuesViewModel,
           navController = navController,
         )
       }

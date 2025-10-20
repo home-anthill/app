@@ -19,7 +19,7 @@ import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.OnlineValue
 import eu.homeanthill.repository.OnlineRepository
 
-class OnlineValuesViewModel(
+class OnlineFeatureValuesViewModel(
   private val onlineRepository: OnlineRepository
 ) : ViewModel() {
   companion object {
@@ -37,6 +37,7 @@ class OnlineValuesViewModel(
   val onlineValuesUiState: StateFlow<OnlineValuesUiState> = _onlineValuesUiState
 
   fun getPrettyDateFromUnixEpoch(isoDate: String): String {
+    Log.d(TAG, "isoDate = $isoDate")
     val unixEpoch = LocalDateTime.parse(isoDate, DateTimeFormatter.ISO_DATE_TIME)
       .toInstant(ZoneOffset.ofTotalSeconds(0))
       .toEpochMilli()
@@ -57,10 +58,8 @@ class OnlineValuesViewModel(
     viewModelScope.launch {
       _onlineValuesUiState.emit(OnlineValuesUiState.Loading)
       delay(500)
-
       try {
         val value: OnlineValue = onlineRepository.repoGetOnlineValues(device.id)
-        Log.d(TAG, "initDeviceValues - value = $value")
         _onlineValuesUiState.emit(OnlineValuesUiState.Idle(value))
       } catch (err: IOException) {
         _onlineValuesUiState.emit(OnlineValuesUiState.Error(err.message.toString()))

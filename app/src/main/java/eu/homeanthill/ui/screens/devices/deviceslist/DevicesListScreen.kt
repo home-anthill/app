@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,17 +34,6 @@ import androidx.navigation.NavController
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.ui.screens.devices.DevicesRoute
-
-private fun isSensor(device: Device): Boolean {
-  val controller = device.features.find { feature -> feature.type == "controller" }
-  return controller == null
-}
-
-private fun isOnline(device: Device): Boolean {
-  return device.features.find { feature ->
-    feature.type == "sensor" && feature.name == "online"
-  } != null
-}
 
 @Composable
 fun DevicesListScreen(
@@ -112,11 +100,7 @@ fun DevicesListScreen(
                       "room",
                       null
                     )
-                    if (isOnline(device)) {
-                      navController.navigate(route = DevicesRoute.OnlineValues.name)
-                    } else {
-                      navController.navigate(route = DevicesRoute.FeatureValues.name)
-                    }
+                    navController.navigate(route = DevicesRoute.FeatureValues.name)
                   },
                 )
               }
@@ -200,11 +184,7 @@ fun DevicesListScreen(
                         "room",
                         roomWithDevices.room
                       )
-                      if (isOnline(sensor)) {
-                        navController.navigate(route = DevicesRoute.OnlineValues.name)
-                      } else {
-                        navController.navigate(route = DevicesRoute.FeatureValues.name)
-                      }
+                      navController.navigate(route = DevicesRoute.FeatureValues.name)
                     },
                   )
                 }
@@ -268,19 +248,11 @@ fun SimpleCard(
           onClick = { onDetails() },
           modifier = Modifier.padding(8.dp),
         ) {
-          if (isSensor(device)) {
-            Icon(
-              imageVector = ImageVector.vectorResource(R.drawable.auto_stories_24px),
-              contentDescription = "Values",
-              modifier = Modifier.size(30.dp)
-            )
-          } else {
-            Icon(
-              imageVector = Icons.Rounded.PlayArrow,
-              contentDescription = "Play",
-              modifier = Modifier.size(32.dp)
-            )
-          }
+          Icon(
+            imageVector = ImageVector.vectorResource(R.drawable.auto_stories_24px),
+            contentDescription = "Values",
+            modifier = Modifier.size(30.dp)
+          )
         }
       }
     }

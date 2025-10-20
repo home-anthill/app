@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 
 import eu.homeanthill.api.model.FeatureValue
 
-class SensorValuesViewModel() : ViewModel() {
+class SensorFeatureValuesViewModel() : ViewModel() {
 
   fun getPrettyDateFromUnixEpoch(isoDate: Number): String {
     val sdf = SimpleDateFormat("HH:mm:ss dd/MM/yyyy", Locale.ITALY)

@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.RoomRequest
-import eu.homeanthill.api.model.UpdateHome
 
 class RoomsViewModel(
   private val homesRepository: HomesRepository

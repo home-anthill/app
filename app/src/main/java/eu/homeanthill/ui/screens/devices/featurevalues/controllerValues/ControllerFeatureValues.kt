@@ -30,8 +30,8 @@ import eu.homeanthill.ui.components.SwitchWithLabel
 @Composable
 fun ControllerValuesScreen(
   device: Device?,
-  getValueUiState: ControllerValuesViewModel.ValuesUiState,
-  controllerValuesViewModel: ControllerValuesViewModel,
+  getValueUiState: ControllerFeatureValuesViewModel.ValuesUiState,
+  controllerFeatureValuesViewModel: ControllerFeatureValuesViewModel,
   onSendResult: (SendValueResult) -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
@@ -40,12 +40,12 @@ fun ControllerValuesScreen(
 
   LaunchedEffect(Unit) {
     if (device != null) {
-      featureValues = controllerValuesViewModel.getValues(device.id)
+      featureValues = controllerFeatureValuesViewModel.getValues(device.id)
     }
   }
 
   when (getValueUiState) {
-    is ControllerValuesViewModel.ValuesUiState.Error -> {
+    is ControllerFeatureValuesViewModel.ValuesUiState.Error -> {
       Spacer(modifier = Modifier.height(100.dp))
       Text(
         text = "Can't load current values",
@@ -53,11 +53,11 @@ fun ControllerValuesScreen(
       )
     }
 
-    is ControllerValuesViewModel.ValuesUiState.Loading -> {
+    is ControllerFeatureValuesViewModel.ValuesUiState.Loading -> {
       CircularProgressIndicator()
     }
 
-    is ControllerValuesViewModel.ValuesUiState.Idle -> {
+    is ControllerFeatureValuesViewModel.ValuesUiState.Idle -> {
       if (device != null) {
         Column(
           modifier = Modifier
@@ -90,19 +90,19 @@ fun ControllerValuesScreen(
                 "setpoint" -> {
                   MaterialSpinner(
                     title = "Setpoint",
-                    options = controllerValuesViewModel.getSetpoints(),
+                    options = controllerFeatureValuesViewModel.getSetpoints(),
                     onSelect = { option ->
                       featureValues = featureValues.map { featureValue ->
                         val newVal = featureValue.copy()
                         if (newVal.featureUuid == feature.uuid) {
                           newVal.value =
-                            controllerValuesViewModel.getSetpointValue(option.value)
+                            controllerFeatureValuesViewModel.getSetpointValue(option.value)
                         }
                         newVal
                       }
                     },
                     modifier = Modifier.padding(10.dp),
-                    selectedOption = controllerValuesViewModel.getSetpointByFeatureUuid(
+                    selectedOption = controllerFeatureValuesViewModel.getSetpointByFeatureUuid(
                       featureValues,
                       feature.uuid
                     ),
@@ -112,19 +112,19 @@ fun ControllerValuesScreen(
                 "mode" -> {
                   MaterialSpinner(
                     title = "Mode",
-                    options = controllerValuesViewModel.getModes(),
+                    options = controllerFeatureValuesViewModel.getModes(),
                     onSelect = { option ->
                       featureValues = featureValues.map { featureValue ->
                         val newVal = featureValue.copy()
                         if (newVal.featureUuid == feature.uuid) {
                           newVal.value =
-                            controllerValuesViewModel.getModeValue(option.value)
+                            controllerFeatureValuesViewModel.getModeValue(option.value)
                         }
                         newVal
                       }
                     },
                     modifier = Modifier.padding(10.dp),
-                    selectedOption = controllerValuesViewModel.getModeByFeatureUuid(
+                    selectedOption = controllerFeatureValuesViewModel.getModeByFeatureUuid(
                       featureValues,
                       feature.uuid
                     )
@@ -134,19 +134,19 @@ fun ControllerValuesScreen(
                 "fanSpeed" -> {
                   MaterialSpinner(
                     title = "Fan speed",
-                    options = controllerValuesViewModel.getFanSpeeds(),
+                    options = controllerFeatureValuesViewModel.getFanSpeeds(),
                     onSelect = { option ->
                       featureValues = featureValues.map { featureValue ->
                         val newVal = featureValue.copy()
                         if (newVal.featureUuid == feature.uuid) {
                           newVal.value =
-                            controllerValuesViewModel.getFanSpeedValue(option.value)
+                            controllerFeatureValuesViewModel.getFanSpeedValue(option.value)
                         }
                         newVal
                       }
                     },
                     modifier = Modifier.padding(10.dp),
-                    selectedOption = controllerValuesViewModel.getFanSpeedByFeatureUuid(
+                    selectedOption = controllerFeatureValuesViewModel.getFanSpeedByFeatureUuid(
                       featureValues,
                       feature.uuid
                     )
@@ -156,19 +156,19 @@ fun ControllerValuesScreen(
                 "tolerance" -> {
                   MaterialSpinner(
                     title = "Tolerance",
-                    options = controllerValuesViewModel.getTolerances(),
+                    options = controllerFeatureValuesViewModel.getTolerances(),
                     onSelect = { option ->
                       featureValues = featureValues.map { featureValue ->
                         val newVal = featureValue.copy()
                         if (newVal.featureUuid == feature.uuid) {
                           newVal.value =
-                            controllerValuesViewModel.getToleranceValue(option.value)
+                            controllerFeatureValuesViewModel.getToleranceValue(option.value)
                         }
                         newVal
                       }
                     },
                     modifier = Modifier.padding(10.dp),
-                    selectedOption = controllerValuesViewModel.getToleranceByFeatureUuid(
+                    selectedOption = controllerFeatureValuesViewModel.getToleranceByFeatureUuid(
                       featureValues,
                       feature.uuid
                     )
@@ -180,14 +180,14 @@ fun ControllerValuesScreen(
           Spacer(modifier = Modifier.height(20.dp))
 
           Text(
-            text = controllerValuesViewModel.getPrettyDateFromUnixEpoch(device?.modifiedAt),
+            text = controllerFeatureValuesViewModel.getPrettyDateFromUnixEpoch(device?.modifiedAt),
             style = MaterialTheme.typography.bodyMedium,
           )
           Spacer(modifier = Modifier.height(16.dp))
           TextButton(
             onClick = {
               coroutineScope.launch {
-                val result = controllerValuesViewModel.sendCommands(
+                val result = controllerFeatureValuesViewModel.sendCommands(
                   device = device,
                   controllerFeatureValues = featureValues
                 )
