@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.android)
@@ -11,12 +13,12 @@ plugins {
 
 android {
   namespace = "eu.homeanthill"
-  compileSdk = 35
+  compileSdk = 36
 
   defaultConfig {
     applicationId = "eu.homeanthill"
     minSdk = 33
-    targetSdk = 35
+    targetSdk = 36
     versionCode = 1
     versionName = "1.0"
 
@@ -48,8 +50,10 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-  kotlinOptions {
-    jvmTarget = "11"
+  kotlin {
+    compilerOptions {
+      jvmTarget = JvmTarget.fromTarget("11")
+    }
   }
   buildFeatures {
     buildConfig = true
@@ -71,6 +75,7 @@ dependencies {
   implementation(libs.androidx.ui.graphics)
   implementation(libs.androidx.ui.tooling.preview)
   implementation(libs.androidx.material3)
+  implementation(libs.androidx.material.icons.extended)
   implementation(libs.androidx.navigation.compose)
 
   // coil image library
@@ -92,7 +97,7 @@ dependencies {
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.messaging)
   implementation(libs.firebase.firestore)
-  implementation(libs.firebase.analytics.ktx)
+  implementation(libs.firebase.analytics)
 
   // Accompanist (permission library)
   implementation(libs.accompanist.permissions)
