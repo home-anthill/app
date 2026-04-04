@@ -34,8 +34,9 @@ fun OnlineFeatureValues(
   device: Device?,
   onlineValuesUiState: OnlineFeatureValuesViewModel.OnlineValuesUiState,
   onlineFeatureValuesViewModel: OnlineFeatureValuesViewModel,
+  refreshTrigger: Int = 0,
 ) {
-  LaunchedEffect(Unit) {
+  LaunchedEffect(refreshTrigger) {
     if (device != null) {
       onlineFeatureValuesViewModel.initDeviceValues(device)
     }

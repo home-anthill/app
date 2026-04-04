@@ -1,7 +1,6 @@
 package eu.homeanthill.di
 
 import java.net.CookieManager
-import android.content.Context
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -9,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.JavaNetCookieJar
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.androidx.viewmodel.dsl.viewModel
 import retrofit2.Retrofit
@@ -17,18 +17,21 @@ import retrofit2.converter.gson.GsonConverterFactory
 import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.AppAuthenticator
 import eu.homeanthill.api.AuthInterceptor
+import eu.homeanthill.api.SendRefreshTokenCookieInterceptor
 import eu.homeanthill.api.SendSavedCookiesInterceptor
 import eu.homeanthill.api.requests.DevicesServices
 import eu.homeanthill.api.requests.FCMTokenServices
 import eu.homeanthill.api.requests.HomesServices
 import eu.homeanthill.api.requests.OnlineServices
 import eu.homeanthill.api.requests.ProfileServices
+import eu.homeanthill.api.requests.RefreshTokenServices
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.OnlineRepository
 import eu.homeanthill.repository.ProfileRepository
+import eu.homeanthill.repository.RefreshTokenRepository
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
 import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValuesViewModel
@@ -61,6 +64,7 @@ val viewModelModule = module {
 
 val repositoryModule = module {
   factory { LoginRepository(context = androidContext()) }
+  single { RefreshTokenRepository(refreshTokenService = get(), loginRepository = get()) }
   single { FCMTokenRepository(fcmTokenService = get()) }
   single { ProfileRepository(profileService = get()) }
   single { HomesRepository(homesService = get()) }
@@ -74,65 +78,65 @@ val apiModule = module {
   single { get<Retrofit>().create(HomesServices::class.java) }
   single { get<Retrofit>().create(DevicesServices::class.java) }
   single { get<Retrofit>().create(OnlineServices::class.java) }
+  // RefreshTokenServices uses the dedicated refresh Retrofit instance (no AppAuthenticator)
+  // to avoid infinite recursion when AppAuthenticator calls the refresh endpoint.
+  single { get<Retrofit>(named("refresh")).create(RefreshTokenServices::class.java) }
 }
 
 val retrofitModule = module {
-  fun provideGson(): Gson {
-    return GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).create()
+  single {
+    GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).create()
   }
 
-  fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
-    return HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS)
+  single {
+    HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS)
   }
 
-  fun provideAuthInterceptor(loginRepository: LoginRepository): AuthInterceptor {
-    return AuthInterceptor(loginRepository)
-  }
+  single { AuthInterceptor(loginRepository = get()) }
 
-  fun provideAppAuthenticator(loginRepository: LoginRepository): AppAuthenticator {
-    return AppAuthenticator(loginRepository)
-  }
+  single { AppAuthenticator(loginRepository = get(), refreshTokenRepository = get()) }
 
-  fun provideSendSavedCookiesInterceptor(context: Context): SendSavedCookiesInterceptor {
-    return SendSavedCookiesInterceptor(context)
-  }
+  single { SendSavedCookiesInterceptor(context = androidContext()) }
 
-  fun provideOkHttpClient(
-    loggingInterceptor: HttpLoggingInterceptor,
-    authInterceptor: AuthInterceptor,
-    qppAuthenticator: AppAuthenticator,
-    sendSavedCookiesInterceptor: SendSavedCookiesInterceptor,
-  ): OkHttpClient {
-    return OkHttpClient()
+  single { SendRefreshTokenCookieInterceptor(context = androidContext()) }
+
+  // Main OkHttpClient: full interceptor chain + AppAuthenticator for 401 handling.
+  single {
+    OkHttpClient()
       .newBuilder()
       .cookieJar(JavaNetCookieJar(CookieManager()))
-      .addInterceptor(loggingInterceptor)
-      .addInterceptor(sendSavedCookiesInterceptor)
-      .addInterceptor(authInterceptor)
-      .authenticator(qppAuthenticator)
+      .addInterceptor(get<HttpLoggingInterceptor>())
+      .addInterceptor(get<SendSavedCookiesInterceptor>())
+      .addInterceptor(get<AuthInterceptor>())
+      .authenticator(get<AppAuthenticator>())
       .build()
   }
 
-  fun provideRetrofit(factory: Gson, okHttpClient: OkHttpClient): Retrofit {
-    val retrofitBuilder =
-      Retrofit.Builder().baseUrl(BuildConfig.API_BASE_URL).client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create(factory))
-
-    return retrofitBuilder.build()
+  // Dedicated OkHttpClient for the refresh endpoint: no AppAuthenticator (avoids recursion),
+  // no AuthInterceptor (refresh endpoint does not require a Bearer token).
+  single(named("refresh")) {
+    OkHttpClient()
+      .newBuilder()
+      .addInterceptor(get<HttpLoggingInterceptor>())
+      .addInterceptor(get<SendRefreshTokenCookieInterceptor>())
+      .build()
   }
 
-  single { provideGson() }
-  single { provideHttpLoggingInterceptor() }
+  // Main Retrofit instance used by all standard API services.
   single {
-    provideOkHttpClient(
-      loggingInterceptor = get(),
-      authInterceptor = get(),
-      qppAuthenticator = get(),
-      sendSavedCookiesInterceptor = get(),
-    )
+    Retrofit.Builder()
+      .baseUrl(BuildConfig.API_BASE_URL)
+      .client(get<OkHttpClient>())
+      .addConverterFactory(GsonConverterFactory.create(get<Gson>()))
+      .build()
   }
-  single { provideRetrofit(factory = get(), okHttpClient = get()) }
-  single { provideAuthInterceptor(loginRepository = get()) }
-  single { provideAppAuthenticator(loginRepository = get()) }
-  single { provideSendSavedCookiesInterceptor(context = androidContext()) }
+
+  // Dedicated Retrofit instance for the refresh endpoint.
+  single(named("refresh")) {
+    Retrofit.Builder()
+      .baseUrl(BuildConfig.API_BASE_URL)
+      .client(get<OkHttpClient>(named("refresh")))
+      .addConverterFactory(GsonConverterFactory.create(get<Gson>()))
+      .build()
+  }
 }

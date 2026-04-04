@@ -9,17 +9,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,6 +43,7 @@ import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatur
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValues
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValuesViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeaturesScreen(
   featureValuesUiState: FeaturesViewModel.FeatureValuesUiState,
@@ -53,9 +59,18 @@ fun FeaturesScreen(
   val snackbarHostState = remember { SnackbarHostState() }
   val coroutineScope = rememberCoroutineScope()
 
+  var isRefreshing by remember { mutableStateOf(false) }
+  var refreshTrigger by remember { mutableIntStateOf(0) }
+
   LaunchedEffect(Unit) {
     if (device != null) {
       featureValuesViewModel.initDeviceValues(device)
+    }
+  }
+
+  LaunchedEffect(featureValuesUiState) {
+    if (featureValuesUiState !is FeaturesViewModel.FeatureValuesUiState.Loading) {
+      isRefreshing = false
     }
   }
 
@@ -64,98 +79,115 @@ fun FeaturesScreen(
       SnackbarHost(hostState = snackbarHostState)
     },
     content = { padding ->
-      Column(
+      PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+          if (device != null) {
+            isRefreshing = true
+            refreshTrigger++
+            featureValuesViewModel.initDeviceValues(device)
+          }
+        },
         modifier = Modifier
           .fillMaxSize()
-          .padding(padding)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
+          .padding(padding),
       ) {
-        Text(
-          text = "Device",
-          style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        if (home != null && room != null) {
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+          verticalArrangement = Arrangement.Top,
+          horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
           Text(
-            text = "${home.name} ${home.location} - ${room.name} ${room.floor}",
-            style = MaterialTheme.typography.bodySmall
+            text = "Device",
+            style = MaterialTheme.typography.titleLarge
           )
           Spacer(modifier = Modifier.height(10.dp))
-        }
-        if (device != null) {
-          Text(
-            text = device.mac,
-            style = MaterialTheme.typography.bodyMedium
-          )
-          Text(
-            text = "${device.manufacturer} - ${device.model}",
-            style = MaterialTheme.typography.bodySmall
-          )
-          Spacer(modifier = Modifier.height(10.dp))
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        when (featureValuesUiState) {
-          is FeaturesViewModel.FeatureValuesUiState.Error -> {
+          if (home != null && room != null) {
             Text(
-              text = featureValuesUiState.errorMessage,
-              color = MaterialTheme.colorScheme.error,
+              text = "${home.name} ${home.location} - ${room.name} ${room.floor}",
+              style = MaterialTheme.typography.bodySmall
             )
+            Spacer(modifier = Modifier.height(10.dp))
           }
-
-          is FeaturesViewModel.FeatureValuesUiState.Loading -> {
-            CircularProgressIndicator()
+          if (device != null) {
+            Text(
+              text = device.mac,
+              style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+              text = "${device.manufacturer} - ${device.model}",
+              style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.height(10.dp))
           }
-
-          is FeaturesViewModel.FeatureValuesUiState.Idle -> {
-
-            val hasOnline = device?.features?.find { feature ->
-              feature.type == "sensor" && feature.name == "online"
-            } != null
-            if (featureValuesUiState.deviceValue?.sensorFeatureValues?.isEmpty() == false) {
-              if (hasOnline) {
-                val onlineFeatureValuesViewModel = koinViewModel<OnlineFeatureValuesViewModel>()
-                val onlineValuesUiState by onlineFeatureValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
-                OnlineFeatureValues(
-                  device = device,
-                  onlineValuesUiState = onlineValuesUiState,
-                  onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
-                )
-              }
-
-              val sensorFeatureValuesViewModel = koinViewModel<SensorFeatureValuesViewModel>()
-              SensorFeatureValues(
-                featureValues = featureValuesUiState.deviceValue.sensorFeatureValues,
-                sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
+          Spacer(modifier = Modifier.height(10.dp))
+          when (featureValuesUiState) {
+            is FeaturesViewModel.FeatureValuesUiState.Error -> {
+              Text(
+                text = featureValuesUiState.errorMessage,
+                color = MaterialTheme.colorScheme.error,
               )
             }
 
-            if (featureValuesUiState.deviceValue?.controllerFeatureValues?.isEmpty() == false) {
-              val controllerFeatureValuesViewModel = koinViewModel<ControllerFeatureValuesViewModel>()
-              val getValueUiState by controllerFeatureValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
-              ControllerValuesScreen(
-                device = device,
-                getValueUiState = getValueUiState,
-                controllerFeatureValuesViewModel = controllerFeatureValuesViewModel,
-                onSendResult = { result ->
-                  coroutineScope.launch {
-                    if (result.isError) {
-                      snackbarHostState
-                        .showSnackbar(
-                          message = "Cannot update device state!",
-                          duration = SnackbarDuration.Long
-                        )
-                    } else {
-                      snackbarHostState
-                        .showSnackbar(
-                          message = "Device state update successfully!",
-                          duration = SnackbarDuration.Short
-                        )
+            is FeaturesViewModel.FeatureValuesUiState.Loading -> {
+              if (!isRefreshing) {
+                CircularProgressIndicator()
+              }
+            }
+
+            is FeaturesViewModel.FeatureValuesUiState.Idle -> {
+
+              val hasOnline = device?.features?.find { feature ->
+                feature.type == "sensor" && feature.name == "online"
+              } != null
+              if (featureValuesUiState.deviceValue?.sensorFeatureValues?.isEmpty() == false) {
+                if (hasOnline) {
+                  val onlineFeatureValuesViewModel = koinViewModel<OnlineFeatureValuesViewModel>()
+                  val onlineValuesUiState by onlineFeatureValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
+                  OnlineFeatureValues(
+                    device = device,
+                    onlineValuesUiState = onlineValuesUiState,
+                    onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
+                    refreshTrigger = refreshTrigger,
+                  )
+                }
+
+                val sensorFeatureValuesViewModel = koinViewModel<SensorFeatureValuesViewModel>()
+                SensorFeatureValues(
+                  featureValues = featureValuesUiState.deviceValue.sensorFeatureValues,
+                  sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
+                )
+              }
+
+              if (featureValuesUiState.deviceValue?.controllerFeatureValues?.isEmpty() == false) {
+                val controllerFeatureValuesViewModel = koinViewModel<ControllerFeatureValuesViewModel>()
+                val getValueUiState by controllerFeatureValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
+                ControllerValuesScreen(
+                  device = device,
+                  getValueUiState = getValueUiState,
+                  controllerFeatureValuesViewModel = controllerFeatureValuesViewModel,
+                  refreshTrigger = refreshTrigger,
+                  onSendResult = { result ->
+                    coroutineScope.launch {
+                      if (result.isError) {
+                        snackbarHostState
+                          .showSnackbar(
+                            message = "Cannot update device state!",
+                            duration = SnackbarDuration.Long
+                          )
+                      } else {
+                        snackbarHostState
+                          .showSnackbar(
+                            message = "Device state update successfully!",
+                            duration = SnackbarDuration.Short
+                          )
+                      }
                     }
                   }
-                }
-              )
+                )
+              }
             }
           }
         }

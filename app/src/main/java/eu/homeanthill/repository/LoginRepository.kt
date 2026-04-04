@@ -14,12 +14,30 @@ import eu.homeanthill.jwtKey
 import eu.homeanthill.loginTimestampKey
 import eu.homeanthill.mainKey
 import eu.homeanthill.profileKey
+import eu.homeanthill.refreshTokenKey
 
 class LoginRepository(private val context: Context) {
   fun getJWT(): String? {
     val sharedPreference = context.getSharedPreferences(mainKey, Context.MODE_PRIVATE)
     val jwt: String? = sharedPreference.getString(jwtKey, null)
     return jwt
+  }
+
+  fun setJWT(token: String) {
+    context.getSharedPreferences(mainKey, Context.MODE_PRIVATE).edit {
+      putString(jwtKey, token)
+    }
+  }
+
+  fun getRefreshToken(): String? {
+    return context.getSharedPreferences(mainKey, Context.MODE_PRIVATE)
+      .getString(refreshTokenKey, null)
+  }
+
+  fun setRefreshToken(token: String) {
+    context.getSharedPreferences(mainKey, Context.MODE_PRIVATE).edit {
+      putString(refreshTokenKey, token)
+    }
   }
 
   // setJWT is missing because it's manually set in MainActivity
@@ -62,7 +80,7 @@ class LoginRepository(private val context: Context) {
   private fun logout() {
     context.getSharedPreferences(mainKey, Context.MODE_PRIVATE).edit {
       remove(profileKey).remove(fcmTokenKey).remove(jwtKey).remove(cookieKey)
-        .remove(loginTimestampKey)
+        .remove(loginTimestampKey).remove(refreshTokenKey)
     }
   }
 }

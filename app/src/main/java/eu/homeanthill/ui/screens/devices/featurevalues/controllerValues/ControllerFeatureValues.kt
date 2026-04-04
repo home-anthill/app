@@ -33,12 +33,13 @@ fun ControllerValuesScreen(
   getValueUiState: ControllerFeatureValuesViewModel.ValuesUiState,
   controllerFeatureValuesViewModel: ControllerFeatureValuesViewModel,
   onSendResult: (SendValueResult) -> Unit,
+  refreshTrigger: Int = 0,
 ) {
   val coroutineScope = rememberCoroutineScope()
 
   var featureValues: List<DeviceFeatureValueResponse> by remember { mutableStateOf(listOf()) }
 
-  LaunchedEffect(Unit) {
+  LaunchedEffect(refreshTrigger) {
     if (device != null) {
       featureValues = controllerFeatureValuesViewModel.getValues(device.id)
     }

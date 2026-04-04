@@ -35,12 +35,13 @@ class LoginActivity : ComponentActivity() {
     val data: Uri? = intent.data
     Log.d(TAG, "onNewIntent query = ${data?.query}")
 
-    // these 2 query params must match those on server-side
+    // these query params must match those on server-side
     val jwt = data?.getQueryParameter("token")
     val cookie = data?.getQueryParameter("session_cookie")
+    val refreshToken = data?.getQueryParameter("refresh_token")
 
-    if (jwt == null || cookie == null) {
-      Log.e(TAG, "onNewIntent either jwt or cookie are missing")
+    if (jwt == null || cookie == null || refreshToken == null) {
+      Log.e(TAG, "onNewIntent either jwt, cookie, or refreshToken are missing")
       return
     }
 
@@ -50,6 +51,7 @@ class LoginActivity : ComponentActivity() {
       .edit {
         putString(cookieKey, cookie)
           .putString(jwtKey, jwt)
+          .putString(refreshTokenKey, refreshToken)
           .putLong(loginTimestampKey, unixTime)
       }
 
