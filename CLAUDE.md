@@ -118,6 +118,14 @@ Error handling is minimal — exceptions bubble to the ViewModel where they're c
 - `SendSavedCookiesInterceptor` adds the `mysession` session cookie to every request
 - `SendRefreshTokenCookieInterceptor` adds the `refresh_token` cookie **only** to requests targeting `token/refresh`
 
+#### First-Install Deep-Link Handling
+
+Two edge cases apply only on a fresh install (process has never run before):
+
+1. **`onCreate()` must handle `intent.data`**: With `launchMode="singleTask"`, a returning deep link normally triggers `onNewIntent()`. But if the process was killed while the user was in the browser (Android kills background processes under memory pressure), the OS recreates `LoginActivity` and the callback URL arrives in `onCreate()` via `intent.data`, not `onNewIntent()`. `onCreate()` checks for OAuth parameters in `intent.data` before rendering the login UI.
+
+2. **Duplicate `LoginMobileAppCallback` calls**: On first install the server fires `LoginMobileAppCallback` twice in ~400 ms (Chrome follows the deep-link redirect and the OAuth middleware re-fires). Each invocation carries a different server session. `onNewIntent()` (and the `intent.data` path in `onCreate()`) checks for an existing JWT in SharedPreferences at entry; if one is already stored the second callback is discarded with `finish()` to prevent a valid session from being overwritten.
+
 #### Refresh Token Flow (mobile)
 
 The api-server sets `refresh_token` as an `HttpOnly` cookie in the `/api/app_callback` response, but Android's Intent system (which handles the deep link) does not expose `Set-Cookie` headers to the app. To work around this, the server also includes the raw refresh token value as a `refresh_token` query parameter in the deep link URL. `LoginActivity.onNewIntent` reads this value and stores it in SharedPreferences under `refreshTokenKey`.

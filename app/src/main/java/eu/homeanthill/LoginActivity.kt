@@ -35,6 +35,16 @@ class LoginActivity : ComponentActivity() {
     val data: Uri? = intent.data
     Log.d(TAG, "onNewIntent query = ${data?.query}")
 
+    // Guard against a duplicate OAuth callback from the server (LoginMobileAppCallback can fire
+    // twice in quick succession on first install). If a JWT is already stored the first callback
+    // already succeeded — discard this one so we don't overwrite a valid session with a broken one.
+    val existingJwt = this.getSharedPreferences(mainKey, MODE_PRIVATE).getString(jwtKey, null)
+    if (existingJwt != null) {
+      Log.w(TAG, "onNewIntent - JWT already stored, discarding duplicate OAuth callback")
+      finish()
+      return
+    }
+
     // these query params must match those on server-side
     val jwt = data?.getQueryParameter("token")
     val cookie = data?.getQueryParameter("session_cookie")
@@ -66,14 +76,40 @@ class LoginActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     Log.d(TAG, "secret env - API_BASE_URL = ${BuildConfig.API_BASE_URL}")
 
-    val jwt = this.getSharedPreferences(mainKey, MODE_PRIVATE)
-      .getString(jwtKey, null)
-
-    if (jwt != null) {
+    // If already authenticated, go straight to MainActivity — also protects against a duplicate
+    // OAuth callback arriving via intent.data after the first callback already saved the JWT.
+    val storedJwt = this.getSharedPreferences(mainKey, MODE_PRIVATE).getString(jwtKey, null)
+    if (storedJwt != null) {
       val i = Intent(this@LoginActivity, MainActivity::class.java)
       finish()
       startActivity(i)
+      return
     }
+
+    // Handle OAuth callback delivered via intent.data when the process was killed while
+    // the user was in the browser (process death + singleTask means onNewIntent is never called).
+    val data: Uri? = intent.data
+    if (data != null) {
+      val jwt = data.getQueryParameter("token")
+      val cookie = data.getQueryParameter("session_cookie")
+      val refreshToken = data.getQueryParameter("refresh_token")
+      if (jwt != null && cookie != null && refreshToken != null) {
+        Log.d(TAG, "onCreate - processing OAuth callback from intent.data")
+        val unixTime = System.currentTimeMillis() / 1000L
+        this.getSharedPreferences(mainKey, MODE_PRIVATE)
+          .edit {
+            putString(cookieKey, cookie)
+              .putString(jwtKey, jwt)
+              .putString(refreshTokenKey, refreshToken)
+              .putLong(loginTimestampKey, unixTime)
+          }
+        val i = Intent(this@LoginActivity, MainActivity::class.java)
+        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(i)
+        return
+      }
+    }
+
     enableEdgeToEdge()
     setContent {
       val context = LocalContext.current
