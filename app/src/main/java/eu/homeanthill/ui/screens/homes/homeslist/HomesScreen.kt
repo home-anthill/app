@@ -33,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import eu.homeanthill.R
-import kotlinx.coroutines.launch
 
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.ui.screens.homes.HomesRoute
@@ -55,8 +53,8 @@ data class HomeItemObj(
 
 data class HomeEditObj(
   val id: String = "",
-  var name: String = "",
-  var location: String = "",
+  val name: String = "",
+  val location: String = "",
   val value: Boolean = false
 )
 
@@ -66,7 +64,6 @@ fun HomesListScreen(
   homesViewModel: HomesListViewModel,
   navController: NavController,
 ) {
-  val coroutineScope = rememberCoroutineScope()
   val showNewDialog = remember { mutableStateOf(false) }
   var showEditDialog by remember { mutableStateOf(value = HomeEditObj()) }
   var showDeleteDialog by remember { mutableStateOf(value = HomeItemObj()) }
@@ -80,10 +77,8 @@ fun HomesListScreen(
         showNewDialog.value = false
       },
       onConfirmation = { name, location ->
-        coroutineScope.launch {
-          homesViewModel.createHome(name, location)
-          showNewDialog.value = false
-        }
+        homesViewModel.createHome(name, location)
+        showNewDialog.value = false
       },
     )
   }
@@ -102,11 +97,9 @@ fun HomesListScreen(
           showEditDialog.copy(id = "", name = "", location = "", value = false)
       },
       onConfirmation = { id, name, location ->
-        coroutineScope.launch {
-          homesViewModel.editHome(id, name, location)
-          showEditDialog =
-            showEditDialog.copy(id = "", name = "", location = "", value = false)
-        }
+        homesViewModel.editHome(id, name, location)
+        showEditDialog =
+          showEditDialog.copy(id = "", name = "", location = "", value = false)
       },
     )
   }
@@ -120,10 +113,8 @@ fun HomesListScreen(
         showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
       },
       onConfirmation = {
-        coroutineScope.launch {
-          homesViewModel.deleteHome(showDeleteDialog.id)
-          showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
-        }
+        homesViewModel.deleteHome(showDeleteDialog.id)
+        showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
       }
     )
   }
@@ -255,9 +246,9 @@ fun SimpleCard(
           style = MaterialTheme.typography.titleMedium,
           modifier = Modifier.fillMaxWidth()
         )
-        if (home.rooms !== null) {
+        if (home.rooms != null) {
           Spacer(modifier = Modifier.height(10.dp))
-          home.rooms?.forEach { room ->
+          home.rooms.forEach { room ->
             Text(text = room.name + " - " + room.floor)
           }
         }

@@ -35,6 +35,7 @@ import org.koin.androidx.compose.koinViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+import eu.homeanthill.api.model.Profile
 import eu.homeanthill.ui.theme.AppTheme
 import eu.homeanthill.ui.navigation.AppDrawer
 import eu.homeanthill.ui.navigation.AppNavigationActions
@@ -69,6 +70,12 @@ fun AppNavGraph(
   coroutineScope: CoroutineScope = rememberCoroutineScope(),
   drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
 ) {
+  val mainViewModel = koinViewModel<MainViewModel>()
+  val mainUiState by mainViewModel.mainUiState.collectAsStateWithLifecycle()
+  val drawerProfile: Profile? = when (val s = mainUiState) {
+    is MainViewModel.MainUiState.Idle -> s.profile
+    else -> null
+  }
   val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
   val currentRoute = currentNavBackStackEntry?.destination?.route ?: HOME
   val navigationActions = remember(navController) {
@@ -78,6 +85,7 @@ fun AppNavGraph(
     drawerContent = {
       AppDrawer(
         route = currentRoute,
+        profile = drawerProfile,
         navigateToHome = { navigationActions.navigateToHome() },
         navigateToProfile = { navigationActions.navigateToProfile() },
         navigateToHomes = { navigationActions.navigateToHomes() },
@@ -116,10 +124,8 @@ fun AppNavGraph(
         modifier = modifier.padding(it)
       ) {
         composable(HOME) {
-          val homeViewModel = koinViewModel<MainViewModel>()
-          val homeUiState by homeViewModel.mainUiState.collectAsStateWithLifecycle()
           MainScreen(
-            mainUiState = homeUiState,
+            mainUiState = mainUiState,
             navController = navController,
           )
         }

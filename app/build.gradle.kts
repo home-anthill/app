@@ -2,11 +2,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.ksp)
   alias(libs.plugins.google.services)
-  id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+  alias(libs.plugins.secrets)
   // Enable Kotlin Parcelize plugin
   id("kotlin-parcelize")
 }
@@ -39,6 +38,7 @@ android {
       isDebuggable = true
       versionNameSuffix = "-staging"
       signingConfig = signingConfigs.getByName("debug")
+      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
     getByName("debug") {
       isMinifyEnabled = false
@@ -62,6 +62,9 @@ android {
 }
 
 dependencies {
+  // Security
+  implementation(libs.security.crypto)
+
   // Core
   implementation(libs.androidx.core.ktx)
 

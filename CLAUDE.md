@@ -21,6 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Quick start**: Copy `secrets.defaults.properties` → `secrets.properties` and `google-services.json_template` → `google-services.json`, then `./gradlew assembleDebug`.
 
+**Note**: Gradle requires JVM 17 or later. Ensure `JAVA_HOME` points to a JDK 17+ installation before running any Gradle commands.
+
 ## File Organization
 
 ```
@@ -43,6 +45,8 @@ app/src/main/java/eu/homeanthill/
 │   ├── navigation/         # NavHost, Destinations, Drawer
 │   └── theme/
 ├── di/KoinModules.kt       # All DI module registration
+├── SecurePrefs.kt          # EncryptedSharedPreferences extension (securePrefs())
+├── PreferencesKeys.kt      # SharedPreferences key constants
 ├── MainActivity.kt
 └── LoginActivity.kt
 ```
@@ -101,6 +105,8 @@ LoggingInterceptor → SendRefreshTokenCookieInterceptor
 ```
 Used exclusively by `RefreshTokenServices` / `RefreshTokenRepository`. Has no `AppAuthenticator` (prevents infinite recursion) and no `AuthInterceptor` (refresh endpoint does not require a Bearer token).
 
+`HttpLoggingInterceptor` is set to `Level.HEADERS` in debug/staging builds and `Level.NONE` in release builds to prevent credentials from appearing in Logcat on production devices.
+
 ### Repository Pattern
 
 Repositories wrap Retrofit service calls in `suspend` functions. They:
@@ -108,15 +114,15 @@ Repositories wrap Retrofit service calls in `suspend` functions. They:
 2. Check `isSuccessful` on the `Response<T>`
 3. Return `body()!!` on success or throw `IOException` on failure
 
-Error handling is minimal — exceptions bubble to the ViewModel where they're caught and mapped to `Error(message)` state.
+Exceptions bubble to the ViewModel where they're caught and mapped to `Error(message)` state. All `LoginRepository` instances are registered as Koin `single` (not `factory`).
 
 ### Authentication Flow
 
-- `LoginActivity` handles GitHub OAuth2; stores JWT token and refresh token via SharedPreferences
+- `LoginActivity` handles GitHub OAuth2; stores JWT token and refresh token via `EncryptedSharedPreferences`
 - `AuthInterceptor` attaches JWT as Bearer token on every request
 - `AppAuthenticator` intercepts 401 responses: attempts silent token refresh first; only logs out and redirects to `LoginActivity` if the refresh also fails
 - `SendSavedCookiesInterceptor` adds the `mysession` session cookie to every request
-- `SendRefreshTokenCookieInterceptor` adds the `refresh_token` cookie **only** to requests targeting `token/refresh`
+- `SendRefreshTokenCookieInterceptor` adds the `refresh_token` cookie **only** to requests whose path ends with `/token/refresh` (matched via `endsWith` to prevent accidental token leakage to other endpoints)
 
 #### First-Install Deep-Link Handling
 
@@ -124,11 +130,11 @@ Two edge cases apply only on a fresh install (process has never run before):
 
 1. **`onCreate()` must handle `intent.data`**: With `launchMode="singleTask"`, a returning deep link normally triggers `onNewIntent()`. But if the process was killed while the user was in the browser (Android kills background processes under memory pressure), the OS recreates `LoginActivity` and the callback URL arrives in `onCreate()` via `intent.data`, not `onNewIntent()`. `onCreate()` checks for OAuth parameters in `intent.data` before rendering the login UI.
 
-2. **Duplicate `LoginMobileAppCallback` calls**: On first install the server fires `LoginMobileAppCallback` twice in ~400 ms (Chrome follows the deep-link redirect and the OAuth middleware re-fires). Each invocation carries a different server session. `onNewIntent()` (and the `intent.data` path in `onCreate()`) checks for an existing JWT in SharedPreferences at entry; if one is already stored the second callback is discarded with `finish()` to prevent a valid session from being overwritten.
+2. **Duplicate `LoginMobileAppCallback` calls**: On first install the server fires `LoginMobileAppCallback` twice in quick succession (~400 ms apart, caused by Chrome following the deep-link redirect). Each invocation carries a different server session. `onNewIntent()` (and the `intent.data` path in `onCreate()`) checks for an existing JWT in `EncryptedSharedPreferences` at entry; if one is already stored the second callback is discarded with `finish()` to prevent a valid session from being overwritten.
 
 #### Refresh Token Flow (mobile)
 
-The api-server sets `refresh_token` as an `HttpOnly` cookie in the `/api/app_callback` response, but Android's Intent system (which handles the deep link) does not expose `Set-Cookie` headers to the app. To work around this, the server also includes the raw refresh token value as a `refresh_token` query parameter in the deep link URL. `LoginActivity.onNewIntent` reads this value and stores it in SharedPreferences under `refreshTokenKey`.
+The api-server sets `refresh_token` as an `HttpOnly` cookie in the `/api/app_callback` response, but Android's Intent system (which handles the deep link) does not expose `Set-Cookie` headers to the app. To work around this, the server also includes the raw refresh token value as a `refresh_token` query parameter in the deep link URL. `LoginActivity.onNewIntent` reads this value and stores it in `EncryptedSharedPreferences` under `refreshTokenKey`.
 
 When `AppAuthenticator` receives a 401:
 1. It calls `RefreshTokenRepository.repoRefreshToken()` synchronously (using OkHttp `execute()`)
@@ -138,7 +144,9 @@ When `AppAuthenticator` receives a 401:
 
 The dedicated OkHttp/Retrofit pair is registered in Koin under the `named("refresh")` qualifier to keep it separate from the main client.
 
-#### Credential storage (SharedPreferences keys in `PreferencesKeys.kt`)
+#### Credential storage (`PreferencesKeys.kt` + `SecurePrefs.kt`)
+
+All credentials are stored in `EncryptedSharedPreferences` (AES256-GCM) via the `Context.securePrefs()` extension in `SecurePrefs.kt`. The underlying file is excluded from cloud backup and device-transfer in `backup_rules.xml` / `data_extraction_rules.xml`.
 
 | Key | Value stored |
 |-----|-------------|
@@ -148,6 +156,8 @@ The dedicated OkHttp/Retrofit pair is registered in Koin under the `named("refre
 | `loginTimestampKey` | Unix timestamp of last login |
 | `fcmTokenKey` | Firebase Cloud Messaging token |
 | `profileKey` | Serialised `Profile` JSON |
+
+Never call `Context.getSharedPreferences()` directly — always use `Context.securePrefs()`.
 
 ### Navigation
 
@@ -171,11 +181,40 @@ Each feature value composable:
 - Receives `refreshTrigger: Int` from parent to drive pull-to-refresh
 - Uses its own StateFlow for UI state
 
+`ControllerFeatureValuesViewModel` exposes:
+- `getValueUiState: StateFlow<ValuesUiState>` — load state collected via `LaunchedEffect`
+- `sendValueResult: SharedFlow<SendValueResult>` — one-shot send result collected in a `LaunchedEffect(Unit)` collector; triggers the parent snackbar
+
+### Mutation functions are regular funs, not `suspend`
+
+All ViewModel mutation functions (`createHome`, `deleteHome`, `updateRoom`, etc.) are **regular functions** (not `suspend`) that launch their coroutine internally on `viewModelScope`. Screens call them directly from event handlers — no `rememberCoroutineScope().launch { … }` wrapper is needed or correct. Binding the work to the composable's coroutine scope risks cancellation before the result is emitted if the screen is destroyed mid-operation.
+
+`LoginRepository` holds a single `private val gson = Gson()` instance. Do not call `Gson()` per function — JSON serialisation of `Profile` goes through this cached instance.
+
+`SensorFeatureValuesViewModel` and `OnlineFeatureValuesViewModel` use `private val dtf = DateTimeFormatter.ofPattern(…).withZone(ZoneId.systemDefault())` for date formatting. Do not use `SimpleDateFormat` — it is not thread-safe. `DateTimeFormatter` is immutable and safe for concurrent use from multiple coroutines.
+
+All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and additional named constants where needed, e.g. `FCM_REGISTER_DELAY_MS`, `OFFLINE_THRESHOLD_MS`) in their `companion object`. Do not use inline `delay(500)` or other literal millisecond values.
+
+`OnlineFeatureValuesViewModel` uses `private const val OFFLINE_THRESHOLD_MS = 60 * 1000L` for the device-offline detection threshold. Do not inline `60 * 1000` directly in `isOffline`.
+
+`AppAuthenticator` uses `response.priorResponse?.code == 401` (not `priorResponse != null`) to detect retry loops, so a 401 following an HTTP redirect still attempts a token refresh.
+
+`PostSetFeatureDeviceValue.value` is typed `Double`, consistent with all other value fields in the model layer. Do not use `Number` as a field type in models.
+
+`SendSavedCookiesInterceptor` expresses the 28-day session expiry as `private const val SESSION_EXPIRY_SECONDS = 28 * 24 * 60 * 60`. Do not use the raw magic number inline.
+
+`LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the three OAuth parameters, writes them to `EncryptedSharedPreferences`, and starts `MainActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the extraction logic.
+
 ### Error Handling
 
 - Repositories throw `IOException` on API failure
-- ViewModels catch exceptions in coroutines and emit `Error(message)` state
+- ViewModels catch exceptions in coroutines and emit `Error(message)` state — this applies to both read (`init()`) and mutation functions (`createHome`, `deleteDevice`, etc.)
 - Screens display error messages via Material UI snackbars or error cards
+
+### FCM Token Lifecycle
+
+- On first launch, `MainViewModel.init()` fetches a token from Firebase and registers it with the server via `FCMTokenRepository`
+- When Firebase rotates the token, `FCMService.onNewToken()` persists the new token via `LoginRepository` and immediately re-registers it with the server (only if a JWT is present — i.e. the user is logged in). This is wired via Koin `inject()` inside `FCMService`.
 
 ## Tech Stack
 
@@ -183,6 +222,7 @@ Each feature value composable:
 - **Koin** for DI (`koin-core`, `koin-android`, `koin-androidx-compose`)
 - **Retrofit** + Gson + OkHttp; `API_BASE_URL` injected via `secrets.properties` → `BuildConfig`
 - **Firebase BOM** — FCM (push notifications), Firestore, Analytics
+- **Jetpack Security** (`security-crypto`) — `EncryptedSharedPreferences` for credential storage
 - **Coil** (image loading with OkHttp backend)
 - **Accompanist** (runtime permissions)
 - **Coroutines** (`viewModelScope` for VM scope, `suspend` for async)
@@ -190,13 +230,13 @@ Each feature value composable:
 
 ## Build Variants
 
-| Variant | Debuggable | Minified | Version Suffix |
-|---------|-----------|---------|------|
-| debug   | Yes       | No      | `-debug` |
-| staging | Yes       | No      | `-staging` |
-| release | No        | Yes     | none (TODO: real signing) |
+| Variant | Debuggable | Minified | Version Suffix | Cleartext HTTP | Log level |
+|---------|-----------|---------|------|------|------|
+| debug   | Yes       | No      | `-debug` | Allowed | `HEADERS` |
+| staging | Yes       | No      | `-staging` | Allowed | `HEADERS` |
+| release | No        | Yes     | none (TODO: real signing) | Blocked | `NONE` |
 
-Use `staging` for testing real backend without minification (easier debugging). Release signing is TODO — currently uses debug keystore.
+Cleartext traffic is controlled per build type via `network_security_config.xml` files in `src/main/res/xml/` (release), `src/debug/res/xml/`, and `src/staging/res/xml/`. Use `staging` for testing real backend without minification (easier debugging). Release signing is TODO — currently uses debug keystore.
 
 ## Configuration Files
 

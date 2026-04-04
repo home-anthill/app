@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +37,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.Room
@@ -49,7 +47,6 @@ fun RoomsScreen(
   roomsViewModel: RoomsViewModel,
   navController: NavController,
 ) {
-  val coroutineScope = rememberCoroutineScope()
   val showNewDialog = remember { mutableStateOf(false) }
   val home = navController.previousBackStackEntry?.savedStateHandle?.get<Home>("home")
 
@@ -62,10 +59,7 @@ fun RoomsScreen(
         showNewDialog.value = false
       },
       onConfirmation = { name, floor ->
-        coroutineScope.launch {
-          if (home == null) {
-            return@launch
-          }
+        if (home != null) {
           roomsViewModel.createRoom(home.id, name, floor.toInt())
           showNewDialog.value = false
         }
@@ -98,7 +92,7 @@ fun RoomsScreen(
           is RoomsViewModel.RoomsUiState.Idle -> {
             val currHome = roomsUiState.homes.find { h -> h.id == home?.id }
 
-            if (currHome !== null) {
+            if (currHome != null) {
               Text(
                 text = currHome.name,
                 textAlign = TextAlign.Center,
@@ -112,27 +106,23 @@ fun RoomsScreen(
               Spacer(modifier = Modifier.height(10.dp))
 
               // iterate over rooms
-              if (currHome.rooms !== null) {
-                currHome.rooms?.forEach { r ->
+              if (currHome.rooms != null) {
+                currHome.rooms.forEach { r ->
                   SimpleCard(
                     room = r,
                     onEdit = { name, floor ->
-                      coroutineScope.launch {
-                        roomsViewModel.updateRoom(
-                          id = currHome.id,
-                          rid = r.id,
-                          name,
-                          floor.toInt()
-                        )
-                      }
+                      roomsViewModel.updateRoom(
+                        id = currHome.id,
+                        rid = r.id,
+                        name,
+                        floor.toInt()
+                      )
                     },
                     onDelete = {
-                      coroutineScope.launch {
-                        roomsViewModel.deleteRoom(
-                          id = currHome.id,
-                          rid = r.id
-                        )
-                      }
+                      roomsViewModel.deleteRoom(
+                        id = currHome.id,
+                        rid = r.id
+                      )
                     },
                   )
                 }

@@ -18,7 +18,7 @@ class EditDeviceViewModel(
   private val devicesRepository: DevicesRepository
 ) : ViewModel() {
   companion object {
-    private const val TAG = "EditDeviceViewModel"
+    private const val LOAD_DELAY_MS = 500L
   }
 
   sealed class EditDeviceUiState {
@@ -38,22 +38,34 @@ class EditDeviceViewModel(
     init()
   }
 
-  suspend fun assignDevice(id: String, homeId: String, roomId: String) {
-    devicesRepository.repoAssignDeviceToHomeRoom(
-      id = id,
-      body = PutDevice(homeId = homeId, roomId = roomId)
-    )
-    init()
+  fun assignDevice(id: String, homeId: String, roomId: String) {
+    viewModelScope.launch {
+      try {
+        devicesRepository.repoAssignDeviceToHomeRoom(
+          id = id,
+          body = PutDevice(homeId = homeId, roomId = roomId)
+        )
+        init()
+      } catch (err: IOException) {
+        _editDeviceUiState.emit(EditDeviceUiState.Error(err.message.toString()))
+      }
+    }
   }
 
-  suspend fun deleteDevice(id: String) {
-    devicesRepository.repoDeleteDevice(id = id)
+  fun deleteDevice(id: String) {
+    viewModelScope.launch {
+      try {
+        devicesRepository.repoDeleteDevice(id = id)
+      } catch (err: IOException) {
+        _editDeviceUiState.emit(EditDeviceUiState.Error(err.message.toString()))
+      }
+    }
   }
 
   private fun init() {
     viewModelScope.launch {
       _editDeviceUiState.emit(EditDeviceUiState.Loading)
-      delay(500)
+      delay(LOAD_DELAY_MS)
 
       try {
         val homes: List<Home> = homesRepository.repoGetHomes()

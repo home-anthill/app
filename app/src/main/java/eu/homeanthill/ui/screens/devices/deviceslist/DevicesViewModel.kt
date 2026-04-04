@@ -22,7 +22,7 @@ class DevicesListViewModel(
   private val homesRepository: HomesRepository
 ) : ViewModel() {
   companion object {
-    private const val TAG = "DevicesListViewModel"
+    private const val LOAD_DELAY_MS = 500L
   }
 
   sealed class DevicesUiState {
@@ -43,39 +43,32 @@ class DevicesListViewModel(
       .filter { !it.rooms.isNullOrEmpty() }
       .map { it.rooms!! }
       .flatten()
-    val devicesIds: List<String> = rooms
+    val assignedIds: Set<String> = rooms
       .filter { !it.devices.isNullOrEmpty() }
-      .map { it.devices!! }
-      .flatten();
-    return devices
-      .filter { !devicesIds.contains(it.id) }
+      .flatMap { it.devices!! }
+      .toSet()
+    return devices.filter { it.id !in assignedIds }
   }
 
   private fun getControllers(devices: List<Device>): List<Device> {
     // if a device has a controller feature, it's a controller and it cannot have any sensor feature!
-    return devices.filter { device ->
-      val controller = device.features.find { feature -> feature.type == "controller" }
-      return@filter controller != null
-    }
+    return devices.filter { device -> device.features.any { it.type == "controller" } }
   }
 
   private fun getSensors(devices: List<Device>): List<Device> {
-    // is a device has only sensor feature, it's a sensor
-    return devices.filter { device ->
-      val controller = device.features.find { feature -> feature.type == "controller" }
-      return@filter controller == null
-    }
+    // if a device has only sensor features, it's a sensor
+    return devices.filter { device -> device.features.none { it.type == "controller" } }
   }
 
   private fun getHomeDevices(
     homes: List<Home>,
     devices: List<Device>
-  ): MutableList<HomeWithDevices> {
+  ): List<HomeWithDevices> {
     val homeDevices: MutableList<HomeWithDevices> = mutableListOf()
     homes.forEach { home ->
       val roomsObjs: MutableList<RoomSplitDevices> = mutableListOf()
       if (home.rooms != null) {
-        home.rooms?.forEach { room ->
+        home.rooms.forEach { room ->
           // if this room has devices, otherwise skip it
           if (!room.devices.isNullOrEmpty()) {
             val roomDevices: List<Device> = room.devices
@@ -95,9 +88,7 @@ class DevicesListViewModel(
         }
         // if this home has rooms (added in the loop above), otherwise skip it
         if (roomsObjs.isNotEmpty()) {
-          val homeObj = HomeWithDevices(home = home, rooms = listOf())
-          homeObj.rooms = roomsObjs;
-          homeDevices.add(homeObj);
+          homeDevices.add(HomeWithDevices(home = home, rooms = roomsObjs))
         }
       }
     }
@@ -108,7 +99,7 @@ class DevicesListViewModel(
   private fun init() {
     viewModelScope.launch {
       _deviceUiState.emit(DevicesUiState.Loading)
-      delay(500)
+      delay(LOAD_DELAY_MS)
 
       try {
         val devices: List<Device> = devicesRepository.repoGetDevices()

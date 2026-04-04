@@ -10,7 +10,7 @@ import okhttp3.JavaNetCookieJar
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -63,7 +63,7 @@ val viewModelModule = module {
 }
 
 val repositoryModule = module {
-  factory { LoginRepository(context = androidContext()) }
+  single { LoginRepository(context = androidContext()) }
   single { RefreshTokenRepository(refreshTokenService = get(), loginRepository = get()) }
   single { FCMTokenRepository(fcmTokenService = get()) }
   single { ProfileRepository(profileService = get()) }
@@ -89,7 +89,10 @@ val retrofitModule = module {
   }
 
   single {
-    HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.HEADERS)
+    HttpLoggingInterceptor().setLevel(
+      if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
+      else HttpLoggingInterceptor.Level.NONE
+    )
   }
 
   single { AuthInterceptor(loginRepository = get()) }

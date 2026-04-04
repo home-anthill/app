@@ -1,6 +1,5 @@
 package eu.homeanthill.ui.navigation
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,16 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.google.gson.Gson
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Profile
-import eu.homeanthill.mainKey
-import eu.homeanthill.profileKey
 import eu.homeanthill.ui.components.CircleAsyncImage
 import eu.homeanthill.ui.navigation.Destinations.DEVICES
 import eu.homeanthill.ui.navigation.Destinations.HOME
@@ -38,6 +33,7 @@ import eu.homeanthill.ui.navigation.Destinations.PROFILE
 @Composable
 fun AppDrawer(
   route: String,
+  profile: Profile? = null,
   modifier: Modifier = Modifier,
   navigateToHome: () -> Unit = {},
   navigateToProfile: () -> Unit = {},
@@ -45,11 +41,6 @@ fun AppDrawer(
   navigateToDevices: () -> Unit = {},
   closeDrawer: () -> Unit = {}
 ) {
-  val context = LocalContext.current
-  val sharedPreference = context.getSharedPreferences(mainKey, Context.MODE_PRIVATE)
-  val json: String? = sharedPreference.getString(profileKey, null)
-  val profile: Profile? = if (json != null) Gson().fromJson(json, Profile::class.java) else null
-
   ModalDrawerSheet(modifier = Modifier) {
     DrawerHeader(modifier, profile)
     Spacer(modifier = Modifier.padding(5.dp))

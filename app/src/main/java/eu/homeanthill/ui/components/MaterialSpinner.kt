@@ -2,13 +2,14 @@ package eu.homeanthill.ui.components
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
+import eu.homeanthill.BuildConfig
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -21,8 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 data class SpinnerItemObj(
-  var key: String,
-  var value: String,
+  val key: String,
+  val value: String,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,7 +35,7 @@ fun MaterialSpinner(
   modifier: Modifier = Modifier,
   selectedOption: SpinnerItemObj? = null,
 ) {
-  if (title == "mode") {
+  if (BuildConfig.DEBUG && title == "mode") {
     Log.d("MaterialSpinner", "options = $options")
     Log.d("MaterialSpinner", "selectedOption = $selectedOption")
   }
@@ -46,7 +47,7 @@ fun MaterialSpinner(
     modifier = Modifier.then(modifier)
   ) {
     TextField(
-      modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+      modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
       value = selectedOption?.value ?: SpinnerItemObj("---", "---").value,
       onValueChange = {},
       readOnly = true,

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import eu.homeanthill.BuildConfig
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.NewHome
@@ -19,6 +20,7 @@ class HomesListViewModel(
 ) : ViewModel() {
   companion object {
     private const val TAG = "HomesListViewModel"
+    private const val LOAD_DELAY_MS = 500L
   }
 
   sealed class HomesUiState {
@@ -34,29 +36,47 @@ class HomesListViewModel(
     init()
   }
 
-  suspend fun createHome(name: String, location: String) {
-    homesRepository.repoPostHome(NewHome(name = name, location = location, rooms = listOf()))
-    init()
+  fun createHome(name: String, location: String) {
+    viewModelScope.launch {
+      try {
+        homesRepository.repoPostHome(NewHome(name = name, location = location, rooms = listOf()))
+        init()
+      } catch (err: IOException) {
+        _homesUiState.emit(HomesUiState.Error(err.message.toString()))
+      }
+    }
   }
 
-  suspend fun editHome(id: String, name: String, location: String) {
-    homesRepository.repoPutHome(id, UpdateHome(name = name, location = location))
-    init()
+  fun editHome(id: String, name: String, location: String) {
+    viewModelScope.launch {
+      try {
+        homesRepository.repoPutHome(id, UpdateHome(name = name, location = location))
+        init()
+      } catch (err: IOException) {
+        _homesUiState.emit(HomesUiState.Error(err.message.toString()))
+      }
+    }
   }
 
-  suspend fun deleteHome(id: String) {
-    homesRepository.repoDeleteHome(id)
-    init()
+  fun deleteHome(id: String) {
+    viewModelScope.launch {
+      try {
+        homesRepository.repoDeleteHome(id)
+        init()
+      } catch (err: IOException) {
+        _homesUiState.emit(HomesUiState.Error(err.message.toString()))
+      }
+    }
   }
 
   private fun init() {
     viewModelScope.launch {
       _homesUiState.emit(HomesUiState.Loading)
-      delay(500)
+      delay(LOAD_DELAY_MS)
 
       try {
         val homes: List<Home> = homesRepository.repoGetHomes()
-        Log.d(TAG, "init - homes = $homes")
+        if (BuildConfig.DEBUG) Log.d(TAG, "init - homes = $homes")
         _homesUiState.emit(HomesUiState.Idle(homes))
       } catch (err: IOException) {
         _homesUiState.emit(HomesUiState.Error(err.message.toString()))

@@ -6,6 +6,7 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 
+import eu.homeanthill.BuildConfig
 import eu.homeanthill.di.apiModule
 import eu.homeanthill.di.repositoryModule
 
@@ -17,7 +18,7 @@ class App : Application() {
   override fun onCreate() {
     super.onCreate()
     startKoin {
-      androidLogger(Level.DEBUG)
+      androidLogger(if (BuildConfig.DEBUG) Level.DEBUG else Level.ERROR)
       androidContext(this@App)
       modules(
         listOf(

@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.io.IOException
 
+import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.model.Profile
 import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.LoginRepository
@@ -24,6 +25,8 @@ class MainViewModel(
 ) : ViewModel() {
   companion object {
     private const val TAG = "MainViewModel"
+    private const val LOAD_DELAY_MS = 500L
+    private const val FCM_REGISTER_DELAY_MS = 250L
   }
 
   sealed class MainUiState {
@@ -42,50 +45,40 @@ class MainViewModel(
   private fun init() {
     viewModelScope.launch {
       _mainUiState.emit(MainUiState.Loading)
-      delay(500)
+      delay(LOAD_DELAY_MS)
 
-      var fcmToken: String? = loginRepository.getFCMToken()
-      Log.d(TAG, "init - fcmToken = $fcmToken")
-      if (fcmToken == null) {
-        // register this device
-        val registeredFCMToken: String? = registerDeviceToFirebase()
-        Log.d(TAG, "init - registeredFCMToken = $registeredFCMToken")
-        if (registeredFCMToken == null) {
-          _mainUiState.emit(MainUiState.Error("Cannot generate FCM Token"))
-          return@launch
-        }
-        fcmToken = registeredFCMToken
-      }
       try {
+        var fcmToken: String? = loginRepository.getFCMToken()
+        if (BuildConfig.DEBUG) Log.d(TAG, "init - fcmToken = $fcmToken")
+        if (fcmToken == null) {
+          // register this device — throws IOException on failure
+          fcmToken = registerDeviceToFirebase()
+          if (BuildConfig.DEBUG) Log.d(TAG, "init - registeredFCMToken = $fcmToken")
+        }
         val response = profileRepository.repoGetProfile()
-        response.fcmToken = fcmToken
-        Log.d(TAG, "init - profile response = $response")
+        val profile = response.copy(fcmToken = fcmToken)
+        if (BuildConfig.DEBUG) Log.d(TAG, "init - profile response = $profile")
         // save profile
-        loginRepository.setLoggedProfile(profile = response)
-        _mainUiState.emit(MainUiState.Idle(response))
+        loginRepository.setLoggedProfile(profile = profile)
+        _mainUiState.emit(MainUiState.Idle(profile))
       } catch (err: IOException) {
-        Log.d(TAG, "init - error = $err")
+        if (BuildConfig.DEBUG) Log.d(TAG, "init - error = $err")
         _mainUiState.emit(MainUiState.Error(err.message.toString()))
       }
     }
   }
 
-  private suspend fun registerDeviceToFirebase(): String? {
+  private suspend fun registerDeviceToFirebase(): String {
     // Get new FCM registration token
     val token = Firebase.messaging.getToken().await()
-    Log.d(TAG, "fcm token = $token")
+    if (BuildConfig.DEBUG) Log.d(TAG, "fcm token = $token")
 
     val body = mapOf(
       "fcmToken" to token,
     )
-    try {
-      delay(250)
-      fcmTokenRepository.repoPostFCMToken(body)
-      loginRepository.setFCMToken(token)
-      return token
-    } catch (err: IOException) {
-      _mainUiState.emit(MainUiState.Error(err.message.toString()))
-      return null
-    }
+    delay(FCM_REGISTER_DELAY_MS)
+    fcmTokenRepository.repoPostFCMToken(body)
+    loginRepository.setFCMToken(token)
+    return token
   }
 }

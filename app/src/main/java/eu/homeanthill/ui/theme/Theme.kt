@@ -2,6 +2,7 @@ package eu.homeanthill.ui.theme
 
 import android.os.Build
 import android.util.Log
+import eu.homeanthill.BuildConfig
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -260,7 +261,7 @@ fun AppTheme(
   dynamicColor: Boolean = true,
   content: @Composable() () -> Unit
 ) {
-  Log.d("AppTheme", "isSystemInDarkTheme " + isSystemInDarkTheme())
+  if (BuildConfig.DEBUG) Log.d("AppTheme", "isSystemInDarkTheme " + isSystemInDarkTheme())
   val colorScheme = when {
     dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
       val context = LocalContext.current

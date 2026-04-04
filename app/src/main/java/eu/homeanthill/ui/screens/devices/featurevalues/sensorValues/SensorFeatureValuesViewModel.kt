@@ -1,18 +1,21 @@
 package eu.homeanthill.ui.screens.devices.featurevalues.sensorValues
 
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.lifecycle.ViewModel
 
 import eu.homeanthill.api.model.FeatureValue
 
-class SensorFeatureValuesViewModel() : ViewModel() {
+class SensorFeatureValuesViewModel : ViewModel() {
+  // DateTimeFormatter is immutable and thread-safe; no risk of concurrent access issues.
+  private val dtf = DateTimeFormatter
+    .ofPattern("HH:mm:ss dd/MM/yyyy", Locale.ITALY)
+    .withZone(ZoneId.systemDefault())
 
-  fun getPrettyDateFromUnixEpoch(isoDate: Number): String {
-    val sdf = SimpleDateFormat("HH:mm:ss dd/MM/yyyy", Locale.ITALY)
-    val netDate = Date(isoDate.toLong())
-    return sdf.format(netDate)
+  fun getPrettyDateFromUnixEpoch(isoDate: Long): String {
+    return dtf.format(Instant.ofEpochMilli(isoDate))
   }
 
   private fun getMotionValue(value: Int): String {
@@ -33,8 +36,8 @@ class SensorFeatureValuesViewModel() : ViewModel() {
     }
   }
 
-  private fun toFixed(value: Number, precision: Int): String {
-    return String.format("%.${precision}f", value.toDouble())
+  private fun toFixed(value: Double, precision: Int): String {
+    return String.format("%.${precision}f", value)
   }
 
   fun getValue(featureValue: FeatureValue): String {

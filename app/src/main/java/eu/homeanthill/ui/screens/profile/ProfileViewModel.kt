@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.model.ProfileAPITokenResponse
 import eu.homeanthill.api.model.Profile
 import eu.homeanthill.repository.LoginRepository
@@ -20,6 +21,7 @@ class ProfileViewModel(
 ) : ViewModel() {
   companion object {
     private const val TAG = "ProfileViewModel"
+    private const val LOAD_DELAY_MS = 250L
   }
 
   sealed class ProfileUiState {
@@ -44,17 +46,19 @@ class ProfileViewModel(
     init()
   }
 
-  suspend fun regenApiToken(id: String?) {
+  fun regenApiToken(id: String?) {
     if (id == null) {
       return
     }
-    _apiTokenUiState.emit(ApiTokenUiState.Loading)
-    delay(250)
-    try {
-      val response: ProfileAPITokenResponse = profileRepository.repoPostRegenAPIToken(id)
-      _apiTokenUiState.emit(ApiTokenUiState.Idle(response.apiToken))
-    } catch (err: IOException) {
-      _apiTokenUiState.emit(ApiTokenUiState.Error(err.message.toString()))
+    viewModelScope.launch {
+      _apiTokenUiState.emit(ApiTokenUiState.Loading)
+      delay(LOAD_DELAY_MS)
+      try {
+        val response: ProfileAPITokenResponse = profileRepository.repoPostRegenAPIToken(id)
+        _apiTokenUiState.emit(ApiTokenUiState.Idle(response.apiToken))
+      } catch (err: IOException) {
+        _apiTokenUiState.emit(ApiTokenUiState.Error(err.message.toString()))
+      }
     }
   }
 
@@ -65,15 +69,14 @@ class ProfileViewModel(
   private fun init() {
     viewModelScope.launch {
       _profileUiState.emit(ProfileUiState.Loading)
-      delay(250)
+      delay(LOAD_DELAY_MS)
       try {
         val response = profileRepository.repoGetProfile()
-        Log.d(TAG, "init - profile response = $response")
+        if (BuildConfig.DEBUG) Log.d(TAG, "init - profile response = $response")
         _profileUiState.emit(ProfileUiState.Idle(response))
       } catch (err: IOException) {
         _profileUiState.emit(ProfileUiState.Error(err.message.toString()))
       }
-      return@launch
     }
   }
 }

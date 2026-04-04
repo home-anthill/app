@@ -3,7 +3,7 @@ package eu.homeanthill.api.model
 import com.google.gson.annotations.SerializedName
 
 data class GitHub(
-  @SerializedName("id") val id: Number,
+  @SerializedName("id") val id: Long,
   @SerializedName("login") val login: String,
   @SerializedName("name") val name: String,
   @SerializedName("email") val email: String,
@@ -15,7 +15,7 @@ data class Profile(
   @SerializedName("createdAt") val createdAt: String,
   @SerializedName("modifiedAt") val modifiedAt: String,
   @SerializedName("github") val github: GitHub,
-  @SerializedName("fcmToken") var fcmToken: String?,
+  @SerializedName("fcmToken") val fcmToken: String?,
 )
 
 data class ProfileAPITokenResponse(

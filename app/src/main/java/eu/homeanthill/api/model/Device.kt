@@ -9,13 +9,13 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class MyDevicesList(
   @SerializedName("unassignedDevices") val unassignedDevices: List<Device>,
-  @SerializedName("homeDevices") val homeDevices: MutableList<HomeWithDevices>,
+  @SerializedName("homeDevices") val homeDevices: List<HomeWithDevices>,
 ) : Parcelable
 
 @Parcelize
 data class HomeWithDevices(
   @SerializedName("home") val home: Home,
-  @SerializedName("rooms") var rooms: List<RoomSplitDevices>,
+  @SerializedName("rooms") val rooms: List<RoomSplitDevices>,
 ) : Parcelable
 
 @Parcelize
@@ -46,7 +46,7 @@ data class Feature(
   @SerializedName("type") val type: String,
   @SerializedName("name") val name: String,
   @SerializedName("enable") val enable: Boolean,
-  @SerializedName("order") val order: Number,
+  @SerializedName("order") val order: Int,
   @SerializedName("unit") val unit: String,
 ) : Parcelable
 

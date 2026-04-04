@@ -16,9 +16,9 @@ data class DeviceValue(
 @Parcelize
 data class FeatureValue(
   @SerializedName("feature") val feature: Feature,
-  @SerializedName("value") val value: Number,
-  @SerializedName("createdAt") val createdAt: Number,
-  @SerializedName("modifiedAt") val modifiedAt: Number,
+  @SerializedName("value") val value: Double,
+  @SerializedName("createdAt") val createdAt: Long,
+  @SerializedName("modifiedAt") val modifiedAt: Long,
 ) : Parcelable
 
 
@@ -37,9 +37,9 @@ data class DeviceFeatureValueResponse(
   @SerializedName("featureUuid") val featureUuid: String,
   @SerializedName("type") val type: String,
   @SerializedName("name") val name: String,
-  @SerializedName("value") var value: Number,
-  @SerializedName("createdAt") val createdAt: Number,
-  @SerializedName("modifiedAt") val modifiedAt: Number,
+  @SerializedName("value") val value: Double,
+  @SerializedName("createdAt") val createdAt: Long,
+  @SerializedName("modifiedAt") val modifiedAt: Long,
 ) : Parcelable
 
 @Parcelize
@@ -47,5 +47,5 @@ data class PostSetFeatureDeviceValue(
   @SerializedName("featureUuid") val featureUuid: String,
   @SerializedName("type") val type: String,
   @SerializedName("name") val name: String,
-  @SerializedName("value") val value: Number,
+  @SerializedName("value") val value: Double,
 ) : Parcelable

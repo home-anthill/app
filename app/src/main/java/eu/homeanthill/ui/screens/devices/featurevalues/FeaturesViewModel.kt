@@ -13,7 +13,6 @@ import eu.homeanthill.api.model.DeviceFeatureValueResponse
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.DeviceValue
-import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.FeatureValue
 
 class FeaturesViewModel(
@@ -21,17 +20,13 @@ class FeaturesViewModel(
 ) : ViewModel() {
   companion object {
     private const val TAG = "FeaturesViewModel"
+    private const val LOAD_DELAY_MS = 500L
   }
 
   sealed class FeatureValuesUiState {
     data class Idle(val deviceValue: DeviceValue?) : FeatureValuesUiState()
     data object Loading : FeatureValuesUiState()
     data class Error(val errorMessage: String) : FeatureValuesUiState()
-  }
-
-  sealed class SendUiState {
-    data class Idle(val result: String?) : SendUiState()
-    data class Error(val errorMessage: String) : SendUiState()
   }
 
   private val _featureValuesUiState =
@@ -41,7 +36,7 @@ class FeaturesViewModel(
   fun initDeviceValues(device: Device) {
     viewModelScope.launch {
       _featureValuesUiState.emit(FeatureValuesUiState.Loading)
-      delay(500)
+      delay(LOAD_DELAY_MS)
       try {
         val values: List<DeviceFeatureValueResponse> =
           devicesRepository.repoGetDeviceValues(device.id)
@@ -64,7 +59,7 @@ class FeaturesViewModel(
     type: String,
   ): List<FeatureValue> {
     // order by 'order'
-    val sortedFeatures = device.features.sortedBy { it: Feature -> it.order.toString() }
+    val sortedFeatures = device.features.sortedBy { it.order }
     val featureValues = sortedFeatures
       .filter { feature -> feature.type == type }
       .map { feature ->
@@ -72,9 +67,9 @@ class FeaturesViewModel(
           values.find { value -> value.featureUuid == feature.uuid }
         val featureValue = FeatureValue(
           feature = feature,
-          value = sensorValue?.value ?: -999,
-          createdAt = sensorValue?.createdAt ?: 0,
-          modifiedAt = sensorValue?.modifiedAt ?: 0,
+          value = sensorValue?.value ?: -999.0,
+          createdAt = sensorValue?.createdAt ?: 0L,
+          modifiedAt = sensorValue?.modifiedAt ?: 0L,
         )
         return@map featureValue
       }

@@ -17,14 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Home
@@ -40,7 +38,6 @@ fun EditDeviceScreen(
   devicesViewModel: EditDeviceViewModel,
   navController: NavController,
 ) {
-  val coroutineScope = rememberCoroutineScope()
   // inputs
   val device: Device? =
     navController.previousBackStackEntry?.savedStateHandle?.get<Device>("device")
@@ -64,12 +61,10 @@ fun EditDeviceScreen(
         showDeleteDialog = false
       },
       onConfirmation = {
-        coroutineScope.launch {
-          if (device !== null) {
-            devicesViewModel.deleteDevice(id = device.id)
-            navController.navigate(route = DevicesRoute.Devices.name)
-            showDeleteDialog = false
-          }
+        if (device != null) {
+          devicesViewModel.deleteDevice(id = device.id)
+          navController.navigate(route = DevicesRoute.Devices.name)
+          showDeleteDialog = false
         }
       }
     )
@@ -84,7 +79,7 @@ fun EditDeviceScreen(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
       ) {
-        if (device !== null) {
+        if (device != null) {
           Text(
             text = device.mac,
             textAlign = TextAlign.Center,
@@ -127,7 +122,7 @@ fun EditDeviceScreen(
                 SpinnerItemObj(selectedHome!!.id, selectedHome!!.name)
               },
             )
-            if (selectedHome !== null && selectedHome!!.rooms !== null && selectedHome!!.rooms!!.isNotEmpty()) {
+            if (selectedHome != null && selectedHome!!.rooms != null && selectedHome!!.rooms!!.isNotEmpty()) {
               roomsOption = selectedHome!!.rooms!!.map { room ->
                 SpinnerItemObj(room.id, room.name)
               }
@@ -152,15 +147,13 @@ fun EditDeviceScreen(
             if (selectedHome != null && selectedRoom != null) {
               TextButton(
                 onClick = {
-                  if (device !== null && selectedHome !== null && selectedRoom !== null) {
-                    coroutineScope.launch {
-                      devicesViewModel.assignDevice(
-                        id = device.id,
-                        homeId = selectedHome!!.id,
-                        roomId = selectedRoom!!.id
-                      )
-                      navController.navigate(route = DevicesRoute.Devices.name)
-                    }
+                  if (device != null && selectedHome != null && selectedRoom != null) {
+                    devicesViewModel.assignDevice(
+                      id = device.id,
+                      homeId = selectedHome!!.id,
+                      roomId = selectedRoom!!.id
+                    )
+                    navController.navigate(route = DevicesRoute.Devices.name)
                   }
                 },
                 modifier = Modifier.padding(8.dp),
