@@ -12,9 +12,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew assembleDebug                          # Build debug APK
 ./gradlew assembleStaging                        # Build staging APK (debuggable, -staging suffix)
 ./gradlew assembleRelease                        # Build release APK (minified, shrunk)
-./gradlew test                                   # Run all unit tests
-./gradlew testDebugUnitTest --tests "eu.homeanthill.ExampleUnitTest"  # Run single unit test class
-./gradlew testDebugUnitTest -q --tests "ExampleUnitTest"             # Single test, quiet output
+./gradlew testDebugUnitTest                      # Run all unit tests
+./gradlew testDebugUnitTest --tests "eu.homeanthill.repository.HomesRepositoryTest"  # Run single test class
+./gradlew testDebugUnitTest -q --tests "HomesRepositoryTest"                         # Single test, quiet output
 ./gradlew connectedAndroidTest                   # Run instrumented tests on device/emulator
 ./gradlew lintDebug                              # Run Android Lint analysis
 ```
@@ -216,6 +216,51 @@ All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and
 - On first launch, `MainViewModel.init()` fetches a token from Firebase and registers it with the server via `FCMTokenRepository`
 - When Firebase rotates the token, `FCMService.onNewToken()` persists the new token via `LoginRepository` and immediately re-registers it with the server (only if a JWT is present — i.e. the user is logged in). This is wired via Koin `inject()` inside `FCMService`.
 
+## Testing
+
+Unit tests use **MockK** (not Mockito) and JUnit 4. No external infrastructure is required — all dependencies are mocked.
+
+**Repository tests** (`app/src/test/…/repository/`): mock the Retrofit service interface directly, run with `runBlocking`, assert `IOException` on non-`isSuccessful` responses.
+
+```kotlin
+class HomesRepositoryTest {
+    private val mockHomesService = mockk<HomesServices>()
+    private lateinit var homesRepository: HomesRepository
+
+    @Before fun setUp() { homesRepository = HomesRepository(mockHomesService) }
+    @After fun tearDown() { clearAllMocks() }
+
+    @Test
+    fun `repoGetHomes returns list on success`() = runBlocking {
+        coEvery { mockHomesService.getHomes() } returns Response.success(listOf(testHome))
+        val result = homesRepository.repoGetHomes()
+        assertEquals(1, result.size)
+    }
+}
+```
+
+**ViewModel tests** (`app/src/test/…/ui/screens/`): use `TestCoroutineScheduler` + `StandardTestDispatcher` + `Dispatchers.setMain`; run with `runTest(testScheduler)`; call `advanceUntilIdle()` after triggering async work. Annotate with `@OptIn(ExperimentalCoroutinesApi::class)`.
+
+```kotlin
+@OptIn(ExperimentalCoroutinesApi::class)
+class HomesListViewModelTest {
+    private val testScheduler = TestCoroutineScheduler()
+    private val mainDispatcher = StandardTestDispatcher(testScheduler)
+    private val mockHomesRepo = mockk<HomesRepository>()
+
+    @Before fun setUp() { Dispatchers.setMain(mainDispatcher) }
+    @After fun tearDown() { Dispatchers.resetMain(); clearAllMocks() }
+
+    @Test
+    fun `init emits Idle with homes list on success`() = runTest(testScheduler) {
+        coEvery { mockHomesRepo.repoGetHomes() } returns listOf(testHome)
+        val vm = HomesListViewModel(mockHomesRepo)
+        advanceUntilIdle()
+        assertTrue(vm.homesUiState.value is HomesListViewModel.HomesUiState.Idle)
+    }
+}
+```
+
 ## Tech Stack
 
 - **Kotlin** (Android), Jetpack Compose, Material3
@@ -226,6 +271,7 @@ All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and
 - **Coil** (image loading with OkHttp backend)
 - **Accompanist** (runtime permissions)
 - **Coroutines** (`viewModelScope` for VM scope, `suspend` for async)
+- **MockK** + JUnit 4 + `kotlinx.coroutines.test` for unit tests
 - Min SDK: 33 (Android 13), Target/Compile SDK: 36, JVM target: 11
 
 ## Build Variants
@@ -244,3 +290,7 @@ Cleartext traffic is controlled per build type via `network_security_config.xml`
 - `google-services.json` (gitignored) — Firebase config. Copy from `_template`
 - `staging.properties` / `release.properties` — environment-specific overrides (injected via build variants)
 - `local.properties` — SDK path (auto-generated)
+
+## AI Changelog
+
+Append significant changes (new features, bug fixes, refactors) to `CHANGELOG_CLAUDE.md` in the repo root.
