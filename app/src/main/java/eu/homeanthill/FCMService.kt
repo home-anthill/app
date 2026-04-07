@@ -35,6 +35,9 @@ class FCMService : FirebaseMessagingService() {
     remoteMessage.notification?.let {
       if (BuildConfig.DEBUG) Log.d(TAG, "Message Notification Body: ${it.body}")
     }
+
+    // Forward to the foreground bus so the UI can show an in-app snackbar.
+    FCMNotificationBus.emit(remoteMessage)
   }
 
   /**

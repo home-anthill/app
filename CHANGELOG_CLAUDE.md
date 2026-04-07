@@ -120,6 +120,8 @@ This file tracks significant changes made with AI assistance, organized by type.
 
 ## Added
 
+- **In-app FCM notifications via snackbar** — Added `FCMNotificationBus` singleton (`SharedFlow<RemoteMessage>`). `FCMService.onMessageReceived` emits every foreground message to the bus. `AppNavGraph` in `MainActivity` collects it in a `LaunchedEffect` and shows a `SnackbarDuration.Long` snackbar with the notification title/body, visible on whichever screen the user is on.
+
 - **`SecurePrefs.kt`** — New `Context.securePrefs()` extension for AES256-GCM encrypted preferences.
 
 - **Refresh token support** — `PreferencesKeys.kt` (two new constants), `LoginActivity.onNewIntent` (reads `refresh_token` from deep link), `LoginRepository` (new methods: `setJWT()`, `getRefreshToken()`, `setRefreshToken()`), `RefreshTokenServices`, `TokenResponse`, `SendRefreshTokenCookieInterceptor`, `RefreshTokenRepository`.

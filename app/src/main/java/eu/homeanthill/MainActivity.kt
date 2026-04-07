@@ -16,10 +16,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,6 +74,23 @@ fun AppNavGraph(
   coroutineScope: CoroutineScope = rememberCoroutineScope(),
   drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
 ) {
+  val snackbarHostState = remember { SnackbarHostState() }
+
+  LaunchedEffect(Unit) {
+    FCMNotificationBus.messages.collect { message ->
+      val title = message.notification?.title
+      val body = message.notification?.body
+      val text = when {
+        title != null && body != null -> "$title: $body"
+        title != null -> title
+        body != null -> body
+        message.data.isNotEmpty() -> message.data.values.first()
+        else -> return@collect
+      }
+      snackbarHostState.showSnackbar(message = text, duration = SnackbarDuration.Long)
+    }
+  }
+
   val mainViewModel = koinViewModel<MainViewModel>()
   val mainUiState by mainViewModel.mainUiState.collectAsStateWithLifecycle()
   val drawerProfile: Profile? = when (val s = mainUiState) {
@@ -97,6 +118,7 @@ fun AppNavGraph(
     drawerState = drawerState
   ) {
     Scaffold(
+      snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
       topBar = {
         TopAppBar(
           title = { Text(text = currentRoute) },
