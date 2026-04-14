@@ -35,7 +35,7 @@ class App : Application(), Configuration.Provider {
     }
 
     // Start scheduling
-    FcmScheduler.scheduleMonthlyRefresh(this)
+    FcmScheduler.schedulePeriodically(this)
   }
 
   // Custom config for WorkManager for Koin

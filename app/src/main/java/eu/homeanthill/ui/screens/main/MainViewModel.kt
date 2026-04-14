@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.io.IOException
-
 import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.model.Profile
 import eu.homeanthill.repository.FCMTokenRepository
@@ -61,7 +59,7 @@ class MainViewModel(
         // save profile
         loginRepository.setLoggedProfile(profile = profile)
         _mainUiState.emit(MainUiState.Idle(profile))
-      } catch (err: IOException) {
+      } catch (err: Exception) {
         if (BuildConfig.DEBUG) Log.d(TAG, "init - error = $err")
         _mainUiState.emit(MainUiState.Error(err.message.toString()))
       }

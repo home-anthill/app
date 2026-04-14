@@ -16,7 +16,7 @@ object FcmScheduler {
   private const val WORK_NAME_ONE_TIME = "fcm_token_immediate_sync"
 
   // periodic refresh function
-  fun scheduleMonthlyRefresh(context: Context) {
+  fun schedulePeriodically(context: Context) {
     val constraints = Constraints.Builder()
       .setRequiredNetworkType(NetworkType.CONNECTED)
       .build()
