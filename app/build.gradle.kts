@@ -85,6 +85,11 @@ dependencies {
   implementation(libs.androidx.material.icons.extended)
   implementation(libs.androidx.navigation.compose)
 
+  // Android work runtime
+  implementation(libs.androidx.work.runtime)
+  implementation(libs.kotlinx.coroutines.playservices)
+  implementation(libs.insert.koin.workmanager)
+
   // coil image library
   implementation(libs.coil.compose)
   implementation(libs.coil.network.okhttp)

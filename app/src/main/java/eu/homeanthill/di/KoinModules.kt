@@ -11,10 +11,12 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.core.module.dsl.viewModel
+import org.koin.androidx.workmanager.dsl.worker
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 import eu.homeanthill.BuildConfig
+import eu.homeanthill.FcmTokenWorker
 import eu.homeanthill.api.AppAuthenticator
 import eu.homeanthill.api.AuthInterceptor
 import eu.homeanthill.api.SendRefreshTokenCookieInterceptor
@@ -70,6 +72,18 @@ val repositoryModule = module {
   single { HomesRepository(homesService = get()) }
   single { DevicesRepository(devicesService = get()) }
   single { OnlineRepository(onlineService = get()) }
+}
+
+val fcmModule = module {
+  // Declare worker. Koin will inject Context, WorkerParameters and repositories
+  worker {
+    FcmTokenWorker(
+      appContext = get(),
+      workerParams = get(),
+      loginRepository = get(),
+      fcmTokenRepository = get()
+    )
+  }
 }
 
 val apiModule = module {
