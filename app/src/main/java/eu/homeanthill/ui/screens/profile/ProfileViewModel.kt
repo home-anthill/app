@@ -12,11 +12,11 @@ import kotlinx.coroutines.launch
 import eu.homeanthill.BuildConfig
 import eu.homeanthill.api.model.ProfileAPITokenResponse
 import eu.homeanthill.api.model.Profile
-import eu.homeanthill.repository.LoginRepository
+import eu.homeanthill.repository.LogoutRepository
 import eu.homeanthill.repository.ProfileRepository
 
 class ProfileViewModel(
-  private val loginRepository: LoginRepository,
+  private val logoutRepository: LogoutRepository,
   private val profileRepository: ProfileRepository,
 ) : ViewModel() {
   companion object {
@@ -62,8 +62,14 @@ class ProfileViewModel(
     }
   }
 
+  fun resetApiToken() {
+    _apiTokenUiState.value = ApiTokenUiState.Idle("********-****-****-****-************")
+  }
+
   fun logout() {
-    loginRepository.logoutAndRedirect()
+    viewModelScope.launch {
+      logoutRepository.logoutWithServerAndRedirect()
+    }
   }
 
   private fun init() {

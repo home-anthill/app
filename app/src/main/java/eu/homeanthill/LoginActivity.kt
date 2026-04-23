@@ -7,48 +7,55 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
-
+import androidx.lifecycle.lifecycleScope
+import eu.homeanthill.ui.screens.login.LoginScreen
 import eu.homeanthill.ui.theme.AppTheme
+import eu.homeanthill.repository.AppLoginExchangeRepository
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 class LoginActivity : ComponentActivity() {
+  private val appLoginExchangeRepository: AppLoginExchangeRepository by inject()
+
   companion object {
     private const val TAG = "LoginActivity"
   }
 
   /**
    * Extracts OAuth2 callback params from [data], persists credentials, and launches
-   * [MainActivity]. Returns true if all required parameters were present and handled.
+   * [PermissionActivity]. Returns true if all required parameters were present and handled.
    */
   private fun handleOAuthCallback(data: Uri): Boolean {
-    val jwt = data.getQueryParameter("token")
-    val cookie = data.getQueryParameter("session_cookie")
-    val refreshToken = data.getQueryParameter("refresh_token")
-    if (jwt == null || cookie == null || refreshToken == null) return false
-
-    val unixTime = System.currentTimeMillis() / 1000L
-    this.securePrefs().edit {
-      putString(cookieKey, cookie)
-        .putString(jwtKey, jwt)
-        .putString(refreshTokenKey, refreshToken)
-        .putLong(loginTimestampKey, unixTime)
+    val code = data.getQueryParameter("code") ?: return false
+    val codeVerifier = this.securePrefs().getString(pkceCodeVerifierKey, null) ?: run {
+      Log.e(TAG, "handleOAuthCallback - PKCE code verifier is missing")
+      return false
     }
-    val i = Intent(this@LoginActivity, MainActivity::class.java)
-    i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-    startActivity(i)
+    lifecycleScope.launch {
+      val result = appLoginExchangeRepository.exchangeCode(code, codeVerifier)
+      if (result == null) {
+        Log.e(TAG, "handleOAuthCallback - code exchange failed")
+        return@launch
+      }
+
+      val unixTime = System.currentTimeMillis() / 1000L
+      this@LoginActivity.securePrefs().edit {
+        putString(jwtKey, result.tokenResponse.token)
+          .putString(refreshTokenKey, result.tokenResponse.refreshToken)
+          .putLong(loginTimestampKey, unixTime)
+          .remove(pkceCodeVerifierKey)
+        if (!result.sessionCookie.isNullOrEmpty()) {
+          putString(cookieKey, result.sessionCookie)
+        }
+      }
+      val i = Intent(this@LoginActivity, PermissionActivity::class.java)
+      i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+      startActivity(i)
+      finish()
+    }
     return true
   }
 
@@ -67,18 +74,19 @@ class LoginActivity : ComponentActivity() {
     }
 
     if (data == null || !handleOAuthCallback(data)) {
-      Log.e(TAG, "onNewIntent - jwt, cookie, or refreshToken are missing")
+      Log.e(TAG, "onNewIntent - login code is missing")
     }
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    // If already authenticated, go straight to MainActivity — also protects against a duplicate
+    // If already authenticated, go straight to _root_ide_package_.eu.homeanthill.PermissionActivity — also protects against a duplicate
     // OAuth callback arriving via intent.data after the first callback already saved the JWT.
     val storedJwt = this.securePrefs().getString(jwtKey, null)
     if (storedJwt != null) {
-      val i = Intent(this@LoginActivity, MainActivity::class.java)
+      this.securePrefs().edit { remove(pkceCodeVerifierKey) }
+      val i = Intent(this@LoginActivity, PermissionActivity::class.java)
       finish()
       startActivity(i)
       return
@@ -93,30 +101,24 @@ class LoginActivity : ComponentActivity() {
     setContent {
       val context = LocalContext.current
       AppTheme(dynamicColor = false) {
-        Scaffold(
-          topBar = {},
-          content = { padding ->
-            Column(
-              modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 8.dp),
-              verticalArrangement = Arrangement.Center,
-              horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-              Button(
-                onClick = {
-                  val intent = Intent(
-                    Intent.ACTION_VIEW,
-                    (BuildConfig.API_BASE_URL + "login_app").toUri()
-                  )
-                  context.startActivity(intent)
-                },
-                enabled = true,
-              ) {
-                Text(text = stringResource(R.string.login_button))
-              }
+        LoginScreen(
+          onLoginClick = {
+            val codeVerifier = PKCE.generateCodeVerifier()
+            val codeChallenge = PKCE.buildCodeChallenge(codeVerifier)
+            context.securePrefs().edit {
+              putString(pkceCodeVerifierKey, codeVerifier)
             }
+            val loginUri = (BuildConfig.API_BASE_URL + "oauth/app/login")
+              .toUri()
+              .buildUpon()
+              .appendQueryParameter("code_challenge", codeChallenge)
+              .appendQueryParameter("code_challenge_method", "S256")
+              .build()
+            val intent = Intent(
+              Intent.ACTION_VIEW,
+              loginUri
+            )
+            context.startActivity(intent)
           }
         )
       }

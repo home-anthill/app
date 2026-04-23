@@ -21,7 +21,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Quick start**: Copy `secrets.defaults.properties` → `secrets.properties` and `google-services.json_template` → `google-services.json`, then `./gradlew assembleDebug`.
 
-**Note**: Gradle requires JVM 17 or later. Ensure `JAVA_HOME` points to a JDK 17+ installation before running any Gradle commands.
+**Agent test requirement**: Before running any Gradle build/test/lint command, set `JAVA_HOME` to Android Studio's bundled JBR:
+
+```bash
+JAVA_HOME="/Users/ks89/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew testDebugUnitTest
+```
+
+The shell default Java is Corretto 11, which is too old for the Gradle wrapper. The JetBrains Toolbox runtime under `/Applications/JetBrains Toolbox.app/Contents/jre/Contents/Home` is also unsuitable because it is missing `java.instrument`; use the Android Studio JBR path above.
 
 ## File Organization
 
@@ -32,8 +38,7 @@ app/src/main/java/eu/homeanthill/
 │   ├── model/              # Data classes (@Parcelize for navigation)
 │   ├── AuthInterceptor.kt
 │   ├── AppAuthenticator.kt
-│   ├── SendSavedCookieInterceptor.kt
-│   └── SendRefreshTokenCookieInterceptor.kt
+│   └── SendSavedCookieInterceptor.kt
 ├── repository/             # Data repositories (single source of truth)
 ├── ui/
 │   ├── screens/
@@ -66,7 +71,7 @@ XRepository calls Retrofit XServices interface
     ↓
 Main OkHttpClient chain: LoggingInterceptor → SendSavedCookiesInterceptor → AuthInterceptor → AppAuthenticator
     ↓ (on 401: AppAuthenticator calls RefreshTokenRepository using the refresh OkHttpClient)
-Refresh OkHttpClient chain: LoggingInterceptor → SendRefreshTokenCookieInterceptor → POST /api/token/refresh
+Refresh OkHttpClient chain: LoggingInterceptor → POST /api/oauth/app/refresh with JSON refreshToken
     ↓
 api-server REST endpoints
 ```
@@ -101,9 +106,15 @@ Used by all standard API services (homes, devices, profile, etc.).
 
 **Refresh client** (`named("refresh")`):
 ```
-LoggingInterceptor → SendRefreshTokenCookieInterceptor
+LoggingInterceptor
 ```
-Used exclusively by `RefreshTokenServices` / `RefreshTokenRepository`. Has no `AppAuthenticator` (prevents infinite recursion) and no `AuthInterceptor` (refresh endpoint does not require a Bearer token).
+Used exclusively by `RefreshTokenServices` / `RefreshTokenRepository`. Has no `AppAuthenticator` (prevents infinite recursion), no `AuthInterceptor` (refresh endpoint does not require a Bearer token), and no refresh-token cookie interceptor because mobile refresh tokens are sent in the JSON request body.
+
+**Public client** (`named("public")`):
+```
+LoggingInterceptor
+```
+Used by unauthenticated pre-login flows such as `/api/oauth/app/exchange-code`.
 
 `HttpLoggingInterceptor` is set to `Level.HEADERS` in debug/staging builds and `Level.NONE` in release builds to prevent credentials from appearing in Logcat on production devices.
 
@@ -121,8 +132,8 @@ Exceptions bubble to the ViewModel where they're caught and mapped to `Error(mes
 - `LoginActivity` handles GitHub OAuth2; stores JWT token and refresh token via `EncryptedSharedPreferences`
 - `AuthInterceptor` attaches JWT as Bearer token on every request
 - `AppAuthenticator` intercepts 401 responses: attempts silent token refresh first; only logs out and redirects to `LoginActivity` if the refresh also fails
-- `SendSavedCookiesInterceptor` adds the `mysession` session cookie to every request
-- `SendRefreshTokenCookieInterceptor` adds the `refresh_token` cookie **only** to requests whose path ends with `/token/refresh` (matched via `endsWith` to prevent accidental token leakage to other endpoints)
+- `SendSavedCookiesInterceptor` adds the `oauth_session` session cookie to every request
+- Mobile refresh and logout send the stored refresh token as JSON to `/api/oauth/app/refresh` and `/api/oauth/app/logout`; they do not use the web refresh-token cookie endpoint.
 
 #### First-Install Deep-Link Handling
 
@@ -134,15 +145,19 @@ Two edge cases apply only on a fresh install (process has never run before):
 
 #### Refresh Token Flow (mobile)
 
-The api-server sets `refresh_token` as an `HttpOnly` cookie in the `/api/app_callback` response, but Android's Intent system (which handles the deep link) does not expose `Set-Cookie` headers to the app. To work around this, the server also includes the raw refresh token value as a `refresh_token` query parameter in the deep link URL. `LoginActivity.onNewIntent` reads this value and stores it in `EncryptedSharedPreferences` under `refreshTokenKey`.
+The api-server returns an app code to the deep link from `/api/oauth/app/callback`. Android then exchanges that code through `/api/oauth/app/exchange-code` and stores the returned access token and refresh token in `EncryptedSharedPreferences`.
 
 When `AppAuthenticator` receives a 401:
 1. It calls `RefreshTokenRepository.repoRefreshToken()` synchronously (using OkHttp `execute()`)
-2. `RefreshTokenRepository` uses a **dedicated OkHttp client** (no `AppAuthenticator`, no `AuthInterceptor`) with `SendRefreshTokenCookieInterceptor` to `POST /api/token/refresh`
-3. On success: stores the new JWT via `LoginRepository.setJWT()`, reads the rotated `refresh_token` from the `Set-Cookie` response header and stores it via `LoginRepository.setRefreshToken()`, then retries the original request
+2. `RefreshTokenRepository` reads `refreshTokenKey` from secure prefs and uses a **dedicated OkHttp client** (no `AppAuthenticator`, no `AuthInterceptor`) to `POST /api/oauth/app/refresh` with body `{ "refreshToken": "..." }`
+3. On success: stores the new JWT via `LoginRepository.setJWT()`, stores the rotated `refreshToken` from the JSON response via `LoginRepository.setRefreshToken()`, then retries the original request
 4. On failure (refresh 401 or network error): calls `LoginRepository.logoutAndRedirect()`
 
 The dedicated OkHttp/Retrofit pair is registered in Koin under the `named("refresh")` qualifier to keep it separate from the main client.
+
+#### Logout Flow (mobile)
+
+`ProfileViewModel.logout()` calls `LogoutRepository.logoutWithServerAndRedirect()`. The repository reads `refreshTokenKey` and posts `{ "refreshToken": "..." }` to `/api/oauth/app/logout` so the api-server can revoke the mobile refresh-token family. Local logout and redirect still happen if the token is missing or the server call fails.
 
 #### Credential storage (`PreferencesKeys.kt` + `SecurePrefs.kt`)
 
@@ -152,7 +167,7 @@ All credentials are stored in `EncryptedSharedPreferences` (AES256-GCM) via the 
 |-----|-------------|
 | `jwtKey` | Access JWT |
 | `refreshTokenKey` | Refresh token value |
-| `cookieKey` | `mysession` cookie value |
+| `cookieKey` | `oauth_session` cookie value |
 | `loginTimestampKey` | Unix timestamp of last login |
 | `fcmTokenKey` | Firebase Cloud Messaging token |
 | `profileKey` | Serialised `Profile` JSON |
@@ -203,7 +218,7 @@ All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and
 
 `SendSavedCookiesInterceptor` expresses the 28-day session expiry as `private const val SESSION_EXPIRY_SECONDS = 28 * 24 * 60 * 60`. Do not use the raw magic number inline.
 
-`LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the three OAuth parameters, writes them to `EncryptedSharedPreferences`, and starts `MainActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the extraction logic.
+`LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the app login `code`, exchanges it with the stored PKCE verifier, writes the returned credentials to `EncryptedSharedPreferences`, and starts `PermissionActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the callback handling logic.
 
 ### Error Handling
 

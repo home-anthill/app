@@ -19,18 +19,21 @@ import eu.homeanthill.BuildConfig
 import eu.homeanthill.FcmTokenWorker
 import eu.homeanthill.api.AppAuthenticator
 import eu.homeanthill.api.AuthInterceptor
-import eu.homeanthill.api.SendRefreshTokenCookieInterceptor
 import eu.homeanthill.api.SendSavedCookiesInterceptor
+import eu.homeanthill.api.requests.AppLoginExchangeServices
 import eu.homeanthill.api.requests.DevicesServices
 import eu.homeanthill.api.requests.FCMTokenServices
 import eu.homeanthill.api.requests.HomesServices
+import eu.homeanthill.api.requests.LogoutServices
 import eu.homeanthill.api.requests.OnlineServices
 import eu.homeanthill.api.requests.ProfileServices
 import eu.homeanthill.api.requests.RefreshTokenServices
+import eu.homeanthill.repository.AppLoginExchangeRepository
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.repository.LoginRepository
+import eu.homeanthill.repository.LogoutRepository
 import eu.homeanthill.repository.OnlineRepository
 import eu.homeanthill.repository.ProfileRepository
 import eu.homeanthill.repository.RefreshTokenRepository
@@ -53,7 +56,12 @@ val viewModelModule = module {
       fcmTokenRepository = get()
     )
   }
-  viewModel { ProfileViewModel(loginRepository = get(), profileRepository = get()) }
+  viewModel {
+    ProfileViewModel(
+      logoutRepository = get(),
+      profileRepository = get()
+    )
+  }
   viewModel { HomesListViewModel(homesRepository = get()) }
   viewModel { RoomsViewModel(homesRepository = get()) }
   viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
@@ -66,6 +74,8 @@ val viewModelModule = module {
 
 val repositoryModule = module {
   single { LoginRepository(context = androidContext()) }
+  single { LogoutRepository(logoutService = get(), loginRepository = get()) }
+  single { AppLoginExchangeRepository(service = get()) }
   single { RefreshTokenRepository(refreshTokenService = get(), loginRepository = get()) }
   single { FCMTokenRepository(fcmTokenService = get()) }
   single { ProfileRepository(profileService = get()) }
@@ -87,8 +97,10 @@ val fcmModule = module {
 }
 
 val apiModule = module {
+  single { get<Retrofit>(named("public")).create(AppLoginExchangeServices::class.java) }
   single { get<Retrofit>().create(FCMTokenServices::class.java) }
   single { get<Retrofit>().create(ProfileServices::class.java) }
+  single { get<Retrofit>().create(LogoutServices::class.java) }
   single { get<Retrofit>().create(HomesServices::class.java) }
   single { get<Retrofit>().create(DevicesServices::class.java) }
   single { get<Retrofit>().create(OnlineServices::class.java) }
@@ -115,8 +127,6 @@ val retrofitModule = module {
 
   single { SendSavedCookiesInterceptor(context = androidContext()) }
 
-  single { SendRefreshTokenCookieInterceptor(context = androidContext()) }
-
   // Main OkHttpClient: full interceptor chain + AppAuthenticator for 401 handling.
   single {
     OkHttpClient()
@@ -135,7 +145,14 @@ val retrofitModule = module {
     OkHttpClient()
       .newBuilder()
       .addInterceptor(get<HttpLoggingInterceptor>())
-      .addInterceptor(get<SendRefreshTokenCookieInterceptor>())
+      .build()
+  }
+
+  // Public OkHttpClient for unauthenticated pre-login flows.
+  single(named("public")) {
+    OkHttpClient()
+      .newBuilder()
+      .addInterceptor(get<HttpLoggingInterceptor>())
       .build()
   }
 
@@ -153,6 +170,14 @@ val retrofitModule = module {
     Retrofit.Builder()
       .baseUrl(BuildConfig.API_BASE_URL)
       .client(get<OkHttpClient>(named("refresh")))
+      .addConverterFactory(GsonConverterFactory.create(get<Gson>()))
+      .build()
+  }
+
+  single(named("public")) {
+    Retrofit.Builder()
+      .baseUrl(BuildConfig.API_BASE_URL)
+      .client(get<OkHttpClient>(named("public")))
       .addConverterFactory(GsonConverterFactory.create(get<Gson>()))
       .build()
   }

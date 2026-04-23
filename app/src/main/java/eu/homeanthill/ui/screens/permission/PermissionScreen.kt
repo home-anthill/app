@@ -1,4 +1,4 @@
-package eu.homeanthill.ui.screens.main
+package eu.homeanthill.ui.screens.permission
 
 import android.Manifest
 import android.content.Intent
@@ -14,51 +14,57 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
+import eu.homeanthill.MainActivity
 import eu.homeanthill.R
 import eu.homeanthill.ui.navigation.Destinations
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen(
-  mainUiState: MainViewModel.MainUiState,
-  navController: NavController,
-  modifier: Modifier = Modifier
+fun PermissionScreen(
+  modifier: Modifier = Modifier,
+  navController: NavHostController = rememberNavController(),
 ) {
   val context = LocalContext.current
 
   val notificationPermission = rememberPermissionState(
     permission = Manifest.permission.POST_NOTIFICATIONS
   )
+
+  LaunchedEffect(notificationPermission.status.isGranted) {
+    if (notificationPermission.status.isGranted) {
+      val intent = Intent(context, MainActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+      }
+      context.startActivity(intent)
+    }
+  }
+
   val showRationalDialog = remember { mutableStateOf(false) }
   if (showRationalDialog.value) {
     AlertDialog(
@@ -128,33 +134,7 @@ fun MainScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
       ) {
-        if (notificationPermission.status.isGranted) {
-          when (mainUiState) {
-            is MainViewModel.MainUiState.Error -> {
-              Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.cloud_off_24dp),
-                contentDescription = "Connection error",
-                modifier = Modifier.size(150.dp),
-                tint = MaterialTheme.colorScheme.error,
-              )
-              Text(
-                text = mainUiState.errorMessage,
-                color = MaterialTheme.colorScheme.error,
-              )
-            }
-
-            is MainViewModel.MainUiState.Loading -> {
-              CircularProgressIndicator()
-            }
-
-            is MainViewModel.MainUiState.Idle -> {
-              navController.navigate(Destinations.DEVICES) {
-                launchSingleTop = true
-                restoreState = true
-              }
-            }
-          }
-        } else {
+        if (!notificationPermission.status.isGranted) {
           Button(
             onClick = {
               if (notificationPermission.status.shouldShowRationale) {
@@ -210,14 +190,3 @@ fun MainScreen(
     }
   }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun MainScreenPreview() {
-//  AppTheme(darkTheme = true) {
-//    MainScreen(
-//      mainUiState = MainViewModel.MainUiState.Idle,
-//      navController = NavController(LocalContext.current)
-//    )
-//  }
-//}

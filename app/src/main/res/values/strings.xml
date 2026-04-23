@@ -2,8 +2,11 @@
     <string name="app_name">Home Anthill</string>
     <string name="default_notification_channel_id">home_anthill_default</string>
 
-    <string name="login">Login</string>
-    <string name="login_button">Login with Github</string>
+    <string name="login_title">Home Anthill</string>
+    <string name="login_subtitle_1">Your smart ecosystem, all under control.</string>
+    <string name="login_subtitle_2">Log in to manage your home IoT system</string>
+    <string name="login_button_github">Sign in with GitHub</string>
+    <string name="login_footer">No account? Just use your GitHub credentials.</string>
 
     <string name="home">Home</string>
     <string name="home_permission">Permission</string>
@@ -16,7 +19,10 @@
     <string name="home_permission_required">The notification permission is required for some functionality.</string>
 
     <string name="profile">Profile</string>
+    <string name="profile_manage_account">Manage your account</string>
     <string name="profile_regen_apitoken">Regenerate API Token</string>
+    <string name="profile_api_token">API Token</string>
+    <string name="profile_api_token_caption">Use this API token in firmwares</string>
     <string name="profile_logout">Logout</string>
 
     <string name="homes">Homes</string>

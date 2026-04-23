@@ -15,7 +15,7 @@ import eu.homeanthill.securePrefs
 class SendRefreshTokenCookieInterceptor(private val context: Context) : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     val request = chain.request()
-    val isRefreshEndpoint = request.url.encodedPath.endsWith("/token/refresh")
+    val isRefreshEndpoint = request.url.encodedPath.endsWith("/oauth/refresh")
     if (!isRefreshEndpoint) {
       return chain.proceed(request)
     }

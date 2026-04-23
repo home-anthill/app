@@ -1,13 +1,12 @@
 package eu.homeanthill.repository
 
+import eu.homeanthill.api.model.RefreshTokenRequest
 import eu.homeanthill.api.model.TokenResponse
 import eu.homeanthill.api.requests.RefreshTokenServices
-import eu.homeanthill.refreshTokenCookieName
 
 /**
- * Handles token refresh by calling POST /api/token/refresh synchronously.
- * After a successful refresh the server rotates the refresh token via Set-Cookie; this
- * repository reads that header and persists the new value to SharedPreferences so future
+ * Handles mobile token refresh by calling POST /api/oauth/app/refresh synchronously.
+ * The server rotates the mobile refresh token in the JSON response; persist it so future
  * refreshes continue to work after the app restarts.
  */
 class RefreshTokenRepository(
@@ -15,18 +14,13 @@ class RefreshTokenRepository(
   private val loginRepository: LoginRepository,
 ) {
   fun repoRefreshToken(): TokenResponse? {
-    val response = refreshTokenService.refreshToken().execute()
+    val refreshToken = loginRepository.getRefreshToken() ?: return null
+    val response = refreshTokenService.refreshToken(RefreshTokenRequest(refreshToken)).execute()
     if (!response.isSuccessful) return null
 
-    // Persist the rotated refresh token returned by the server in the Set-Cookie header.
-    val newRefreshToken = response.headers().values("Set-Cookie")
-      .firstOrNull { it.startsWith("$refreshTokenCookieName=") }
-      ?.substringAfter("$refreshTokenCookieName=")
-      ?.substringBefore(";")
-    if (!newRefreshToken.isNullOrEmpty()) {
-      loginRepository.setRefreshToken(newRefreshToken)
-    }
+    val body = response.body() ?: return null
+    loginRepository.setRefreshToken(body.refreshToken)
 
-    return response.body()
+    return body
   }
 }

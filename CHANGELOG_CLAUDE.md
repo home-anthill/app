@@ -11,11 +11,12 @@ This file tracks significant changes made with AI assistance, organized by type.
 - **Sensitive Logcat output removed** — OAuth deep-link query strings (containing `token`, `session_cookie`, `refresh_token`) removed from logs. All FCM, DI, and debug log calls guarded by `BuildConfig.DEBUG`.
 - **`HttpLoggingInterceptor` scoped to debug builds** — Level is `HEADERS` in debug/staging, `NONE` in release. `Authorization` and `Cookie` headers never appear in Logcat on production.
 - **Token refresh on 401** — `AppAuthenticator` silently refreshes the JWT on first 401, retries the request, and only falls back to logout when the refresh itself fails. Prior-response guard fixed from `!= null` (true on 3xx redirects too) to `?.code == 401`.
-- **Refresh token flow implemented** — Full JWT refresh token cycle with `RefreshTokenServices`, `TokenResponse`, `SendRefreshTokenCookieInterceptor` (adds cookie **only** on `/token/refresh` endpoint), and `RefreshTokenRepository`.
+- **Mobile refresh token flow implemented** — Full JWT refresh token cycle with `RefreshTokenServices`, `TokenResponse`, and `RefreshTokenRepository`. Mobile refresh now posts `{ refreshToken }` to `/api/oauth/app/refresh` and persists the rotated `refreshToken` from the JSON response.
+- **Mobile OAuth login migrated to PKCE code exchange** — App login now opens `/api/oauth/app/login` with `code_challenge` / `code_challenge_method=S256`, receives an app code through the deep link, and exchanges it at `/api/oauth/app/exchange-code` using the stored code verifier instead of receiving tokens directly in the callback URL.
 - **Thread-safe date formatting** — `SimpleDateFormat` (mutable, not thread-safe) replaced with immutable `DateTimeFormatter` to prevent coroutine data races.
 - **`MasterKey` cache made thread-safe** — `@Volatile` + double-checked locking ensures the key is built at most once even under concurrent access.
 - **Koin logger guarded by build type** — Debug logs only in `BuildConfig.DEBUG` to avoid leaking DI resolution info in release.
-- **Refresh token cookie scoping** — Path check changed from `contains` to `endsWith("/token/refresh")` so the token is never sent to unrelated endpoints.
+- **Mobile refresh tokens kept out of cookies** — Android refresh/logout use JSON bodies on `/api/oauth/app/refresh` and `/api/oauth/app/logout`; the web-only `/api/oauth/refresh` cookie flow is not used by the app.
 
 ---
 
@@ -24,6 +25,9 @@ This file tracks significant changes made with AI assistance, organized by type.
 - **First-install OAuth deep-link crash loop** — `onCreate()` now handles the deep-link when the process was killed while the browser was open (`singleTask` + process death).
 - **Duplicate OAuth callback** — Both `onCreate()` and `onNewIntent()` discard a second callback if a JWT is already stored, preventing valid session overwrite.
 - **Missing `return` after JWT redirect** — `onCreate()` fell through to render the login UI after launching `MainActivity`.
+- **Mobile login rejected after successful code exchange** — Client cookie name updated from stale `mysession` to server-side `oauth_session`, so the session cookie returned by `/api/oauth/app/exchange-code` is persisted and sent with authenticated API requests.
+- **Koin dependency cycle after logout endpoint wiring** — Server logout call moved out of `LoginRepository` into `LogoutRepository`, breaking the `LoginRepository → LogoutServices → Retrofit → AuthInterceptor → LoginRepository` resolution loop.
+- **Android refresh called web endpoint** — The app was posting an empty request to `/api/oauth/refresh`, which validates web refresh cookies and returned 401 for mobile tokens. It now calls `/api/oauth/app/refresh` with the stored refresh token in JSON.
 - **Out-of-bounds crash on controller feature values** — All four `getXxxByFeatureUuid` functions now bounds-check before array access.
 - **Reference equality on `String` and `null`** — `!==` replaced with `!isNullOrEmpty()` / `!= null` throughout.
 - **Broken string template** — `profileUiState.profile?.id}` missing `${` corrected.
@@ -39,6 +43,8 @@ This file tracks significant changes made with AI assistance, organized by type.
 ## 🏗️ Architecture / Design
 
 - **Dual OkHttp/Retrofit instances** — Main client has `AppAuthenticator`; refresh client intentionally does not (prevents recursion). Registered under `named("refresh")` in Koin.
+- **Public OkHttp/Retrofit client added** — Unauthenticated pre-login flows use a separate `named("public")` Retrofit instance for app code exchange, keeping them outside the authenticated client/authenticator chain.
+- **Mobile logout endpoint wired** — `LogoutServices` now posts the stored refresh token to `/api/oauth/app/logout`; `LogoutRepository` still clears local state if server logout cannot complete.
 - **`LoginRepository` as `single`** — Changed from `factory` to consistent singleton pattern.
 - **All ViewModel mutation and async functions converted to non-`suspend`** — Functions called from composables via `rememberCoroutineScope().launch { … }` are now regular functions that launch on `viewModelScope` internally, making them resilient to screen destruction. `rememberCoroutineScope` removed from all affected screens.
 - **`ControllerFeatureValuesViewModel` result emission** — `getValues` renamed `loadValues`, emits to `StateFlow`. `sendCommands` emits to `SharedFlow<SendValueResult>`. Composable uses separate `LaunchedEffect` blocks for each concern.
@@ -92,4 +98,4 @@ This file tracks significant changes made with AI assistance, organized by type.
 
 - **In-app FCM notifications via snackbar** — Added `FCMNotificationBus` singleton (`SharedFlow<RemoteMessage>`). `FCMService.onMessageReceived` emits every foreground message to the bus. `AppNavGraph` in `MainActivity` collects it in a `LaunchedEffect` and shows a `SnackbarDuration.Long` snackbar with the notification title/body, visible on whichever screen the user is on.
 - **`SecurePrefs.kt`** — New `Context.securePrefs()` extension for AES256-GCM encrypted preferences.
-- **Refresh token support** — `PreferencesKeys.kt` (two new constants), `LoginActivity.onNewIntent` (reads `refresh_token` from deep link), `LoginRepository` (new methods: `setJWT()`, `getRefreshToken()`, `setRefreshToken()`), `RefreshTokenServices`, `TokenResponse`, `SendRefreshTokenCookieInterceptor`, `RefreshTokenRepository`.
+- **Refresh token support** — `PreferencesKeys.kt` (refresh-token constants), `LoginActivity` PKCE app-code exchange, `LoginRepository` (new methods: `setJWT()`, `getRefreshToken()`, `setRefreshToken()`), `RefreshTokenServices`, `TokenResponse`, and `RefreshTokenRepository`.

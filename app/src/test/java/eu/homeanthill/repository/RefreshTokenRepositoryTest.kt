@@ -4,10 +4,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import okhttp3.Protocol
-import okhttp3.Request
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.Response as OkHttpResponse
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -39,44 +36,26 @@ class RefreshTokenRepositoryTest {
     // --- repoRefreshToken ---
 
     @Test
-    fun `repoRefreshToken returns token on success without Set-Cookie header`() {
+    fun `repoRefreshToken posts stored refresh token and persists rotated token on success`() {
         val mockCall = mockk<Call<TokenResponse>>()
-        val retrofitResponse = Response.success(TokenResponse("new-jwt-token"))
-        every { mockRefreshTokenService.refreshToken() } returns mockCall
+        val retrofitResponse = Response.success(TokenResponse("new-jwt-token", "new-refresh-token"))
+        every { mockLoginRepository.getRefreshToken() } returns "stored-refresh-token"
+        every { mockRefreshTokenService.refreshToken(match { it.refreshToken == "stored-refresh-token" }) } returns mockCall
         every { mockCall.execute() } returns retrofitResponse
 
         val result = refreshTokenRepository.repoRefreshToken()
 
         assertNotNull(result)
         assertEquals("new-jwt-token", result?.token)
-        verify(exactly = 0) { mockLoginRepository.setRefreshToken(any()) }
-    }
-
-    @Test
-    fun `repoRefreshToken persists rotated refresh token from Set-Cookie header`() {
-        val mockCall = mockk<Call<TokenResponse>>()
-        val rawOkHttpResponse = OkHttpResponse.Builder()
-            .code(200)
-            .message("OK")
-            .protocol(Protocol.HTTP_1_1)
-            .request(Request.Builder().url("http://localhost/api/token/refresh").build())
-            .header("Set-Cookie", "refresh_token=new-rotated-rt; Path=/; HttpOnly; SameSite=Strict")
-            .build()
-        val retrofitResponse = Response.success(TokenResponse("new-jwt-token"), rawOkHttpResponse)
-        every { mockRefreshTokenService.refreshToken() } returns mockCall
-        every { mockCall.execute() } returns retrofitResponse
-
-        val result = refreshTokenRepository.repoRefreshToken()
-
-        assertNotNull(result)
-        assertEquals("new-jwt-token", result?.token)
-        verify(exactly = 1) { mockLoginRepository.setRefreshToken("new-rotated-rt") }
+        assertEquals("new-refresh-token", result?.refreshToken)
+        verify(exactly = 1) { mockLoginRepository.setRefreshToken("new-refresh-token") }
     }
 
     @Test
     fun `repoRefreshToken returns null on failure response`() {
         val mockCall = mockk<Call<TokenResponse>>()
-        every { mockRefreshTokenService.refreshToken() } returns mockCall
+        every { mockLoginRepository.getRefreshToken() } returns "stored-refresh-token"
+        every { mockRefreshTokenService.refreshToken(any()) } returns mockCall
         every { mockCall.execute() } returns Response.error(401, "{}".toResponseBody())
 
         val result = refreshTokenRepository.repoRefreshToken()
@@ -86,22 +65,13 @@ class RefreshTokenRepositoryTest {
     }
 
     @Test
-    fun `repoRefreshToken does not persist refresh token when Set-Cookie value is blank`() {
-        val mockCall = mockk<Call<TokenResponse>>()
-        val rawOkHttpResponse = OkHttpResponse.Builder()
-            .code(200)
-            .message("OK")
-            .protocol(Protocol.HTTP_1_1)
-            .request(Request.Builder().url("http://localhost/api/token/refresh").build())
-            .header("Set-Cookie", "other_cookie=value; Path=/")
-            .build()
-        val retrofitResponse = Response.success(TokenResponse("new-jwt-token"), rawOkHttpResponse)
-        every { mockRefreshTokenService.refreshToken() } returns mockCall
-        every { mockCall.execute() } returns retrofitResponse
+    fun `repoRefreshToken returns null without stored refresh token`() {
+        every { mockLoginRepository.getRefreshToken() } returns null
 
         val result = refreshTokenRepository.repoRefreshToken()
 
-        assertNotNull(result)
+        assertNull(result)
+        verify(exactly = 0) { mockRefreshTokenService.refreshToken(any()) }
         verify(exactly = 0) { mockLoginRepository.setRefreshToken(any()) }
     }
 }

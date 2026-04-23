@@ -4,7 +4,6 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -23,7 +22,7 @@ import java.io.IOException
 import eu.homeanthill.api.model.GitHub
 import eu.homeanthill.api.model.Profile
 import eu.homeanthill.api.model.ProfileAPITokenResponse
-import eu.homeanthill.repository.LoginRepository
+import eu.homeanthill.repository.LogoutRepository
 import eu.homeanthill.repository.ProfileRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,7 +30,7 @@ class ProfileViewModelTest {
 
     private val testScheduler = TestCoroutineScheduler()
     private val mainDispatcher = StandardTestDispatcher(testScheduler)
-    private val mockLoginRepo = mockk<LoginRepository>(relaxed = true)
+    private val mockLogoutRepo = mockk<LogoutRepository>(relaxed = true)
     private val mockProfileRepo = mockk<ProfileRepository>()
 
     private val testProfile = Profile(
@@ -65,7 +64,7 @@ class ProfileViewModelTest {
     fun `init emits Idle with profile on success`() = runTest(testScheduler) {
         coEvery { mockProfileRepo.repoGetProfile() } returns testProfile
 
-        val vm = ProfileViewModel(mockLoginRepo, mockProfileRepo)
+        val vm = ProfileViewModel(mockLogoutRepo, mockProfileRepo)
         advanceUntilIdle()
 
         val state = vm.profileUiState.value
@@ -78,7 +77,7 @@ class ProfileViewModelTest {
     fun `init emits Error when repoGetProfile throws IOException`() = runTest(testScheduler) {
         coEvery { mockProfileRepo.repoGetProfile() } throws IOException("Profile load failed")
 
-        val vm = ProfileViewModel(mockLoginRepo, mockProfileRepo)
+        val vm = ProfileViewModel(mockLogoutRepo, mockProfileRepo)
         advanceUntilIdle()
 
         val state = vm.profileUiState.value
@@ -94,7 +93,7 @@ class ProfileViewModelTest {
         coEvery { mockProfileRepo.repoPostRegenAPIToken("prof1") } returns
                 ProfileAPITokenResponse(apiToken = "new-api-token")
 
-        val vm = ProfileViewModel(mockLoginRepo, mockProfileRepo)
+        val vm = ProfileViewModel(mockLogoutRepo, mockProfileRepo)
         advanceUntilIdle()
 
         vm.regenApiToken("prof1")
@@ -111,7 +110,7 @@ class ProfileViewModelTest {
         coEvery { mockProfileRepo.repoGetProfile() } returns testProfile
         coEvery { mockProfileRepo.repoPostRegenAPIToken("prof1") } throws IOException("Regen failed")
 
-        val vm = ProfileViewModel(mockLoginRepo, mockProfileRepo)
+        val vm = ProfileViewModel(mockLogoutRepo, mockProfileRepo)
         advanceUntilIdle()
 
         vm.regenApiToken("prof1")
@@ -126,7 +125,7 @@ class ProfileViewModelTest {
     fun `regenApiToken does nothing when id is null`() = runTest(testScheduler) {
         coEvery { mockProfileRepo.repoGetProfile() } returns testProfile
 
-        val vm = ProfileViewModel(mockLoginRepo, mockProfileRepo)
+        val vm = ProfileViewModel(mockLogoutRepo, mockProfileRepo)
         advanceUntilIdle()
 
         vm.regenApiToken(null)
@@ -139,14 +138,15 @@ class ProfileViewModelTest {
     // --- logout ---
 
     @Test
-    fun `logout calls loginRepository logoutAndRedirect`() = runTest(testScheduler) {
+    fun `logout calls logoutRepository logoutWithServerAndRedirect`() = runTest(testScheduler) {
         coEvery { mockProfileRepo.repoGetProfile() } returns testProfile
 
-        val vm = ProfileViewModel(mockLoginRepo, mockProfileRepo)
+        val vm = ProfileViewModel(mockLogoutRepo, mockProfileRepo)
         advanceUntilIdle()
 
         vm.logout()
+        advanceUntilIdle()
 
-        verify(exactly = 1) { mockLoginRepo.logoutAndRedirect() }
+        coVerify(exactly = 1) { mockLogoutRepo.logoutWithServerAndRedirect() }
     }
 }
