@@ -7,6 +7,7 @@ import okhttp3.Route
 
 import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.RefreshTokenRepository
+import eu.homeanthill.cookieName
 
 class AppAuthenticator(
   private val loginRepository: LoginRepository,
@@ -32,9 +33,14 @@ class AppAuthenticator(
     }
 
     loginRepository.setJWT(tokenResponse.token)
-    return response.request.newBuilder()
+    val retryRequest = response.request.newBuilder()
       .header("Authorization", "Bearer ${tokenResponse.token}")
-      .build()
+
+    loginRepository.getSessionCookie()?.let { sessionCookie ->
+      retryRequest.header("Cookie", "$cookieName=$sessionCookie")
+    }
+
+    return retryRequest.build()
   }
 
   private fun Response.isUnauthorized() = this.code == 401

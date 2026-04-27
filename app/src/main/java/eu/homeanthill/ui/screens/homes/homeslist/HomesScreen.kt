@@ -1,7 +1,7 @@
 package eu.homeanthill.ui.screens.homes.homeslist
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,54 +9,49 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import eu.homeanthill.R
 
+import eu.homeanthill.R
+import eu.homeanthill.ui.theme.AppTheme
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.ui.screens.homes.HomesRoute
-
-data class HomeItemObj(
-  val id: String = "",
-  val value: Boolean = false
-)
-
-data class HomeEditObj(
-  val id: String = "",
-  val name: String = "",
-  val location: String = "",
-  val value: Boolean = false
-)
 
 @Composable
 fun HomesListScreen(
@@ -64,103 +59,100 @@ fun HomesListScreen(
   homesViewModel: HomesListViewModel,
   navController: NavController,
 ) {
+  var isRefreshing by remember { mutableStateOf(false) }
+
+  LaunchedEffect(Unit) {
+    homesViewModel.loadHomes()
+  }
+
+  LaunchedEffect(homesUiState) {
+    if (homesUiState !is HomesListViewModel.HomesUiState.Loading) {
+      isRefreshing = false
+    }
+  }
+
+  HomesListContent(
+    homesUiState = homesUiState,
+    isRefreshing = isRefreshing,
+    onRefresh = {
+      isRefreshing = true
+      homesViewModel.loadHomes()
+    },
+    onCreateHome = { name, location ->
+      homesViewModel.createHome(name, location)
+    },
+    onNavigateToDetails = { home ->
+      navController.currentBackStackEntry?.savedStateHandle?.set("home", home)
+      navController.navigate(route = HomesRoute.EditHome.name)
+    }
+  )
+}
+
+@Composable
+fun HomesListContent(
+  homesUiState: HomesListViewModel.HomesUiState,
+  isRefreshing: Boolean,
+  onRefresh: () -> Unit,
+  onCreateHome: (name: String, location: String) -> Unit,
+  onNavigateToDetails: (home: Home) -> Unit,
+) {
   val showNewDialog = remember { mutableStateOf(false) }
-  var showEditDialog by remember { mutableStateOf(value = HomeEditObj()) }
-  var showDeleteDialog by remember { mutableStateOf(value = HomeItemObj()) }
 
   if (showNewDialog.value) {
     NewHomeDialog(
-      dialogText = "New home",
-      saveText = "Save",
-      cancelText = "Cancel",
+      dialogText = stringResource(R.string.homes_new_title),
+      saveText = stringResource(R.string.save),
+      cancelText = stringResource(R.string.cancel),
       onDismissRequest = {
         showNewDialog.value = false
       },
       onConfirmation = { name, location ->
-        homesViewModel.createHome(name, location)
+        onCreateHome(name, location)
         showNewDialog.value = false
       },
     )
   }
-  if (showEditDialog.value) {
-    EditHomeDialog(
-      dialogText = "Edit home",
-      saveText = "Save",
-      cancelText = "Cancel",
-      homeEditObj = HomeEditObj(
-        id = showEditDialog.id,
-        name = showEditDialog.name,
-        location = showEditDialog.location,
-      ),
-      onDismissRequest = {
-        showEditDialog =
-          showEditDialog.copy(id = "", name = "", location = "", value = false)
-      },
-      onConfirmation = { id, name, location ->
-        homesViewModel.editHome(id, name, location)
-        showEditDialog =
-          showEditDialog.copy(id = "", name = "", location = "", value = false)
-      },
-    )
-  }
-  if (showDeleteDialog.value) {
-    DeleteHomeDialog(
-      dialogTitle = "Delete home",
-      dialogText = "Would you remove this home?",
-      confirmText = "Yes",
-      dismissText = "No",
-      onDismissRequest = {
-        showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
-      },
-      onConfirmation = {
-        homesViewModel.deleteHome(showDeleteDialog.id)
-        showDeleteDialog = showDeleteDialog.copy(id = "", value = false)
-      }
-    )
-  }
+
   Scaffold(
+    containerColor = Color.Black,
     content = { padding ->
-      Column(
+      PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        state = rememberPullToRefreshState(),
         modifier = Modifier
           .fillMaxSize()
           .padding(padding)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
       ) {
-        when (homesUiState) {
-          is HomesListViewModel.HomesUiState.Error -> {
-            Text(
-              text = homesUiState.errorMessage,
-              color = MaterialTheme.colorScheme.error,
-            )
-          }
-
-          is HomesListViewModel.HomesUiState.Loading -> {
-            CircularProgressIndicator()
-          }
-
-          is HomesListViewModel.HomesUiState.Idle -> {
-            homesUiState.homes.forEach { home ->
-              SimpleCard(
-                home = home,
-                onEdit = {
-                  showEditDialog = showEditDialog.copy(
-                    id = home.id,
-                    name = home.name,
-                    location = home.location,
-                    value = true,
-                  )
-                },
-                onRoomsDetails = {
-                  navController.currentBackStackEntry?.savedStateHandle?.set("home", home)
-                  navController.navigate(route = HomesRoute.EditHome.name)
-                },
-                onDelete = {
-                  showDeleteDialog =
-                    showDeleteDialog.copy(id = home.id, value = true)
-                }
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+          verticalArrangement = Arrangement.Top,
+          horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+          when (homesUiState) {
+            is HomesListViewModel.HomesUiState.Error -> {
+              Text(
+                text = homesUiState.errorMessage,
+                color = MaterialTheme.colorScheme.error,
               )
+            }
+
+            is HomesListViewModel.HomesUiState.Loading -> {
+              if (!isRefreshing) {
+                CircularProgressIndicator(color = Color(0xFFBD5700))
+              }
+            }
+
+            is HomesListViewModel.HomesUiState.Idle -> {
+              homesUiState.homes.forEach { home ->
+                HomeItemCard(
+                  home = home,
+                  onClick = { onNavigateToDetails(home) }
+                )
+              }
             }
           }
         }
@@ -168,91 +160,63 @@ fun HomesListScreen(
     },
     floatingActionButton = {
       FloatingActionButton(
-        onClick = {
-          showNewDialog.value = true
-        },
+        onClick = { showNewDialog.value = true },
+        containerColor = Color(0xFFBD5700),
+        contentColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
       ) {
-        Icon(Icons.Filled.Add, "Floating action button.")
+        Icon(
+          Icons.Default.Add,
+          contentDescription = stringResource(R.string.homes_add),
+        )
       }
     }
   )
 }
 
 @Composable
-fun SimpleCard(
+fun HomeItemCard(
   home: Home,
-  onEdit: () -> Unit,
-  onDelete: () -> Unit,
-  onRoomsDetails: () -> Unit,
+  onClick: () -> Unit,
 ) {
-  var expanded by remember { mutableStateOf(false) }
-
   Card(
-    elevation = CardDefaults.cardElevation(10.dp),
     modifier = Modifier
       .fillMaxWidth()
-      .height(200.dp)
-      .padding(vertical = 10.dp, horizontal = 20.dp)
-      .clip(RoundedCornerShape(16.dp))
+      .padding(vertical = 8.dp)
+      .clickable { onClick() },
+    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+    shape = RoundedCornerShape(16.dp),
+    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
   ) {
-    Box {
-      Box(
-        modifier = Modifier.align(Alignment.TopEnd)
-      ) {
-        IconButton(
-          modifier = Modifier.align(Alignment.TopEnd),
-          onClick = { expanded = !expanded }
-        ) {
-          Icon(Icons.Default.MoreVert, contentDescription = "More options")
-        }
-        DropdownMenu(
-          modifier = Modifier.align(Alignment.TopEnd),
-          expanded = expanded,
-          onDismissRequest = { expanded = false }
-        ) {
-          DropdownMenuItem(
-            text = { Text("Edit home") },
-            onClick = {
-              onEdit()
-            }
-          )
-          DropdownMenuItem(
-            text = { Text("View rooms") },
-            onClick = {
-              onRoomsDetails()
-            }
-          )
-          DropdownMenuItem(
-            text = { Text("Delete home") },
-            onClick = {
-              onDelete()
-            }
-          )
-        }
-      }
-      Column(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(vertical = 20.dp, horizontal = 20.dp)
-          .align(Alignment.TopStart)
-      ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier.padding(16.dp)
+    ) {
+      Icon(
+        imageVector = Icons.Default.Business,
+        contentDescription = null,
+        tint = Color(0xFFBD5700),
+        modifier = Modifier.size(32.dp)
+      )
+      Spacer(modifier = Modifier.width(16.dp))
+      Column(modifier = Modifier.weight(1f)) {
         Text(
           text = home.name,
           style = MaterialTheme.typography.titleLarge,
-          modifier = Modifier.fillMaxWidth()
+          fontWeight = FontWeight.Bold,
+          color = Color.White
         )
         Text(
           text = home.location,
-          style = MaterialTheme.typography.titleMedium,
-          modifier = Modifier.fillMaxWidth()
+          style = MaterialTheme.typography.bodyMedium,
+          color = Color.Gray
         )
-        if (home.rooms != null) {
-          Spacer(modifier = Modifier.height(10.dp))
-          home.rooms.forEach { room ->
-            Text(text = room.name + " - " + room.floor)
-          }
-        }
       }
+      Icon(
+        imageVector = Icons.Default.ChevronRight,
+        contentDescription = null,
+        tint = Color.Gray
+      )
     }
   }
 }
@@ -268,115 +232,59 @@ fun NewHomeDialog(
   var name by remember { mutableStateOf("") }
   var location by remember { mutableStateOf("") }
 
+  val isSaveEnabled = name.trim().isNotEmpty() && location.trim().isNotEmpty()
+
   Dialog(onDismissRequest = { onDismissRequest() }) {
-    // Draw a rectangle shape with rounded corners inside the dialog
     Card(
       modifier = Modifier
         .fillMaxWidth()
-        .height(375.dp)
         .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
+      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
     ) {
       Column(
-        modifier = Modifier
-          .fillMaxSize(),
+        modifier = Modifier.padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
       ) {
         Text(
           text = dialogText,
-          modifier = Modifier.padding(16.dp),
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = Color.White,
+          modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         )
         TextField(
           value = name,
           onValueChange = { name = it },
-          label = { Text("Name") }
+          label = { Text(stringResource(R.string.name)) },
+          modifier = Modifier.fillMaxWidth()
         )
+        Spacer(modifier = Modifier.height(8.dp))
         TextField(
           value = location,
           onValueChange = { location = it },
-          label = { Text("Location") }
+          label = { Text(stringResource(R.string.location)) },
+          modifier = Modifier.fillMaxWidth()
         )
+        Spacer(modifier = Modifier.height(16.dp))
         Row(
-          modifier = Modifier
-            .fillMaxWidth(),
-          horizontalArrangement = Arrangement.Center,
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
         ) {
-          TextButton(
-            onClick = { onDismissRequest() },
-            modifier = Modifier.padding(8.dp),
-          ) {
-            Text(text = cancelText)
+          TextButton(onClick = { onDismissRequest() }) {
+            Text(text = cancelText, color = Color.White)
           }
           TextButton(
             onClick = { onConfirmation(name, location) },
-            modifier = Modifier.padding(8.dp),
+            enabled = isSaveEnabled
           ) {
-            Text(text = saveText)
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-fun EditHomeDialog(
-  dialogText: String,
-  saveText: String,
-  cancelText: String,
-  homeEditObj: HomeEditObj,
-  onDismissRequest: () -> Unit,
-  onConfirmation: (id: String, name: String, location: String) -> Unit,
-) {
-  var name by remember { mutableStateOf(homeEditObj.name) }
-  var location by remember { mutableStateOf(homeEditObj.location) }
-
-  Dialog(onDismissRequest = { onDismissRequest() }) {
-    // Draw a rectangle shape with rounded corners inside the dialog
-    Card(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(375.dp)
-        .padding(16.dp),
-      shape = RoundedCornerShape(16.dp),
-    ) {
-      Column(
-        modifier = Modifier
-          .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-      ) {
-        Text(
-          text = dialogText,
-          modifier = Modifier.padding(16.dp),
-        )
-        TextField(
-          value = name,
-          onValueChange = { name = it },
-          label = { Text("Name") }
-        )
-        TextField(
-          value = location,
-          onValueChange = { location = it },
-          label = { Text("Location") }
-        )
-        Row(
-          modifier = Modifier
-            .fillMaxWidth(),
-          horizontalArrangement = Arrangement.Center,
-        ) {
-          TextButton(
-            onClick = { onDismissRequest() },
-            modifier = Modifier.padding(8.dp),
-          ) {
-            Text(text = cancelText)
-          }
-          TextButton(
-            onClick = { onConfirmation(homeEditObj.id, name, location) },
-            modifier = Modifier.padding(8.dp),
-          ) {
-            Text(text = saveText)
+            Text(
+              text = saveText,
+              color = if (isSaveEnabled) Color.White else Color.Gray,
+              fontWeight = FontWeight.Bold
+            )
           }
         }
       }
@@ -393,33 +301,86 @@ fun DeleteHomeDialog(
   onDismissRequest: () -> Unit,
   onConfirmation: () -> Unit,
 ) {
-  AlertDialog(
-    title = {
-      Text(text = dialogTitle)
-    },
-    text = {
-      Text(text = dialogText)
-    },
-    onDismissRequest = {
-      onDismissRequest()
-    },
-    confirmButton = {
-      TextButton(
-        onClick = {
-          onConfirmation()
-        }
+  Dialog(onDismissRequest = onDismissRequest) {
+    Card(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
+      shape = RoundedCornerShape(16.dp),
+      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    ) {
+      Column(
+        modifier = Modifier.padding(24.dp)
       ) {
-        Text(text = confirmText)
-      }
-    },
-    dismissButton = {
-      TextButton(
-        onClick = {
-          onDismissRequest()
+        Text(
+          text = dialogTitle,
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = Color.White
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+          text = dialogText,
+          color = Color.White,
+          style = MaterialTheme.typography.bodyMedium
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          TextButton(onClick = onDismissRequest) {
+            Text(text = dismissText, color = Color.White)
+          }
+          Spacer(modifier = Modifier.width(16.dp))
+          Button(
+            onClick = onConfirmation,
+            colors = ButtonDefaults.buttonColors(
+              containerColor = Color(0xFFBD5700),
+              contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(8.dp)
+          ) {
+            Text(text = confirmText, fontWeight = FontWeight.Bold)
+          }
         }
-      ) {
-        Text(text = dismissText)
       }
     }
-  )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeItemCardPreview() {
+  AppTheme(darkTheme = true) {
+    HomeItemCard(
+      home = Home(id = "1", name = "Casa", location = "Torino", rooms = emptyList(), createdAt = "", modifiedAt = ""),
+      onClick = {}
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomesListContentPreview() {
+  AppTheme(darkTheme = true) {
+    HomesListContent(
+      homesUiState = HomesListViewModel.HomesUiState.Idle(
+        homes = listOf(
+          Home(id = "1", name = "Casa", location = "Torino", rooms = emptyList(), createdAt = "", modifiedAt = ""),
+          Home(id = "2", name = "Ufficio", location = "Milano", rooms = emptyList(), createdAt = "", modifiedAt = "")
+        )
+      ),
+      isRefreshing = false,
+      onRefresh = {},
+      onCreateHome = { _, _ -> },
+      onNavigateToDetails = { _ -> }
+    )
+  }
 }

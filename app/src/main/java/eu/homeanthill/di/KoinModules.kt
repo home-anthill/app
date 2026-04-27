@@ -38,7 +38,6 @@ import eu.homeanthill.repository.OnlineRepository
 import eu.homeanthill.repository.ProfileRepository
 import eu.homeanthill.repository.RefreshTokenRepository
 import eu.homeanthill.ui.screens.devices.deviceslist.DevicesListViewModel
-import eu.homeanthill.ui.screens.devices.editdevice.EditDeviceViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerFeatureValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesViewModel
@@ -65,11 +64,10 @@ val viewModelModule = module {
   viewModel { HomesListViewModel(homesRepository = get()) }
   viewModel { RoomsViewModel(homesRepository = get()) }
   viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
-  viewModel { EditDeviceViewModel(homesRepository = get(), devicesRepository = get()) }
   viewModel { SensorFeatureValuesViewModel() }
   viewModel { ControllerFeatureValuesViewModel(devicesRepository = get()) }
   viewModel { OnlineFeatureValuesViewModel(onlineRepository = get()) }
-  viewModel { FeaturesViewModel(devicesRepository = get()) }
+  viewModel { FeaturesViewModel(devicesRepository = get(), homesRepository = get()) }
 }
 
 val repositoryModule = module {

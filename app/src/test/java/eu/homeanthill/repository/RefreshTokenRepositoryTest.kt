@@ -4,6 +4,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -14,6 +15,7 @@ import org.junit.Test
 import retrofit2.Call
 import retrofit2.Response
 
+import eu.homeanthill.cookieName
 import eu.homeanthill.api.model.TokenResponse
 import eu.homeanthill.api.requests.RefreshTokenServices
 
@@ -36,9 +38,12 @@ class RefreshTokenRepositoryTest {
     // --- repoRefreshToken ---
 
     @Test
-    fun `repoRefreshToken posts stored refresh token and persists rotated token on success`() {
+    fun `repoRefreshToken posts stored refresh token and persists rotated token and session cookie on success`() {
         val mockCall = mockk<Call<TokenResponse>>()
-        val retrofitResponse = Response.success(TokenResponse("new-jwt-token", "new-refresh-token"))
+        val retrofitResponse = Response.success(
+            TokenResponse("new-jwt-token", "new-refresh-token"),
+            headersOf("Set-Cookie", "$cookieName=new-session-cookie; Path=/; HttpOnly")
+        )
         every { mockLoginRepository.getRefreshToken() } returns "stored-refresh-token"
         every { mockRefreshTokenService.refreshToken(match { it.refreshToken == "stored-refresh-token" }) } returns mockCall
         every { mockCall.execute() } returns retrofitResponse
@@ -49,6 +54,7 @@ class RefreshTokenRepositoryTest {
         assertEquals("new-jwt-token", result?.token)
         assertEquals("new-refresh-token", result?.refreshToken)
         verify(exactly = 1) { mockLoginRepository.setRefreshToken("new-refresh-token") }
+        verify(exactly = 1) { mockLoginRepository.setSessionCookie("new-session-cookie") }
     }
 
     @Test

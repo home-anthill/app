@@ -33,14 +33,29 @@ class HomesListViewModel(
   val homesUiState: StateFlow<HomesUiState> = _homesUiState
 
   init {
-    init()
+    loadHomes()
+  }
+
+  fun loadHomes() {
+    viewModelScope.launch {
+      _homesUiState.emit(HomesUiState.Loading)
+      delay(LOAD_DELAY_MS)
+
+      try {
+        val homes: List<Home> = homesRepository.repoGetHomes()
+        if (BuildConfig.DEBUG) Log.d(TAG, "init - homes = $homes")
+        _homesUiState.emit(HomesUiState.Idle(homes))
+      } catch (err: IOException) {
+        _homesUiState.emit(HomesUiState.Error(err.message.toString()))
+      }
+    }
   }
 
   fun createHome(name: String, location: String) {
     viewModelScope.launch {
       try {
         homesRepository.repoPostHome(NewHome(name = name, location = location, rooms = listOf()))
-        init()
+        loadHomes()
       } catch (err: IOException) {
         _homesUiState.emit(HomesUiState.Error(err.message.toString()))
       }
@@ -51,7 +66,7 @@ class HomesListViewModel(
     viewModelScope.launch {
       try {
         homesRepository.repoPutHome(id, UpdateHome(name = name, location = location))
-        init()
+        loadHomes()
       } catch (err: IOException) {
         _homesUiState.emit(HomesUiState.Error(err.message.toString()))
       }
@@ -62,22 +77,7 @@ class HomesListViewModel(
     viewModelScope.launch {
       try {
         homesRepository.repoDeleteHome(id)
-        init()
-      } catch (err: IOException) {
-        _homesUiState.emit(HomesUiState.Error(err.message.toString()))
-      }
-    }
-  }
-
-  private fun init() {
-    viewModelScope.launch {
-      _homesUiState.emit(HomesUiState.Loading)
-      delay(LOAD_DELAY_MS)
-
-      try {
-        val homes: List<Home> = homesRepository.repoGetHomes()
-        if (BuildConfig.DEBUG) Log.d(TAG, "init - homes = $homes")
-        _homesUiState.emit(HomesUiState.Idle(homes))
+        loadHomes()
       } catch (err: IOException) {
         _homesUiState.emit(HomesUiState.Error(err.message.toString()))
       }

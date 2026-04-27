@@ -33,6 +33,7 @@ data class Device(
   @SerializedName("id") val id: String,
   @SerializedName("uuid") val uuid: String,
   @SerializedName("mac") val mac: String,
+  @SerializedName("name") val name: String?,
   @SerializedName("manufacturer") val manufacturer: String,
   @SerializedName("model") val model: String,
   @SerializedName("features") val features: List<Feature>,
@@ -54,6 +55,7 @@ data class Feature(
 // classes used as body for API requests
 @Parcelize
 data class PutDevice(
+  @SerializedName("name") val name: String,
   @SerializedName("homeId") val homeId: String,
   @SerializedName("roomId") val roomId: String,
 ) : Parcelable

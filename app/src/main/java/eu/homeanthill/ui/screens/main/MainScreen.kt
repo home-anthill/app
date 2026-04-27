@@ -91,7 +91,7 @@ fun MainScreen(
 
           }) {
           Text(
-            text = stringResource(R.string.home_ok),
+            text = stringResource(R.string.ok),
           )
         }
       },
@@ -101,7 +101,7 @@ fun MainScreen(
             showRationalDialog.value = false
           }) {
           Text(
-            text = stringResource(R.string.home_cancel),
+            text = stringResource(R.string.cancel),
           )
         }
       },

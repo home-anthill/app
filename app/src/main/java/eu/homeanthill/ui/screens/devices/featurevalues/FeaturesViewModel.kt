@@ -14,9 +14,13 @@ import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.DeviceValue
 import eu.homeanthill.api.model.FeatureValue
+import eu.homeanthill.api.model.Home
+import eu.homeanthill.api.model.PutDevice
+import eu.homeanthill.repository.HomesRepository
 
 class FeaturesViewModel(
-  private val devicesRepository: DevicesRepository
+  private val devicesRepository: DevicesRepository,
+  private val homesRepository: HomesRepository
 ) : ViewModel() {
   companion object {
     private const val TAG = "FeaturesViewModel"
@@ -24,7 +28,9 @@ class FeaturesViewModel(
   }
 
   sealed class FeatureValuesUiState {
-    data class Idle(val deviceValue: DeviceValue?) : FeatureValuesUiState()
+    data class Idle(val deviceValue: DeviceValue?, val homes: List<Home> = emptyList()) :
+      FeatureValuesUiState()
+
     data object Loading : FeatureValuesUiState()
     data class Error(val errorMessage: String) : FeatureValuesUiState()
   }
@@ -40,15 +46,46 @@ class FeaturesViewModel(
       try {
         val values: List<DeviceFeatureValueResponse> =
           devicesRepository.repoGetDeviceValues(device.id)
+        val homes: List<Home> = homesRepository.repoGetHomes()
         val deviceValue = DeviceValue(
           device = device,
           sensorFeatureValues = getFeatureValues(device, values, "sensor"),
           controllerFeatureValues = getFeatureValues(device, values, "controller"),
         )
-        _featureValuesUiState.emit(FeatureValuesUiState.Idle(deviceValue))
+        _featureValuesUiState.emit(FeatureValuesUiState.Idle(deviceValue, homes))
       } catch (err: IOException) {
         _featureValuesUiState.emit(FeatureValuesUiState.Error(err.message.toString()))
         Log.e(TAG, "initDeviceValues - err = $err")
+      }
+    }
+  }
+
+  fun updateDeviceSettings(id: String, name: String, homeId: String, roomId: String) {
+    viewModelScope.launch {
+      try {
+        devicesRepository.repoAssignDeviceToHomeRoom(
+          id = id,
+          body = PutDevice(name = name, homeId = homeId, roomId = roomId)
+        )
+        // Refresh values after update
+        _featureValuesUiState.value.let { state ->
+          if (state is FeatureValuesUiState.Idle && state.deviceValue != null) {
+            initDeviceValues(state.deviceValue.device.copy(name = name))
+          }
+        }
+      } catch (err: IOException) {
+        _featureValuesUiState.emit(FeatureValuesUiState.Error(err.message.toString()))
+      }
+    }
+  }
+
+  fun deleteDevice(id: String, onDeleted: () -> Unit) {
+    viewModelScope.launch {
+      try {
+        devicesRepository.repoDeleteDevice(id)
+        onDeleted()
+      } catch (err: IOException) {
+        _featureValuesUiState.emit(FeatureValuesUiState.Error(err.message.toString()))
       }
     }
   }

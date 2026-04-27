@@ -2,8 +2,11 @@ package eu.homeanthill.ui.screens.devices.featurevalues.controllerValues
 
 import android.util.Log
 import java.io.IOException
+import java.time.Instant
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -130,10 +133,24 @@ class ControllerFeatureValuesViewModel(
   }
 
   fun getPrettyDateFromUnixEpoch(unixEpoch: String?): String {
-    if (unixEpoch == null) {
+    if (unixEpoch.isNullOrBlank()) {
       return ""
     }
-    return ZonedDateTime.parse(unixEpoch).format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"))
+    return try {
+      ZonedDateTime.parse(unixEpoch).format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"))
+    } catch (e: Exception) {
+      ""
+    }
+  }
+
+  fun getPrettyDateFromLong(timestamp: Long?): String {
+    if (timestamp == null || timestamp == 0L) {
+      return ""
+    }
+    val dtf = DateTimeFormatter
+      .ofPattern("HH:mm:ss dd/MM/yyyy", Locale.ITALY)
+      .withZone(ZoneId.systemDefault())
+    return dtf.format(Instant.ofEpochMilli(timestamp))
   }
 
   fun loadValues(id: String) {

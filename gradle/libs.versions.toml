@@ -25,6 +25,7 @@ coil = "3.4.0"
 androidWorkRuntime = "2.11.2"
 coroutinesPlayServices = "1.10.2"
 insertKoinWorkmanager = "4.2.1"
+ui = "1.11.0"
 
 [libraries]
 #security
@@ -85,6 +86,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

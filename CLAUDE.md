@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 ./gradlew assembleDebug                          # Build debug APK
-./gradlew assembleStaging                        # Build staging APK (debuggable, -staging suffix)
+./gradlew assembleStaging                        # Build staging APK (non-debuggable, minified, -staging suffix)
 ./gradlew assembleRelease                        # Build release APK (minified, shrunk)
 ./gradlew testDebugUnitTest                      # Run all unit tests
 ./gradlew testDebugUnitTest --tests "eu.homeanthill.repository.HomesRepositoryTest"  # Run single test class
@@ -116,7 +116,7 @@ LoggingInterceptor
 ```
 Used by unauthenticated pre-login flows such as `/api/oauth/app/exchange-code`.
 
-`HttpLoggingInterceptor` is set to `Level.HEADERS` in debug/staging builds and `Level.NONE` in release builds to prevent credentials from appearing in Logcat on production devices.
+`HttpLoggingInterceptor` is set to `Level.HEADERS` only in debug builds and `Level.NONE` in staging/release builds to prevent credentials from appearing in Logcat on production-like devices.
 
 ### Repository Pattern
 
@@ -142,6 +142,8 @@ Two edge cases apply only on a fresh install (process has never run before):
 1. **`onCreate()` must handle `intent.data`**: With `launchMode="singleTask"`, a returning deep link normally triggers `onNewIntent()`. But if the process was killed while the user was in the browser (Android kills background processes under memory pressure), the OS recreates `LoginActivity` and the callback URL arrives in `onCreate()` via `intent.data`, not `onNewIntent()`. `onCreate()` checks for OAuth parameters in `intent.data` before rendering the login UI.
 
 2. **Duplicate `LoginMobileAppCallback` calls**: On first install the server fires `LoginMobileAppCallback` twice in quick succession (~400 ms apart, caused by Chrome following the deep-link redirect). Each invocation carries a different server session. `onNewIntent()` (and the `intent.data` path in `onCreate()`) checks for an existing JWT in `EncryptedSharedPreferences` at entry; if one is already stored the second callback is discarded with `finish()` to prevent a valid session from being overwritten.
+
+`LoginActivity.handleOAuthCallback(Uri)` validates callback `scheme` and `path` before exchanging the code. Production/staging accepts `https` callbacks to `/postlogin`; debug additionally accepts `http` callbacks to `/postlogin` for local development. Host and port live in manifest/property configuration, not Kotlin constants.
 
 #### Refresh Token Flow (mobile)
 
@@ -220,6 +222,8 @@ All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and
 
 `LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the app login `code`, exchanges it with the stored PKCE verifier, writes the returned credentials to `EncryptedSharedPreferences`, and starts `PermissionActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the callback handling logic.
 
+`ProfileScreen` sets `WindowManager.LayoutParams.FLAG_SECURE` while mounted and clears it on dispose. This prevents screenshots/screen recording while the regenerated API token can be visible; keep screenshot blocking scoped to this screen unless another screen displays similarly sensitive data.
+
 ### Error Handling
 
 - Repositories throw `IOException` on API failure
@@ -294,10 +298,10 @@ class HomesListViewModelTest {
 | Variant | Debuggable | Minified | Version Suffix | Cleartext HTTP | Log level |
 |---------|-----------|---------|------|------|------|
 | debug   | Yes       | No      | `-debug` | Allowed | `HEADERS` |
-| staging | Yes       | No      | `-staging` | Allowed | `HEADERS` |
+| staging | No        | Yes     | `-staging` | Blocked | `NONE` |
 | release | No        | Yes     | none (TODO: real signing) | Blocked | `NONE` |
 
-Cleartext traffic is controlled per build type via `network_security_config.xml` files in `src/main/res/xml/` (release), `src/debug/res/xml/`, and `src/staging/res/xml/`. Use `staging` for testing real backend without minification (easier debugging). Release signing is TODO — currently uses debug keystore.
+Cleartext traffic is controlled per build type via `network_security_config.xml` files in `src/main/res/xml/` (release), `src/debug/res/xml/`, and `src/staging/res/xml/`. `debug` allows cleartext and user CA certificates for local development/MITM inspection. `staging` is production-like: non-debuggable, minified, cleartext-blocked, system CA trust only. Release signing is TODO — currently uses debug keystore.
 
 ## Configuration Files
 

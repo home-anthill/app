@@ -1,18 +1,26 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,178 +28,194 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
+import eu.homeanthill.api.model.Feature
 import eu.homeanthill.ui.screens.devices.DevicesRoute
+import eu.homeanthill.ui.theme.AppTheme
 
 @Composable
 fun DevicesListScreen(
   devicesUiState: DevicesListViewModel.DevicesUiState,
-  devicesViewModel: DevicesListViewModel,
+  @Suppress("UNUSED_PARAMETER") devicesViewModel: DevicesListViewModel,
   navController: NavController,
 ) {
+  var isRefreshing by remember { mutableStateOf(false) }
+
+  LaunchedEffect(Unit) {
+    devicesViewModel.loadDevices()
+  }
+
+  LaunchedEffect(devicesUiState) {
+    if (devicesUiState !is DevicesListViewModel.DevicesUiState.Loading) {
+      isRefreshing = false
+    }
+  }
+
   Scaffold(
+    containerColor = Color.Black,
     content = { padding ->
-      Column(
+      PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+          isRefreshing = true
+          devicesViewModel.loadDevices()
+        },
+        state = rememberPullToRefreshState(),
         modifier = Modifier
           .fillMaxSize()
           .padding(padding)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
       ) {
-        when (devicesUiState) {
-          is DevicesListViewModel.DevicesUiState.Error -> {
-            Text(
-              text = devicesUiState.errorMessage,
-              color = MaterialTheme.colorScheme.error,
-            )
-          }
-
-          is DevicesListViewModel.DevicesUiState.Loading -> {
-            CircularProgressIndicator()
-          }
-
-          is DevicesListViewModel.DevicesUiState.Idle -> {
-            if (devicesUiState.deviceList?.unassignedDevices?.isNotEmpty() == true) {
+        Column(
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+          verticalArrangement = Arrangement.Top,
+          horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+          when (devicesUiState) {
+            is DevicesListViewModel.DevicesUiState.Error -> {
               Text(
-                text = "Unassigned",
-                style = MaterialTheme.typography.titleLarge
-              )
-              devicesUiState.deviceList.unassignedDevices.forEach { device ->
-                SimpleCard(
-                  device = device,
-                  onEdit = {
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                      "device",
-                      device
-                    )
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                      "home",
-                      null
-                    )
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                      "room",
-                      null
-                    )
-                    navController.navigate(route = DevicesRoute.EditDevice.name)
-                  },
-                  onDetails = {
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                      "device",
-                      device
-                    )
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                      "home",
-                      null
-                    )
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                      "room",
-                      null
-                    )
-                    navController.navigate(route = DevicesRoute.FeatureValues.name)
-                  },
-                )
-              }
-              HorizontalDivider(
-                thickness = 2.dp, modifier = Modifier.padding(vertical = 20.dp)
+                text = devicesUiState.errorMessage,
+                color = MaterialTheme.colorScheme.error,
               )
             }
-            devicesUiState.deviceList?.homeDevices?.forEach { homeWithDevices ->
-              Text(
-                text = homeWithDevices.home.name + " (" + homeWithDevices.home.location + ")",
-                style = MaterialTheme.typography.titleLarge
-              )
-              homeWithDevices.rooms.forEach { roomWithDevices ->
+
+            is DevicesListViewModel.DevicesUiState.Loading -> {
+              if (!isRefreshing) {
+                CircularProgressIndicator(color = Color(0xFFFD7E13))
+              }
+            }
+
+            is DevicesListViewModel.DevicesUiState.Idle -> {
+              val deviceList = devicesUiState.deviceList
+
+              if (deviceList?.unassignedDevices?.isNotEmpty() == true) {
                 Text(
-                  text = roomWithDevices.room.name + " - " + roomWithDevices.room.floor,
-                  style = MaterialTheme.typography.titleMedium
+                  text = stringResource(R.string.devices_unassigned),
+                  style = MaterialTheme.typography.titleLarge,
+                  fontWeight = FontWeight.Bold,
+                  color = Color(0xFFFD7E13),
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
                 )
-                roomWithDevices.controllerDevices.forEach { device ->
-                  SimpleCard(
+                deviceList.unassignedDevices.forEach { device ->
+                  DeviceCard(
                     device = device,
-                    onEdit = {
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "device",
-                        device
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "home",
-                        homeWithDevices.home
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "room",
-                        roomWithDevices.room
-                      )
-                      navController.navigate(route = DevicesRoute.EditDevice.name)
-                    },
-                    onDetails = {
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "device",
-                        device
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "home",
-                        homeWithDevices.home
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "room",
-                        roomWithDevices.room
-                      )
+                    onClick = {
+                      navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
+                      navController.currentBackStackEntry?.savedStateHandle?.set("home", null)
+                      navController.currentBackStackEntry?.savedStateHandle?.set("room", null)
                       navController.navigate(route = DevicesRoute.FeatureValues.name)
-                    },
-                  )
-                }
-                roomWithDevices.sensorDevices.forEach { sensor ->
-                  SimpleCard(
-                    device = sensor,
-                    onEdit = {
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "device",
-                        sensor
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "home",
-                        homeWithDevices.home
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "room",
-                        roomWithDevices.room
-                      )
-                      navController.navigate(route = DevicesRoute.EditDevice.name)
-                    },
-                    onDetails = {
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "device",
-                        sensor
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "home",
-                        homeWithDevices.home
-                      )
-                      navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "room",
-                        roomWithDevices.room
-                      )
-                      navController.navigate(route = DevicesRoute.FeatureValues.name)
-                    },
+                    }
                   )
                 }
               }
-              HorizontalDivider(
-                thickness = 2.dp, modifier = Modifier.padding(vertical = 20.dp)
-              )
+
+              deviceList?.homeDevices?.forEach { homeWithDevices ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  verticalAlignment = Alignment.CenterVertically
+                ) {
+                  Box(
+                    modifier = Modifier
+                      .size(40.dp)
+                      .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+                      .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.Business,
+                      contentDescription = null,
+                      tint = Color(0xFFFD7E13),
+                      modifier = Modifier.size(24.dp)
+                    )
+                  }
+                  Spacer(modifier = Modifier.width(16.dp))
+                  Text(
+                    text = "${homeWithDevices.home.name} (${homeWithDevices.home.location})",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                  )
+                }
+                HorizontalDivider(
+                  thickness = 1.dp,
+                  color = Color(0xFF2C2C2C),
+                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
+
+                homeWithDevices.rooms.forEach { roomWithDevices ->
+                  Row(
+                    modifier = Modifier
+                      .fillMaxWidth()
+                      .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                  ) {
+                    Icon(
+                      imageVector = Icons.Default.MeetingRoom,
+                      contentDescription = null,
+                      tint = Color.White,
+                      modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                      text = "${roomWithDevices.room.name} (${roomWithDevices.controllerDevices.size + roomWithDevices.sensorDevices.size})",
+                      style = MaterialTheme.typography.titleMedium,
+                      fontWeight = FontWeight.Bold,
+                      color = Color.White
+                    )
+                  }
+
+                  roomWithDevices.controllerDevices.forEach { device ->
+                    DeviceCard(
+                      device = device,
+                      onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
+                        navController.currentBackStackEntry?.savedStateHandle?.set("home", homeWithDevices.home)
+                        navController.currentBackStackEntry?.savedStateHandle?.set("room", roomWithDevices.room)
+                        navController.navigate(route = DevicesRoute.FeatureValues.name)
+                      }
+                    )
+                  }
+                  roomWithDevices.sensorDevices.forEach { sensor ->
+                    DeviceCard(
+                      device = sensor,
+                      onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("device", sensor)
+                        navController.currentBackStackEntry?.savedStateHandle?.set("home", homeWithDevices.home)
+                        navController.currentBackStackEntry?.savedStateHandle?.set("room", roomWithDevices.room)
+                        navController.navigate(route = DevicesRoute.FeatureValues.name)
+                      }
+                    )
+                  }
+                }
+              }
             }
           }
         }
@@ -201,60 +225,148 @@ fun DevicesListScreen(
 }
 
 @Composable
-fun SimpleCard(
+fun DeviceCard(
   device: Device,
-  onEdit: () -> Unit,
-  onDetails: () -> Unit,
+  onClick: () -> Unit,
 ) {
+  val hasController = device.features.any { it.type.lowercase().contains("controller") }
+
   Card(
-    elevation = CardDefaults.cardElevation(10.dp),
     modifier = Modifier
       .fillMaxWidth()
-      .padding(vertical = 10.dp, horizontal = 20.dp)
-      .clip(RoundedCornerShape(16.dp))
+      .padding(vertical = 8.dp)
+      .clickable { onClick() },
+    colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+    shape = RoundedCornerShape(16.dp),
+    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
   ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(vertical = 20.dp, horizontal = 20.dp)
+        .padding(16.dp)
     ) {
-      Text(
-        text = device.mac,
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.fillMaxWidth()
-      )
-      Text(
-        text = device.model,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.fillMaxWidth()
-      )
-      Spacer(modifier = Modifier.padding(5.dp))
       Row(
-        modifier = Modifier
-          .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
       ) {
-        TextButton(
-          onClick = { onEdit() },
-          modifier = Modifier.padding(8.dp),
-        ) {
-          Icon(
-            imageVector = Icons.Rounded.Settings,
-            contentDescription = "Settings",
-            modifier = Modifier.size(30.dp)
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text = if (!device.name.isNullOrBlank()) device.name else device.mac,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+          )
+          Text(
+            text = device.mac,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
           )
         }
-        TextButton(
-          onClick = { onDetails() },
-          modifier = Modifier.padding(8.dp),
-        ) {
-          Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.auto_stories_24px),
-            contentDescription = "Values",
-            modifier = Modifier.size(30.dp)
-          )
+        if (hasController) {
+          CtrlBadge()
+        }
+      }
+
+      Spacer(modifier = Modifier.height(16.dp))
+      HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
+      Spacer(modifier = Modifier.height(16.dp))
+
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .height(36.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        device.features.filter { it.enable && it.type.lowercase() == "sensor" }.forEach { feature ->
+          FeatureIcon(feature)
+          Spacer(modifier = Modifier.width(8.dp))
         }
       }
     }
+  }
+}
+
+@Composable
+fun CtrlBadge() {
+  Surface(
+    color = Color(0xFF5D2412),
+    shape = RoundedCornerShape(12.dp)
+  ) {
+    Row(
+      modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Icon(
+        imageVector = Icons.Default.Tune,
+        contentDescription = null,
+        tint = Color(0xFFFD7E13),
+        modifier = Modifier.size(14.dp)
+      )
+      Spacer(modifier = Modifier.width(4.dp))
+      Text(
+        text = "CTRL",
+        color = Color(0xFFFD7E13),
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold
+      )
+    }
+  }
+}
+
+@Composable
+fun FeatureIcon(feature: Feature) {
+  val iconRes = when (feature.name) {
+    "temperature" -> R.drawable.device_thermostat_24px
+    "humidity" -> R.drawable.invert_colors_24px
+    "light" -> R.drawable.light_mode_24px
+    "airpressure" -> R.drawable.compress_24px
+    "airquality" -> R.drawable.eco_24px
+    "motion" -> R.drawable.directions_run_24px
+    "online" -> R.drawable.bolt_24px
+    else -> R.drawable.question_mark_24px
+  }
+
+  Box(
+    modifier = Modifier
+      .size(36.dp)
+      .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+      .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp)),
+    contentAlignment = Alignment.Center
+  ) {
+    Icon(
+      imageVector = ImageVector.vectorResource(iconRes),
+      contentDescription = feature.name,
+      tint = Color(0xFFFD7E13),
+      modifier = Modifier.size(20.dp)
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DeviceCardPreview() {
+  AppTheme(darkTheme = true) {
+    DeviceCard(
+      device = Device(
+        id = "1",
+        uuid = "uuid",
+        mac = "1C:DB:D4:41:38:B4",
+        name = "My Device name",
+        manufacturer = "man",
+        model = "model info",
+        features = listOf(
+          Feature("1", "sensor", "temperature", true, 1, "C"),
+          Feature("2", "sensor", "humidity", true, 2, "%"),
+          Feature("3", "sensor", "light", true, 3, "lux"),
+          Feature("4", "sensor", "airquality", true, 4, ""),
+          Feature("5", "controller", "setpoint", true, 5, "")
+        ),
+        createdAt = "",
+        modifiedAt = ""
+      ),
+      onClick = {}
+    )
   }
 }

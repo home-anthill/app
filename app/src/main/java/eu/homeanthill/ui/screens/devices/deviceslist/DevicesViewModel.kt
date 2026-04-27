@@ -35,7 +35,7 @@ class DevicesListViewModel(
   val devicesUiState: StateFlow<DevicesUiState> = _deviceUiState
 
   init {
-    init()
+    loadDevices()
   }
 
   private fun getUnassignedDevices(homes: List<Home>, devices: List<Device>): List<Device> {
@@ -96,7 +96,7 @@ class DevicesListViewModel(
   }
 
 
-  private fun init() {
+  fun loadDevices() {
     viewModelScope.launch {
       _deviceUiState.emit(DevicesUiState.Loading)
       delay(LOAD_DELAY_MS)

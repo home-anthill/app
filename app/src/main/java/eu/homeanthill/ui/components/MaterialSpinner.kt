@@ -3,6 +3,7 @@ package eu.homeanthill.ui.components
 import android.util.Log
 import androidx.compose.foundation.layout.Column
 import eu.homeanthill.BuildConfig
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,10 +45,12 @@ fun MaterialSpinner(
   ExposedDropdownMenuBox(
     expanded = expanded,
     onExpandedChange = { expanded = it },
-    modifier = Modifier.then(modifier)
+    modifier = modifier
   ) {
     TextField(
-      modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+      modifier = Modifier
+        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+        .fillMaxWidth(),
       value = selectedOption?.value ?: SpinnerItemObj("---", "---").value,
       onValueChange = {},
       readOnly = true,

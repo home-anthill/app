@@ -7,9 +7,13 @@ This file tracks significant changes made with AI assistance, organized by type.
 ## 🔒 Security
 
 - **Credential storage migrated to `EncryptedSharedPreferences`** — All SharedPreferences access now uses `Context.securePrefs()` for AES256-GCM encryption. All credential reads/writes go through this helper. The preferences file is excluded from cloud backup and device-transfer to prevent leaking auth tokens via Android backup.
-- **Per-build-type network security config** — Release blocks all cleartext HTTP; debug and staging allow it. User-added CA certificates are trusted in debug/staging for MITM-proxy inspection.
+- **Per-build-type network security config** — Release and staging block cleartext HTTP and trust only system CAs; debug allows cleartext and user-added CA certificates for local/MITM inspection.
 - **Sensitive Logcat output removed** — OAuth deep-link query strings (containing `token`, `session_cookie`, `refresh_token`) removed from logs. All FCM, DI, and debug log calls guarded by `BuildConfig.DEBUG`.
-- **`HttpLoggingInterceptor` scoped to debug builds** — Level is `HEADERS` in debug/staging, `NONE` in release. `Authorization` and `Cookie` headers never appear in Logcat on production.
+- **`HttpLoggingInterceptor` scoped to debug builds** — Level is `HEADERS` in debug, `NONE` in staging/release. `Authorization` and `Cookie` headers never appear in Logcat on production-like builds.
+- **OAuth callback validation hardened** — `LoginActivity.handleOAuthCallback(Uri)` now validates callback scheme and `/postlogin` path before exchanging an app code. Debug additionally accepts `http` callbacks for local development; host and port remain in manifest/property configuration.
+- **Localhost OAuth callback moved to debug-only manifest** — `http://localhost:8082/postlogin` is no longer declared in the main manifest, so staging/release only expose the HTTPS app-link callback.
+- **Profile screenshots blocked** — `ProfileScreen` sets `FLAG_SECURE` while mounted and clears it on dispose to prevent screenshots/screen recording while the regenerated API token can be visible.
+- **Staging hardened** — Staging APKs are now non-debuggable, minified, resource-shrunk, cleartext-blocked, and use `HttpLoggingInterceptor.Level.NONE`.
 - **Token refresh on 401** — `AppAuthenticator` silently refreshes the JWT on first 401, retries the request, and only falls back to logout when the refresh itself fails. Prior-response guard fixed from `!= null` (true on 3xx redirects too) to `?.code == 401`.
 - **Mobile refresh token flow implemented** — Full JWT refresh token cycle with `RefreshTokenServices`, `TokenResponse`, and `RefreshTokenRepository`. Mobile refresh now posts `{ refreshToken }` to `/api/oauth/app/refresh` and persists the rotated `refreshToken` from the JSON response.
 - **Mobile OAuth login migrated to PKCE code exchange** — App login now opens `/api/oauth/app/login` with `code_challenge` / `code_challenge_method=S256`, receives an app code through the deep link, and exchanges it at `/api/oauth/app/exchange-code` using the stored code verifier instead of receiving tokens directly in the callback URL.

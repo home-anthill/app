@@ -34,6 +34,14 @@ class LoginRepository(private val context: Context) {
     context.securePrefs().edit { putString(refreshTokenKey, token) }
   }
 
+  fun getSessionCookie(): String? {
+    return context.securePrefs().getString(cookieKey, null)
+  }
+
+  fun setSessionCookie(cookie: String) {
+    context.securePrefs().edit { putString(cookieKey, cookie) }
+  }
+
   fun setFCMToken(fcmToken: String) {
     context.securePrefs().edit { putString(fcmTokenKey, fcmToken) }
   }

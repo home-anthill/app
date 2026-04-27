@@ -13,6 +13,7 @@ import eu.homeanthill.BuildConfig
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.RoomRequest
+import eu.homeanthill.api.model.UpdateHome
 
 class RoomsViewModel(
   private val homesRepository: HomesRepository
@@ -33,14 +34,36 @@ class RoomsViewModel(
   val roomsUiState: StateFlow<RoomsUiState> = _roomsUiState
 
   init {
-    init()
+    loadHomes()
+  }
+
+  fun editHome(id: String, name: String, location: String) {
+    viewModelScope.launch {
+      try {
+        homesRepository.repoPutHome(id, UpdateHome(name = name, location = location))
+        loadHomes()
+      } catch (err: IOException) {
+        _roomsUiState.emit(RoomsUiState.Error(err.message.toString()))
+      }
+    }
+  }
+
+  fun deleteHome(id: String) {
+    viewModelScope.launch {
+      try {
+        homesRepository.repoDeleteHome(id)
+        loadHomes()
+      } catch (err: IOException) {
+        _roomsUiState.emit(RoomsUiState.Error(err.message.toString()))
+      }
+    }
   }
 
   fun createRoom(id: String, name: String, floor: Int) {
     viewModelScope.launch {
       try {
         homesRepository.repoPostRoom(id, RoomRequest(name, floor))
-        init()
+        loadHomes()
       } catch (err: IOException) {
         _roomsUiState.emit(RoomsUiState.Error(err.message.toString()))
       }
@@ -51,7 +74,7 @@ class RoomsViewModel(
     viewModelScope.launch {
       try {
         homesRepository.repoPutRoom(id, rid, RoomRequest(name, floor))
-        init()
+        loadHomes()
       } catch (err: IOException) {
         _roomsUiState.emit(RoomsUiState.Error(err.message.toString()))
       }
@@ -62,14 +85,14 @@ class RoomsViewModel(
     viewModelScope.launch {
       try {
         homesRepository.repoDeleteRoom(id, rid)
-        init()
+        loadHomes()
       } catch (err: IOException) {
         _roomsUiState.emit(RoomsUiState.Error(err.message.toString()))
       }
     }
   }
 
-  private fun init() {
+  fun loadHomes() {
     viewModelScope.launch {
       _roomsUiState.emit(RoomsUiState.Loading)
       delay(LOAD_DELAY_MS)

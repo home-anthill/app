@@ -22,6 +22,9 @@ class LoginActivity : ComponentActivity() {
 
   companion object {
     private const val TAG = "LoginActivity"
+    private const val PROD_CALLBACK_SCHEME = "https"
+    private const val DEBUG_CALLBACK_SCHEME = "http"
+    private const val CALLBACK_PATH = "/postlogin"
   }
 
   /**
@@ -29,6 +32,10 @@ class LoginActivity : ComponentActivity() {
    * [PermissionActivity]. Returns true if all required parameters were present and handled.
    */
   private fun handleOAuthCallback(data: Uri): Boolean {
+    if (!isAllowedOAuthCallback(data)) {
+      Log.e(TAG, "handleOAuthCallback - callback URI is not allowed")
+      return false
+    }
     val code = data.getQueryParameter("code") ?: return false
     val codeVerifier = this.securePrefs().getString(pkceCodeVerifierKey, null) ?: run {
       Log.e(TAG, "handleOAuthCallback - PKCE code verifier is missing")
@@ -57,6 +64,13 @@ class LoginActivity : ComponentActivity() {
       finish()
     }
     return true
+  }
+
+  private fun isAllowedOAuthCallback(data: Uri): Boolean {
+    val isAllowedScheme = data.scheme == PROD_CALLBACK_SCHEME ||
+        (BuildConfig.DEBUG && data.scheme == DEBUG_CALLBACK_SCHEME)
+
+    return isAllowedScheme && data.path == CALLBACK_PATH
   }
 
   override fun onNewIntent(intent: Intent) {
