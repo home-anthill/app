@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.featurevalues.onlineValues
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +57,7 @@ fun OnlineFeatureValues(
     }
 
     is OnlineFeatureValuesViewModel.OnlineValuesUiState.Loading -> {
-      CircularProgressIndicator(color = Color(0xFFBD5700))
+      CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
     }
 
     is OnlineFeatureValuesViewModel.OnlineValuesUiState.Idle -> {
@@ -70,9 +71,9 @@ fun OnlineFeatureValues(
           modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-          colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
           shape = RoundedCornerShape(16.dp),
-          border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
         ) {
           Box {
             // Orange top border accent
@@ -80,15 +81,17 @@ fun OnlineFeatureValues(
               modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
-                .background(Color(0xFFBD5700).copy(alpha = 0.5f))
+                .background(MaterialTheme.colorScheme.secondary)
                 .align(Alignment.TopCenter)
             )
 
+            // sensor card
             Column(
               modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
             ) {
+              // header
               Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
@@ -96,14 +99,14 @@ fun OnlineFeatureValues(
                 Box(
                   modifier = Modifier
                     .size(48.dp)
-                    .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(12.dp)),
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
                   contentAlignment = Alignment.Center
                 ) {
                   Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.bolt_24px),
                     contentDescription = "Online",
-                    tint = Color(0xFFFD7E13),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                   )
                 }
@@ -111,27 +114,32 @@ fun OnlineFeatureValues(
                 Text(
                   text = stringResource(R.string.online),
                   style = MaterialTheme.typography.titleMedium,
-                  color = Color.White
+                  color = MaterialTheme.colorScheme.tertiary
                 )
               }
 
               Spacer(modifier = Modifier.height(24.dp))
 
+              // value
               Text(
                 text = if (isOffline) stringResource(R.string.offline_label) else stringResource(R.string.online_label),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (isOffline) Color(0xFFB71C1C) else Color(0xFF388E3C)
+                color = if (isOffline) MaterialTheme.colorScheme.error else Color(0xFF388E3C)
               )
 
               Spacer(modifier = Modifier.height(16.dp))
-              HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
+              HorizontalDivider(color = MaterialTheme.colorScheme.surface, thickness = 1.dp)
               Spacer(modifier = Modifier.height(16.dp))
 
+              // date
               Text(
-                text = stringResource(R.string.updated_at, onlineFeatureValuesViewModel.getPrettyDateFromUnixEpoch(onlineValuesUiState.onlineValue.modifiedAt)),
+                text = stringResource(
+                  R.string.updated_at,
+                  onlineFeatureValuesViewModel.getPrettyDateFromUnixEpoch(onlineValuesUiState.onlineValue.modifiedAt)
+                ),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
               )
             }
           }

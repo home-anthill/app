@@ -114,7 +114,7 @@ class LoginActivity : ComponentActivity() {
     enableEdgeToEdge()
     setContent {
       val context = LocalContext.current
-      AppTheme(dynamicColor = false) {
+      AppTheme {
         LoginScreen(
           onLoginClick = {
             val codeVerifier = PKCE.generateCodeVerifier()

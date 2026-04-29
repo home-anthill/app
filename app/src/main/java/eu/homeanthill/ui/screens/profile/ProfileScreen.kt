@@ -2,6 +2,7 @@ package eu.homeanthill.ui.screens.profile
 
 import android.app.Activity
 import android.view.WindowManager
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -36,19 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 
 import eu.homeanthill.R
@@ -98,110 +94,6 @@ fun ProfileScreen(
 }
 
 @Composable
-fun RegenerateTokenDialog(
-  onDismissRequest: () -> Unit,
-  onConfirm: () -> Unit
-) {
-  AlertDialog(
-    onDismissRequest = onDismissRequest,
-    icon = {
-      Icon(
-        painterResource(id = R.drawable.warning_24dp),
-        contentDescription = null,
-        tint = Color(0xFFFD7E13),
-        modifier = Modifier.size(32.dp)
-      )
-    },
-    title = {
-      Text(
-        text = stringResource(R.string.regen_api_token_title),
-        color = Color.White,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
-      )
-    },
-    text = {
-      Column {
-        Text(
-          text = buildAnnotatedString {
-            val text = stringResource(R.string.regen_api_token_warning_1)
-            val boldText = stringResource(R.string.critical_operation)
-            val index = text.indexOf(boldText)
-            if (index != -1) {
-              append(text.substring(0, index))
-              withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(boldText)
-              }
-              append(text.substring(index + boldText.length))
-            } else {
-              append(text)
-            }
-          },
-          color = Color.White,
-          fontSize = 16.sp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-          text = buildAnnotatedString {
-            val text = stringResource(R.string.regen_api_token_warning_2)
-            val boldText = stringResource(R.string.manually_reprogram)
-            val index = text.indexOf(boldText)
-            if (index != -1) {
-              append(text.substring(0, index))
-              withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                append(boldText)
-              }
-              append(text.substring(index + boldText.length))
-            } else {
-              append(text)
-            }
-          },
-          color = Color.White,
-          fontSize = 16.sp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-          text = stringResource(R.string.regen_api_token_confirm_question),
-          color = Color.White,
-          fontSize = 16.sp,
-          fontWeight = FontWeight.Bold
-        )
-      }
-    },
-    confirmButton = {
-      Button(
-        onClick = onConfirm,
-        modifier = Modifier.height(48.dp),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = Color(0xFFBD5700),
-          contentColor = Color.White
-        ),
-      ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          Text(text = stringResource(R.string.regen_api_token_confirm_btn), fontWeight = FontWeight.Bold)
-        }
-      }
-    },
-    dismissButton = {
-      TextButton(
-        onClick = onDismissRequest,
-        modifier = Modifier.height(48.dp),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = Color.Transparent,
-          contentColor = Color.White
-        ),
-      ) {
-        Text(
-          text = stringResource(R.string.cancel),
-          color = Color.White,
-          fontWeight = FontWeight.Bold
-        )
-      }
-    }
-  )
-}
-
-@Composable
 fun ProfileContent(
   profileUiState: ProfileViewModel.ProfileUiState,
   apiTokenUiState: ProfileViewModel.ApiTokenUiState,
@@ -211,21 +103,21 @@ fun ProfileContent(
 ) {
   Box(
     modifier = modifier
-        .fillMaxSize()
-        .background(Color.Black)
-        .padding(16.dp),
+      .fillMaxSize()
+      .background(MaterialTheme.colorScheme.background)
+      .padding(16.dp),
     contentAlignment = Alignment.Center,
   ) {
     Column(
       modifier = Modifier
-          .verticalScroll(rememberScrollState())
-          .padding(vertical = 16.dp)
+        .verticalScroll(rememberScrollState())
+        .padding(vertical = 16.dp)
     ) {
       Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF121212),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
       ) {
         Column(
           modifier = Modifier.padding(24.dp),
@@ -233,11 +125,11 @@ fun ProfileContent(
         ) {
           when (profileUiState) {
             is ProfileViewModel.ProfileUiState.Loading -> {
-              CircularProgressIndicator(color = Color(0xFFBD5700))
+              CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
             }
 
             is ProfileViewModel.ProfileUiState.Error -> {
-              Text(text = profileUiState.errorMessage, color = Color.Red)
+              Text(text = profileUiState.errorMessage, color = MaterialTheme.colorScheme.error)
             }
 
             is ProfileViewModel.ProfileUiState.Idle -> {
@@ -247,8 +139,8 @@ fun ProfileContent(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(160.dp)
-                    .clip(RoundedCornerShape(32.dp))
+                  .size(160.dp)
+                  .clip(RoundedCornerShape(32.dp))
               )
 
               Spacer(modifier = Modifier.height(24.dp))
@@ -256,25 +148,25 @@ fun ProfileContent(
               Text(
                 text = profile?.github?.name ?: "",
                 style = MaterialTheme.typography.headlineSmall,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.tertiary,
                 fontWeight = FontWeight.Bold
               )
 
               Text(
                 text = profile?.github?.email ?: "",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF9E9E9E)
+                color = MaterialTheme.colorScheme.tertiary,
               )
 
               Spacer(modifier = Modifier.height(24.dp))
-              HorizontalDivider(color = Color(0xFF2C2C2C))
+              HorizontalDivider(color = MaterialTheme.colorScheme.outline)
               Spacer(modifier = Modifier.height(24.dp))
 
               Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                   text = stringResource(id = R.string.profile_api_token),
                   style = MaterialTheme.typography.titleMedium,
-                  color = Color.White,
+                  color = MaterialTheme.colorScheme.tertiary,
                   fontWeight = FontWeight.Bold
                 )
 
@@ -282,25 +174,28 @@ fun ProfileContent(
 
                 Box(
                   modifier = Modifier
-                      .fillMaxWidth()
-                      .height(56.dp)
-                      .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                      .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp))
-                      .padding(horizontal = 16.dp),
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .background(
+                      MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                      RoundedCornerShape(8.dp)
+                    )
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 16.dp),
                   contentAlignment = Alignment.Center
                 ) {
                   when (apiTokenUiState) {
                     is ProfileViewModel.ApiTokenUiState.Loading -> {
                       CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = Color(0xFFBD5700)
+                        color = MaterialTheme.colorScheme.secondary
                       )
                     }
 
                     is ProfileViewModel.ApiTokenUiState.Error -> {
                       Text(
                         text = "********-****-****-****-************",
-                        color = Color(0xFF9E9E9E),
+                        color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                       )
@@ -309,7 +204,7 @@ fun ProfileContent(
                     is ProfileViewModel.ApiTokenUiState.Idle -> {
                       Text(
                         text = apiTokenUiState.apiToken,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         textAlign = TextAlign.Center
@@ -323,11 +218,11 @@ fun ProfileContent(
                 Button(
                   onClick = { onRegenToken(profile?.id) },
                   modifier = Modifier
-                      .fillMaxWidth()
-                      .height(52.dp),
+                    .fillMaxWidth()
+                    .height(52.dp),
                   colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFBD5700),
-                    contentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.tertiary
                   ),
                   shape = RoundedCornerShape(12.dp)
                 ) {
@@ -350,22 +245,22 @@ fun ProfileContent(
                 Text(
                   text = stringResource(id = R.string.profile_api_token_caption),
                   style = MaterialTheme.typography.bodySmall,
-                  color = Color(0xFF757575)
+                  color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f),
                 )
               }
 
               Spacer(modifier = Modifier.height(24.dp))
-              HorizontalDivider(color = Color(0xFF2C2C2C))
+              HorizontalDivider(color = MaterialTheme.colorScheme.outline)
               Spacer(modifier = Modifier.height(24.dp))
 
               Button(
                 onClick = onLogout,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
+                  .fillMaxWidth()
+                  .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
-                  containerColor = Color(0xFFB71C1C),
-                  contentColor = Color.White
+                  containerColor = MaterialTheme.colorScheme.error,
+                  contentColor = MaterialTheme.colorScheme.tertiary
                 ),
                 shape = RoundedCornerShape(12.dp)
               ) {
@@ -390,10 +285,74 @@ fun ProfileContent(
   }
 }
 
+@Composable
+fun RegenerateTokenDialog(
+  onDismissRequest: () -> Unit,
+  onConfirm: () -> Unit
+) {
+  AlertDialog(
+    onDismissRequest = onDismissRequest,
+    icon = {
+      Icon(
+        painterResource(id = R.drawable.warning_24dp),
+        contentDescription = stringResource(R.string.regen_api_token_title),
+        modifier = Modifier.size(32.dp)
+      )
+    },
+    title = {
+      Text(
+        text = stringResource(R.string.regen_api_token_title),
+        style = MaterialTheme.typography.titleMedium,
+      )
+    },
+    text = {
+      Column {
+        Text(
+          text = stringResource(R.string.regen_api_token_warning_1),
+          style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+          text = stringResource(R.string.regen_api_token_warning_2),
+          style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+          text = stringResource(R.string.regen_api_token_confirm_question),
+          style = MaterialTheme.typography.bodyMedium,
+          fontWeight = FontWeight.Bold
+        )
+      }
+    },
+    confirmButton = {
+      TextButton(
+        onClick = onConfirm,
+        modifier = Modifier.height(48.dp),
+      ) {
+        Text(
+          text = stringResource(R.string.regen_api_token_confirm_btn),
+          color = MaterialTheme.colorScheme.tertiary
+        )
+      }
+    },
+    dismissButton = {
+      TextButton(
+        onClick = onDismissRequest,
+        modifier = Modifier.height(48.dp)
+      ) {
+        Text(
+          text = stringResource(R.string.cancel),
+          color = MaterialTheme.colorScheme.tertiary
+        )
+      }
+    }
+  )
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-  AppTheme(darkTheme = true) {
+  AppTheme {
     ProfileContent(
       profileUiState = ProfileViewModel.ProfileUiState.Idle(
         Profile(

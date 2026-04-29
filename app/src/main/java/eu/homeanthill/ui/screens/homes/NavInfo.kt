@@ -6,6 +6,5 @@ object Graph {
 
 sealed class HomesRoute(val name: String) {
   data object Homes : HomesRoute("Homes")
-  data object EditHome : HomesRoute("EditHome")
-  data object Rooms : HomesRoute("Rooms")
+  data object HomeDetail : HomesRoute("HomeDetail")
 }

@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.homes.rooms
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,27 +63,19 @@ import eu.homeanthill.ui.components.ItemActionButtons
 import eu.homeanthill.ui.theme.AppTheme
 
 data class RoomItemObj(
-  val id: String = "",
-  val value: Boolean = false
+  val id: String = "", val value: Boolean = false
 )
 
 data class RoomEditObj(
-  val id: String = "",
-  val name: String = "",
-  val floor: Int = 0,
-  val value: Boolean = false
+  val id: String = "", val name: String = "", val floor: Int = 0, val value: Boolean = false
 )
 
 data class HomeEditObj(
-  val id: String = "",
-  val name: String = "",
-  val location: String = "",
-  val value: Boolean = false
+  val id: String = "", val name: String = "", val location: String = "", val value: Boolean = false
 )
 
 data class HomeDeleteObj(
-  val id: String = "",
-  val value: Boolean = false
+  val id: String = "", val value: Boolean = false
 )
 
 @Composable
@@ -116,8 +109,7 @@ fun RoomsScreen(
     },
     onDeleteRoom = { id, rid ->
       roomsViewModel.deleteRoom(id, rid)
-    }
-  )
+    })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,8 +147,7 @@ fun RoomsContent(
       onConfirmation = { id, name, location ->
         onEditHome(id, name, location)
         showEditHomeDialog = showEditHomeDialog.copy(value = false)
-      }
-    )
+      })
   }
 
   // Home Delete Dialog
@@ -170,8 +161,7 @@ fun RoomsContent(
       onConfirmation = {
         onDeleteHome(showDeleteHomeDialog.id)
         showDeleteHomeDialog = showDeleteHomeDialog.copy(value = false)
-      }
-    )
+      })
   }
 
   // Room Dialogs
@@ -202,8 +192,7 @@ fun RoomsContent(
           onUpdateRoom(homeId, showEditRoomDialog.id, name, floor.toInt())
           showEditRoomDialog = showEditRoomDialog.copy(value = false)
         }
-      }
-    )
+      })
   }
 
   if (showDeleteRoomDialog.value) {
@@ -218,130 +207,139 @@ fun RoomsContent(
           onDeleteRoom(homeId, showDeleteRoomDialog.id)
           showDeleteRoomDialog = showDeleteRoomDialog.copy(value = false)
         }
-      }
-    )
+      })
   }
 
-  Scaffold(
-    containerColor = Color.Black,
-    topBar = {
-      TopAppBar(
-        title = { Text(stringResource(R.string.home_details), color = Color.White) },
-        navigationIcon = {
-          IconButton(onClick = onNavigateBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = Color.White)
-          }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
+  Scaffold(containerColor = MaterialTheme.colorScheme.background, topBar = {
+    TopAppBar(
+      title = {
+      Text(
+        stringResource(R.string.home_details), color = MaterialTheme.colorScheme.tertiary
       )
     },
-    content = { padding ->
-      Column(
-        modifier = Modifier
-          .fillMaxSize()
-          .padding(padding)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
-      ) {
-        when (roomsUiState) {
-          is RoomsViewModel.RoomsUiState.Error -> {
-            Text(text = roomsUiState.errorMessage, color = MaterialTheme.colorScheme.error)
-          }
-          is RoomsViewModel.RoomsUiState.Loading -> {
-            CircularProgressIndicator(color = Color(0xFFBD5700))
-          }
-          is RoomsViewModel.RoomsUiState.Idle -> {
-            if (currHomeFromState != null) {
-              // Home Details Card
-              HomeDetailsHeader(
-                home = currHomeFromState,
-                onEdit = {
-                  showEditHomeDialog = HomeEditObj(
-                    id = currHomeFromState.id,
-                    name = currHomeFromState.name,
-                    location = currHomeFromState.location,
-                    value = true
-                  )
-                }
-              )
+      navigationIcon = {
+        IconButton(onClick = onNavigateBack) {
+          Icon(
+            Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(R.string.back),
+            tint = MaterialTheme.colorScheme.tertiary
+          )
+        }
+      },
+      colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+    )
+  }, content = { padding ->
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(padding)
+        .verticalScroll(rememberScrollState()),
+      verticalArrangement = Arrangement.Top,
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+      when (roomsUiState) {
+        is RoomsViewModel.RoomsUiState.Error -> {
+          Text(text = roomsUiState.errorMessage, color = MaterialTheme.colorScheme.error)
+        }
 
-              Spacer(modifier = Modifier.height(24.dp))
+        is RoomsViewModel.RoomsUiState.Loading -> {
+          CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+        }
 
+        is RoomsViewModel.RoomsUiState.Idle -> {
+          if (currHomeFromState != null) {
+            // Home Details Card
+            HomeDetailsHeader(
+              home = currHomeFromState, onEdit = {
+                showEditHomeDialog = HomeEditObj(
+                  id = currHomeFromState.id,
+                  name = currHomeFromState.name,
+                  location = currHomeFromState.location,
+                  value = true
+                )
+              })
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+              text = stringResource(R.string.rooms_title),
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold,
+              color = MaterialTheme.colorScheme.tertiary,
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+            )
+
+            if (currHomeFromState.rooms.isNullOrEmpty()) {
               Text(
-                text = stringResource(R.string.rooms_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                stringResource(R.string.rooms_empty),
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
               )
-
-              if (currHomeFromState.rooms.isNullOrEmpty()) {
-                Text(stringResource(R.string.rooms_empty), color = Color.Gray)
-              } else {
-                currHomeFromState.rooms.forEach { r ->
-                  RoomCard(
-                    room = r,
-                    onEdit = {
-                      showEditRoomDialog = RoomEditObj(id = r.id, name = r.name, floor = r.floor, value = true)
-                    },
-                    onDelete = {
-                      showDeleteRoomDialog = RoomItemObj(id = r.id, value = true)
-                    },
-                  )
-                }
+            } else {
+              currHomeFromState.rooms.forEach { r ->
+                RoomCard(
+                  room = r,
+                  onEdit = {
+                    showEditRoomDialog =
+                      RoomEditObj(id = r.id, name = r.name, floor = r.floor, value = true)
+                  },
+                  onDelete = {
+                    showDeleteRoomDialog = RoomItemObj(id = r.id, value = true)
+                  },
+                )
               }
-
-              Spacer(modifier = Modifier.height(32.dp))
-              HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
-              Spacer(modifier = Modifier.height(32.dp))
-
-              // Delete Home Button
-              Button(
-                onClick = {
-                  showDeleteHomeDialog = HomeDeleteObj(id = currHomeFromState.id, value = true)
-                },
-                colors = ButtonDefaults.buttonColors(
-                  contentColor = Color.White,
-                  containerColor = Color(0xFFB71C1C)
-                ),
-                shape = RoundedCornerShape(12.dp)
-              ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                  Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
-                  Spacer(modifier = Modifier.width(8.dp))
-                  Text(stringResource(R.string.homes_delete_title), fontWeight = FontWeight.Bold)
-                }
-              }
-              Spacer(modifier = Modifier.height(24.dp))
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Delete Home Button
+            Button(
+              onClick = {
+                showDeleteHomeDialog = HomeDeleteObj(id = currHomeFromState.id, value = true)
+              },
+              colors = ButtonDefaults.buttonColors(
+                contentColor = MaterialTheme.colorScheme.tertiary,
+                containerColor = MaterialTheme.colorScheme.error
+              ),
+              shape = RoundedCornerShape(12.dp)
+            ) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                  Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.homes_delete_title), fontWeight = FontWeight.Bold)
+              }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
           }
         }
       }
-    },
-    floatingActionButton = {
-      FloatingActionButton(
-        onClick = { showNewRoomDialog.value = true },
-        containerColor = Color(0xFFBD5700),
-        contentColor = Color.White,
+    }
+  }, floatingActionButton = {
+    FloatingActionButton(
+      onClick = { showNewRoomDialog.value = true },
+      containerColor = MaterialTheme.colorScheme.secondary,
+      contentColor = MaterialTheme.colorScheme.tertiary,
 
       ) {
-        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.rooms_add))
-      }
+      Icon(Icons.Default.Add, contentDescription = stringResource(R.string.rooms_add))
     }
-  )
+  })
 }
 
 @Composable
 fun HomeDetailsHeader(
-  home: Home,
-  onEdit: () -> Unit
+  home: Home, onEdit: () -> Unit
 ) {
   Card(
     modifier = Modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(16.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Row(
       modifier = Modifier
@@ -352,7 +350,7 @@ fun HomeDetailsHeader(
       Icon(
         imageVector = Icons.Default.Business,
         contentDescription = null,
-        tint = Color(0xFFBD5700),
+        tint = MaterialTheme.colorScheme.secondary,
         modifier = Modifier.size(32.dp)
       )
       Spacer(modifier = Modifier.width(16.dp))
@@ -361,12 +359,12 @@ fun HomeDetailsHeader(
           text = home.name,
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold,
-          color = Color.White
+          color = MaterialTheme.colorScheme.tertiary
         )
         Text(
           text = home.location,
           style = MaterialTheme.typography.bodyMedium,
-          color = Color.Gray
+          color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
         )
       }
       ItemActionButtons(onEdit = onEdit)
@@ -376,25 +374,41 @@ fun HomeDetailsHeader(
 
 @Composable
 fun RoomCard(
-  room: Room,
-  onEdit: () -> Unit,
-  onDelete: () -> Unit
+  room: Room, onEdit: () -> Unit, onDelete: () -> Unit
 ) {
   Card(
-    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF242424)),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 4.dp),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(12.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF333333))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Row(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
-      Box(modifier = Modifier.width(4.dp).height(40.dp).background(Color(0xFFBD5700), RoundedCornerShape(2.dp)))
+      Box(
+        modifier = Modifier
+          .width(4.dp)
+          .height(40.dp)
+          .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(2.dp))
+      )
       Spacer(modifier = Modifier.width(12.dp))
       Column(modifier = Modifier.weight(1f)) {
-        Text(text = room.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-        Text(text = "${stringResource(R.string.room_floor)} ${room.floor}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        Text(
+          text = room.name,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.tertiary
+        )
+        Text(
+          text = "${stringResource(R.string.room_floor)} ${room.floor}",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
+        )
       }
       ItemActionButtons(onEdit = onEdit, onDelete = onDelete)
     }
@@ -417,26 +431,55 @@ fun HomeEditDialog(
 
   Dialog(onDismissRequest = { onDismissRequest() }) {
     Card(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
-      Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = dialogText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp))
-        TextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name)) }, modifier = Modifier.fillMaxWidth())
+      Column(
+        modifier = Modifier.padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text(
+          text = dialogText,
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.tertiary,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+        )
+        TextField(
+          value = name,
+          onValueChange = { name = it },
+          label = { Text(stringResource(R.string.name)) },
+          modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        TextField(value = location, onValueChange = { location = it }, label = { Text(stringResource(R.string.location)) }, modifier = Modifier.fillMaxWidth())
+        TextField(
+          value = location,
+          onValueChange = { location = it },
+          label = { Text(stringResource(R.string.location)) },
+          modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-          TextButton(onClick = { onDismissRequest() }) { Text(text = cancelText, color = Color.White) }
+          TextButton(onClick = { onDismissRequest() }) {
+            Text(
+              text = cancelText, color = MaterialTheme.colorScheme.tertiary
+            )
+          }
           TextButton(
-            onClick = { onConfirmation(homeEditObj.id, name, location) },
-            enabled = isSaveEnabled
+            onClick = { onConfirmation(homeEditObj.id, name, location) }, enabled = isSaveEnabled
           ) {
             Text(
               text = saveText,
-              color = if (isSaveEnabled) Color.White else Color.Gray,
+              color = if (isSaveEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiary.copy(
+                alpha = 0.5f
+              ),
               fontWeight = FontWeight.Bold
             )
           }
@@ -457,24 +500,43 @@ fun HomeDeleteDialog(
 ) {
   Dialog(onDismissRequest = onDismissRequest) {
     Card(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
       Column(modifier = Modifier.padding(24.dp)) {
-        Text(text = dialogTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(
+          text = dialogTitle,
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.tertiary
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = dialogText, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        Text(
+          text = dialogText,
+          color = MaterialTheme.colorScheme.tertiary,
+          style = MaterialTheme.typography.bodyMedium
+        )
         Spacer(modifier = Modifier.height(24.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-          TextButton(onClick = onDismissRequest) { Text(text = dismissText, color = Color.White) }
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          TextButton(onClick = onDismissRequest) {
+            Text(
+              text = dismissText, color = MaterialTheme.colorScheme.tertiary
+            )
+          }
           Spacer(modifier = Modifier.width(16.dp))
           Button(
             onClick = onConfirmation,
             colors = ButtonDefaults.buttonColors(
-              containerColor = Color(0xFFB71C1C),
-              contentColor = Color.White
+              containerColor = MaterialTheme.colorScheme.error,
+              contentColor = MaterialTheme.colorScheme.tertiary
             ),
           ) {
             Text(text = confirmText, fontWeight = FontWeight.Bold)
@@ -501,14 +563,33 @@ fun EditRoomDialog(
 
   Dialog(onDismissRequest = { onDismissRequest() }) {
     Card(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
-      Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = dialogText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp))
-        TextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name)) }, modifier = Modifier.fillMaxWidth())
+      Column(
+        modifier = Modifier.padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text(
+          text = dialogText,
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.tertiary,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+        )
+        TextField(
+          value = name,
+          onValueChange = { name = it },
+          label = { Text(stringResource(R.string.name)) },
+          modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
           value = floor,
@@ -523,14 +604,19 @@ fun EditRoomDialog(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-          TextButton(onClick = { onDismissRequest() }) { Text(text = cancelText, color = Color.White) }
+          TextButton(onClick = { onDismissRequest() }) {
+            Text(
+              text = cancelText, color = MaterialTheme.colorScheme.tertiary
+            )
+          }
           TextButton(
-            onClick = { onConfirmation(name, floor) },
-            enabled = isSaveEnabled
+            onClick = { onConfirmation(name, floor) }, enabled = isSaveEnabled
           ) {
             Text(
               text = saveText,
-              color = if (isSaveEnabled) Color.White else Color.Gray,
+              color = if (isSaveEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiary.copy(
+                alpha = 0.5f
+              ),
               fontWeight = FontWeight.Bold
             )
           }
@@ -551,24 +637,43 @@ fun DeleteRoomDialog(
 ) {
   Dialog(onDismissRequest = onDismissRequest) {
     Card(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
       Column(modifier = Modifier.padding(24.dp)) {
-        Text(text = dialogTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(
+          text = dialogTitle,
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.tertiary
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = dialogText, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+        Text(
+          text = dialogText,
+          color = MaterialTheme.colorScheme.tertiary,
+          style = MaterialTheme.typography.bodyMedium
+        )
         Spacer(modifier = Modifier.height(24.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-          TextButton(onClick = onDismissRequest) { Text(text = dismissText, color = Color.White) }
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          TextButton(onClick = onDismissRequest) {
+            Text(
+              text = dismissText, color = MaterialTheme.colorScheme.tertiary
+            )
+          }
           Spacer(modifier = Modifier.width(16.dp))
           Button(
             onClick = onConfirmation,
             colors = ButtonDefaults.buttonColors(
-              containerColor = Color(0xFFB71C1C),
-              contentColor = Color.White
+              containerColor = MaterialTheme.colorScheme.error,
+              contentColor = MaterialTheme.colorScheme.tertiary
             ),
           ) {
             Text(text = confirmText, fontWeight = FontWeight.Bold)
@@ -594,14 +699,33 @@ fun NewRoomDialog(
 
   Dialog(onDismissRequest = { onDismissRequest() }) {
     Card(
-      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
-      Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = dialogText, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp))
-        TextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name)) }, modifier = Modifier.fillMaxWidth())
+      Column(
+        modifier = Modifier.padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        Text(
+          text = dialogText,
+          style = MaterialTheme.typography.titleLarge,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.tertiary,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+        )
+        TextField(
+          value = name,
+          onValueChange = { name = it },
+          label = { Text(stringResource(R.string.name)) },
+          modifier = Modifier.fillMaxWidth()
+        )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
           value = floor,
@@ -616,14 +740,19 @@ fun NewRoomDialog(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-          TextButton(onClick = { onDismissRequest() }) { Text(text = cancelText, color = Color.White) }
+          TextButton(onClick = { onDismissRequest() }) {
+            Text(
+              text = cancelText, color = MaterialTheme.colorScheme.tertiary
+            )
+          }
           TextButton(
-            onClick = { onConfirmation(name, floor) },
-            enabled = isSaveEnabled
+            onClick = { onConfirmation(name, floor) }, enabled = isSaveEnabled
           ) {
             Text(
               text = saveText,
-              color = if (isSaveEnabled) Color.White else Color.Gray,
+              color = if (isSaveEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiary.copy(
+                alpha = 0.5f
+              ),
               fontWeight = FontWeight.Bold
             )
           }
@@ -636,20 +765,37 @@ fun NewRoomDialog(
 @Preview(showBackground = true)
 @Composable
 fun RoomCardPreview() {
-  AppTheme(darkTheme = true) {
+  AppTheme {
     RoomCard(
-      room = Room(id = "1", name = "Salotto", floor = 1, createdAt = "", modifiedAt = "", devices = emptyList()),
-      onEdit = {},
-      onDelete = {}
-    )
+      room = Room(
+      id = "1",
+      name = "Salotto",
+      floor = 1,
+      createdAt = "",
+      modifiedAt = "",
+      devices = emptyList()
+    ), onEdit = {}, onDelete = {})
   }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun RoomsContentPreview() {
-  val mockHome = Home(id = "1", name = "Casa", location = "Torino", rooms = listOf(Room(id = "1", name = "Salotto", floor = 1, createdAt = "", modifiedAt = "", devices = emptyList()), Room(id = "2", name = "Cucina", floor = 1, createdAt = "", modifiedAt = "", devices = emptyList())), createdAt = "", modifiedAt = "")
-  AppTheme(darkTheme = true) {
+  val mockHome = Home(
+    id = "1", name = "Casa", location = "Torino", rooms = listOf(
+      Room(
+        id = "1",
+        name = "Salotto",
+        floor = 1,
+        createdAt = "",
+        modifiedAt = "",
+        devices = emptyList()
+      ), Room(
+        id = "2", name = "Cucina", floor = 1, createdAt = "", modifiedAt = "", devices = emptyList()
+      )
+    ), createdAt = "", modifiedAt = ""
+  )
+  AppTheme {
     RoomsContent(
       roomsUiState = RoomsViewModel.RoomsUiState.Idle(homes = listOf(mockHome)),
       homeId = "1",
@@ -658,7 +804,6 @@ fun RoomsContentPreview() {
       onDeleteHome = { _ -> },
       onCreateRoom = { _, _, _ -> },
       onUpdateRoom = { _, _, _, _ -> },
-      onDeleteRoom = { _, _ -> }
-    )
+      onDeleteRoom = { _, _ -> })
   }
 }

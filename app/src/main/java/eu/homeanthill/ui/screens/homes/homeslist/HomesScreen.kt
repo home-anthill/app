@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.homes.homeslist
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,8 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,7 +81,7 @@ fun HomesListScreen(
     },
     onNavigateToDetails = { home ->
       navController.currentBackStackEntry?.savedStateHandle?.set("home", home)
-      navController.navigate(route = HomesRoute.EditHome.name)
+      navController.navigate(route = HomesRoute.HomeDetail.name)
     }
   )
 }
@@ -114,7 +112,7 @@ fun HomesListContent(
   }
 
   Scaffold(
-    containerColor = Color.Black,
+    containerColor = MaterialTheme.colorScheme.background,
     content = { padding ->
       PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -142,7 +140,7 @@ fun HomesListContent(
 
             is HomesListViewModel.HomesUiState.Loading -> {
               if (!isRefreshing) {
-                CircularProgressIndicator(color = Color(0xFFBD5700))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
               }
             }
 
@@ -161,8 +159,8 @@ fun HomesListContent(
     floatingActionButton = {
       FloatingActionButton(
         onClick = { showNewDialog.value = true },
-        containerColor = Color(0xFFBD5700),
-        contentColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.secondary,
+        contentColor = MaterialTheme.colorScheme.tertiary,
         shape = RoundedCornerShape(16.dp)
       ) {
         Icon(
@@ -184,9 +182,9 @@ fun HomeItemCard(
       .fillMaxWidth()
       .padding(vertical = 8.dp)
       .clickable { onClick() },
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(16.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Row(
       verticalAlignment = Alignment.CenterVertically,
@@ -195,7 +193,7 @@ fun HomeItemCard(
       Icon(
         imageVector = Icons.Default.Business,
         contentDescription = null,
-        tint = Color(0xFFBD5700),
+        tint = MaterialTheme.colorScheme.secondary,
         modifier = Modifier.size(32.dp)
       )
       Spacer(modifier = Modifier.width(16.dp))
@@ -204,18 +202,18 @@ fun HomeItemCard(
           text = home.name,
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold,
-          color = Color.White
+          color = MaterialTheme.colorScheme.tertiary
         )
         Text(
           text = home.location,
           style = MaterialTheme.typography.bodyMedium,
-          color = Color.Gray
+          color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
         )
       }
       Icon(
         imageVector = Icons.Default.ChevronRight,
         contentDescription = null,
-        tint = Color.Gray
+        tint = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
       )
     }
   }
@@ -240,8 +238,8 @@ fun NewHomeDialog(
         .fillMaxWidth()
         .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
       Column(
         modifier = Modifier.padding(24.dp),
@@ -252,8 +250,10 @@ fun NewHomeDialog(
           text = dialogText,
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold,
-          color = Color.White,
-          modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+          color = MaterialTheme.colorScheme.tertiary,
+          modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
         )
         TextField(
           value = name,
@@ -274,7 +274,7 @@ fun NewHomeDialog(
           horizontalArrangement = Arrangement.End,
         ) {
           TextButton(onClick = { onDismissRequest() }) {
-            Text(text = cancelText, color = Color.White)
+            Text(text = cancelText, color = MaterialTheme.colorScheme.tertiary)
           }
           TextButton(
             onClick = { onConfirmation(name, location) },
@@ -282,72 +282,11 @@ fun NewHomeDialog(
           ) {
             Text(
               text = saveText,
-              color = if (isSaveEnabled) Color.White else Color.Gray,
+              color = if (isSaveEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiary.copy(
+                alpha = 0.5f
+              ),
               fontWeight = FontWeight.Bold
             )
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-fun DeleteHomeDialog(
-  dialogTitle: String,
-  dialogText: String,
-  confirmText: String,
-  dismissText: String,
-  onDismissRequest: () -> Unit,
-  onConfirmation: () -> Unit,
-) {
-  Dialog(onDismissRequest = onDismissRequest) {
-    Card(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp),
-      shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
-    ) {
-      Column(
-        modifier = Modifier.padding(24.dp)
-      ) {
-        Text(
-          text = dialogTitle,
-          style = MaterialTheme.typography.titleLarge,
-          fontWeight = FontWeight.Bold,
-          color = Color.White
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-          text = dialogText,
-          color = Color.White,
-          style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.End,
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          TextButton(onClick = onDismissRequest) {
-            Text(text = dismissText, color = Color.White)
-          }
-          Spacer(modifier = Modifier.width(16.dp))
-          Button(
-            onClick = onConfirmation,
-            colors = ButtonDefaults.buttonColors(
-              containerColor = Color(0xFFBD5700),
-              contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(8.dp)
-          ) {
-            Text(text = confirmText, fontWeight = FontWeight.Bold)
           }
         }
       }
@@ -358,9 +297,16 @@ fun DeleteHomeDialog(
 @Preview(showBackground = true)
 @Composable
 fun HomeItemCardPreview() {
-  AppTheme(darkTheme = true) {
+  AppTheme {
     HomeItemCard(
-      home = Home(id = "1", name = "Casa", location = "Torino", rooms = emptyList(), createdAt = "", modifiedAt = ""),
+      home = Home(
+        id = "1",
+        name = "Casa",
+        location = "Torino",
+        rooms = emptyList(),
+        createdAt = "",
+        modifiedAt = ""
+      ),
       onClick = {}
     )
   }
@@ -369,12 +315,26 @@ fun HomeItemCardPreview() {
 @Preview(showBackground = true)
 @Composable
 fun HomesListContentPreview() {
-  AppTheme(darkTheme = true) {
+  AppTheme {
     HomesListContent(
       homesUiState = HomesListViewModel.HomesUiState.Idle(
         homes = listOf(
-          Home(id = "1", name = "Casa", location = "Torino", rooms = emptyList(), createdAt = "", modifiedAt = ""),
-          Home(id = "2", name = "Ufficio", location = "Milano", rooms = emptyList(), createdAt = "", modifiedAt = "")
+          Home(
+            id = "1",
+            name = "Casa",
+            location = "Torino",
+            rooms = emptyList(),
+            createdAt = "",
+            modifiedAt = ""
+          ),
+          Home(
+            id = "2",
+            name = "Ufficio",
+            location = "Milano",
+            rooms = emptyList(),
+            createdAt = "",
+            modifiedAt = ""
+          )
         )
       ),
       isRefreshing = false,

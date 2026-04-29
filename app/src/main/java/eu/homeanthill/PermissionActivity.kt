@@ -13,10 +13,8 @@ class PermissionActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     setContent {
-      AppTheme(dynamicColor = false) {
-        PermissionScreen(
-
-        )
+      AppTheme {
+        PermissionScreen()
       }
     }
   }

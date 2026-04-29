@@ -13,7 +13,6 @@
     <string name="home_permission">Permission</string>
     <string name="home_permission_test">The notification is important for this app. Please grant the permission.</string>
     <string name="home_ask_permission">Ask for permission</string>
-    <string name="home_permission_granted">Permission Granted</string>
     <string name="home_permission_rationale">The notification is important for this app. Please grant the permission.</string>
     <string name="home_permission_required">The notification permission is required for some functionality.</string>
 
@@ -101,6 +100,4 @@
     <string name="regen_api_token_warning_2">After regeneration, you will need to manually reprogram each device one by one with the new token to restore connectivity.</string>
     <string name="regen_api_token_confirm_question">Are you sure you want to proceed?</string>
     <string name="regen_api_token_confirm_btn">Confirm</string>
-    <string name="critical_operation">critical operation</string>
-    <string name="manually_reprogram">manually reprogram each device</string>
 </resources>

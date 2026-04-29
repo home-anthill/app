@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,14 +29,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -42,13 +43,12 @@ import com.google.accompanist.permissions.shouldShowRationale
 
 import eu.homeanthill.MainActivity
 import eu.homeanthill.R
-import eu.homeanthill.ui.navigation.Destinations
+import eu.homeanthill.ui.theme.AppTheme
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(
   modifier: Modifier = Modifier,
-  navController: NavHostController = rememberNavController(),
 ) {
   val context = LocalContext.current
 
@@ -74,14 +74,14 @@ fun PermissionScreen(
       title = {
         Text(
           text = stringResource(R.string.home_permission),
-          fontWeight = FontWeight.Bold,
-          fontSize = 16.sp
+          style = MaterialTheme.typography.titleMedium,
+          color = MaterialTheme.colorScheme.tertiary,
         )
       },
       text = {
         Text(
           text = stringResource(R.string.home_permission_test),
-          fontSize = 16.sp
+          style = MaterialTheme.typography.bodyMedium,
         )
       },
       confirmButton = {
@@ -114,10 +114,32 @@ fun PermissionScreen(
     )
   }
 
+  PermissionContent(
+    modifier = modifier,
+    isPermissionGranted = notificationPermission.status.isGranted,
+    shouldShowRationale = notificationPermission.status.shouldShowRationale,
+    onRequestPermission = {
+      if (notificationPermission.status.shouldShowRationale) {
+        showRationalDialog.value = true
+      } else {
+        notificationPermission.launchPermissionRequest()
+      }
+    }
+  )
+}
+
+@Composable
+fun PermissionContent(
+  modifier: Modifier = Modifier,
+  isPermissionGranted: Boolean,
+  shouldShowRationale: Boolean,
+  onRequestPermission: () -> Unit
+) {
   Box(
     modifier = modifier
       .fillMaxSize()
-      .background(Color.Black),
+      .background(MaterialTheme.colorScheme.background)
+      .padding(16.dp),
     contentAlignment = Alignment.Center
   ) {
     Surface(
@@ -125,35 +147,27 @@ fun PermissionScreen(
         .fillMaxWidth()
         .padding(24.dp),
       shape = RoundedCornerShape(16.dp),
-      color = Color(0xFF121212),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      color = MaterialTheme.colorScheme.surface,
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
       Column(
         modifier = Modifier
+          .fillMaxWidth()
           .padding(vertical = 64.dp, horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
       ) {
-        if (!notificationPermission.status.isGranted) {
+        if (!isPermissionGranted) {
           Button(
-            onClick = {
-              if (notificationPermission.status.shouldShowRationale) {
-                // Show a rationale if needed (optional)
-                showRationalDialog.value = true
-              } else {
-                // Request the permission
-                notificationPermission.launchPermissionRequest()
-
-              }
-            },
+            onClick = onRequestPermission,
             modifier = Modifier
               .fillMaxWidth()
-              .height(64.dp),
+              .height(52.dp),
             colors = ButtonDefaults.buttonColors(
-              containerColor = Color(0xFFBD5700),
-              contentColor = Color.White
+              containerColor = MaterialTheme.colorScheme.secondary,
+              contentColor = MaterialTheme.colorScheme.tertiary,
             ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(12.dp)
           ) {
             Row(
               verticalAlignment = Alignment.CenterVertically,
@@ -161,32 +175,52 @@ fun PermissionScreen(
             ) {
               Text(
                 text = stringResource(id = R.string.home_ask_permission),
-                fontSize = 20.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
               )
             }
           }
           Spacer(modifier = Modifier.height(20.dp))
           Text(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
-            text = if (notificationPermission.status.isGranted) {
-              stringResource(R.string.home_permission_granted)
-            } else if (notificationPermission.status.shouldShowRationale) {
-              // If the user has denied the permission but the rationale can be shown,
-              // then gently explain why the app requires this permission
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(vertical = 5.dp),
+            text = if (shouldShowRationale) {
               stringResource(R.string.home_permission_rationale)
             } else {
-              // If it's the first time the user lands on this feature, or the user
-              // doesn't want to be asked again for this permission, explain that the
-              // permission is required
               stringResource(R.string.home_permission_required)
             },
-            color = Color(0xFF9E9E9E),
+            color = MaterialTheme.colorScheme.tertiary,
             fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
           )
         }
       }
     }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PermissionScreenPreview() {
+  AppTheme {
+    PermissionContent(
+      isPermissionGranted = false,
+      shouldShowRationale = false,
+      onRequestPermission = {}
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PermissionScreenRationalePreview() {
+  AppTheme {
+    PermissionContent(
+      isPermissionGranted = false,
+      shouldShowRationale = true,
+      onRequestPermission = {}
+    )
   }
 }

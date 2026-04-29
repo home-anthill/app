@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.featurevalues
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -21,8 +22,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,7 +36,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -54,7 +52,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -68,14 +65,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import eu.homeanthill.R
 
+import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.Room
 import eu.homeanthill.ui.components.MaterialSpinner
 import eu.homeanthill.ui.components.SpinnerItemObj
-import eu.homeanthill.ui.screens.devices.DevicesRoute
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerFeatureValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesScreen
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValuesViewModel
@@ -147,7 +143,7 @@ fun FeaturesScreen(
   }
 
   Scaffold(
-    containerColor = Color.Black,
+    containerColor = MaterialTheme.colorScheme.background,
     snackbarHost = {
       SnackbarHost(hostState = snackbarHostState)
     },
@@ -184,12 +180,12 @@ fun FeaturesScreen(
               Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.back),
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.tertiary
               )
             }
             Text(
               text = stringResource(R.string.devices_back),
-              color = Color.White,
+              color = MaterialTheme.colorScheme.tertiary,
               fontSize = 18.sp,
               fontWeight = FontWeight.Bold
             )
@@ -224,7 +220,7 @@ fun FeaturesScreen(
 
             is FeaturesViewModel.FeatureValuesUiState.Loading -> {
               if (!isRefreshing) {
-                CircularProgressIndicator(color = Color(0xFFBD5700))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
               }
             }
 
@@ -237,7 +233,7 @@ fun FeaturesScreen(
                 it.feature.name.lowercase() != "online"
               } ?: emptyList()
 
-              // 1. Connectivity/Sensors Section
+              // sensors/online section
               if (hasOnline || sensorFeatures.isNotEmpty()) {
                 SectionHeader(title = stringResource(R.string.sensors), icon = Icons.Default.MonitorHeart)
 
@@ -261,9 +257,8 @@ fun FeaturesScreen(
                 }
               }
 
-              // 3. Controls Section
+              // controls section
               if (featureValuesUiState.deviceValue?.controllerFeatureValues?.isNotEmpty() == true) {
-                SectionHeader(title = stringResource(R.string.controls), icon = Icons.Default.Tune)
                 val controllerFeatureValuesViewModel = koinViewModel<ControllerFeatureValuesViewModel>()
                 val getValueUiState by controllerFeatureValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
                 ControllerValuesScreen(
@@ -288,18 +283,18 @@ fun FeaturesScreen(
               }
 
               Spacer(modifier = Modifier.height(32.dp))
-              HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-              Spacer(modifier = Modifier.height(32.dp))
+              HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+              Spacer(modifier = Modifier.height(16.dp))
 
-              // Delete Device Button
+              // delete device button
               Button(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier
                   .padding(horizontal = 16.dp, vertical = 24.dp)
                   .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
-                  containerColor = Color(0xFFB71C1C),
-                  contentColor = Color.White
+                  containerColor = MaterialTheme.colorScheme.error,
+                  contentColor = MaterialTheme.colorScheme.tertiary
                 ),
                 shape = RoundedCornerShape(12.dp)
               ) {
@@ -342,8 +337,8 @@ fun DeviceSettingsDialog(
         .fillMaxWidth()
         .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
       Column(
         modifier = Modifier.padding(24.dp)
@@ -357,7 +352,7 @@ fun DeviceSettingsDialog(
             text = stringResource(R.string.device_settings),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.tertiary
           )
         }
 
@@ -367,7 +362,7 @@ fun DeviceSettingsDialog(
         Text(
           text = stringResource(R.string.device_name_label),
           style = MaterialTheme.typography.labelMedium,
-          color = Color.White,
+          color = MaterialTheme.colorScheme.tertiary,
           modifier = Modifier.padding(bottom = 8.dp)
         )
         TextField(
@@ -376,12 +371,10 @@ fun DeviceSettingsDialog(
           modifier = Modifier.fillMaxWidth(),
           shape = RoundedCornerShape(8.dp),
           colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF2C2C2C),
-            unfocusedContainerColor = Color(0xFF2C2C2C),
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
+            focusedContainerColor = MaterialTheme.colorScheme.outline,
+            unfocusedContainerColor = MaterialTheme.colorScheme.outline,
+            focusedTextColor = MaterialTheme.colorScheme.tertiary,
+            unfocusedTextColor = MaterialTheme.colorScheme.tertiary
           )
         )
 
@@ -391,7 +384,7 @@ fun DeviceSettingsDialog(
         Text(
           text = stringResource(R.string.home_label),
           style = MaterialTheme.typography.labelMedium,
-          color = Color.White,
+          color = MaterialTheme.colorScheme.tertiary,
           modifier = Modifier.padding(bottom = 8.dp)
         )
         MaterialSpinner(
@@ -411,7 +404,7 @@ fun DeviceSettingsDialog(
         Text(
           text = stringResource(R.string.room_label),
           style = MaterialTheme.typography.labelMedium,
-          color = Color.White,
+          color = MaterialTheme.colorScheme.tertiary,
           modifier = Modifier.padding(bottom = 8.dp)
         )
         MaterialSpinner(
@@ -432,7 +425,7 @@ fun DeviceSettingsDialog(
           verticalAlignment = Alignment.CenterVertically
         ) {
           TextButton(onClick = onDismissRequest) {
-            Text(text = stringResource(R.string.cancel), color = Color.White)
+            Text(text = stringResource(R.string.cancel), color = MaterialTheme.colorScheme.tertiary)
           }
           Spacer(modifier = Modifier.width(16.dp))
           TextButton(
@@ -445,7 +438,7 @@ fun DeviceSettingsDialog(
           ) {
             Text(
               text = stringResource(R.string.save),
-              color = if (isSaveEnabled) Color.White else Color.Gray,
+              color = if (isSaveEnabled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f),
               fontWeight = FontWeight.Bold
             )
           }
@@ -467,8 +460,8 @@ fun DeleteDeviceDialog(
         .fillMaxWidth()
         .padding(16.dp),
       shape = RoundedCornerShape(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E)),
-      border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
       Column(
         modifier = Modifier.padding(24.dp)
@@ -477,7 +470,7 @@ fun DeleteDeviceDialog(
           text = stringResource(R.string.device_delete_title),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold,
-          color = Color.White
+          color = MaterialTheme.colorScheme.tertiary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -493,7 +486,7 @@ fun DeleteDeviceDialog(
             }
             append(text.substring(index + deviceDisplayName.length))
           },
-          color = Color.White,
+          color = MaterialTheme.colorScheme.tertiary,
           style = MaterialTheme.typography.bodyMedium
         )
 
@@ -506,7 +499,7 @@ fun DeleteDeviceDialog(
             }
             append(stringResource(R.string.device_delete_warning))
           },
-          color = Color.White,
+          color = MaterialTheme.colorScheme.tertiary,
           style = MaterialTheme.typography.bodyMedium
         )
 
@@ -518,14 +511,14 @@ fun DeleteDeviceDialog(
           verticalAlignment = Alignment.CenterVertically
         ) {
           TextButton(onClick = onDismissRequest) {
-            Text(text = stringResource(R.string.cancel), color = Color.White)
+            Text(text = stringResource(R.string.cancel), color = MaterialTheme.colorScheme.tertiary)
           }
           Spacer(modifier = Modifier.width(16.dp))
           Button(
             onClick = onConfirm,
             colors = ButtonDefaults.buttonColors(
-              containerColor = Color(0xFFB71C1C),
-              contentColor = Color.White
+              containerColor = MaterialTheme.colorScheme.error,
+              contentColor = MaterialTheme.colorScheme.tertiary
             ),
           ) {
             Text(text = stringResource(R.string.delete), fontWeight = FontWeight.Bold)
@@ -547,14 +540,14 @@ fun SectionHeader(title: String, icon: ImageVector) {
     Box(
       modifier = Modifier
         .size(32.dp)
-        .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
-        .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp)),
+        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
       contentAlignment = Alignment.Center
     ) {
       Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = Color(0xFFFD7E13),
+        tint = MaterialTheme.colorScheme.primary,
         modifier = Modifier.size(18.dp)
       )
     }
@@ -563,7 +556,7 @@ fun SectionHeader(title: String, icon: ImageVector) {
       text = title,
       style = MaterialTheme.typography.titleLarge,
       fontWeight = FontWeight.Bold,
-      color = Color(0xFFFD7E13)
+      color = MaterialTheme.colorScheme.primary
     )
   }
 }
@@ -579,9 +572,9 @@ fun DeviceHeaderCard(
     modifier = Modifier
       .fillMaxWidth()
       .padding(horizontal = 16.dp),
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(16.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Column(modifier = Modifier.padding(24.dp)) {
       Row(
@@ -593,26 +586,26 @@ fun DeviceHeaderCard(
           text = if (!device.name.isNullOrBlank()) device.name else device.mac,
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
-          color = Color.White,
+          color = MaterialTheme.colorScheme.tertiary,
           modifier = Modifier.weight(1f)
         )
         IconButton(
           onClick = onSettingsClick,
           modifier = Modifier
             .size(40.dp)
-            .background(Color(0xFF2C2C2C), RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
         ) {
           Icon(
             imageVector = Icons.Default.Settings,
             contentDescription = stringResource(R.string.device_settings),
-            tint = Color.White,
+            tint = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier.size(20.dp)
           )
         }
       }
 
       Spacer(modifier = Modifier.height(16.dp))
-      HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
+      HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
       Spacer(modifier = Modifier.height(24.dp))
 
       DeviceDetailItem(label = stringResource(R.string.device_model), value = device.model)
@@ -632,14 +625,14 @@ fun DeviceDetailItem(label: String, value: String) {
   Row(verticalAlignment = Alignment.CenterVertically) {
     Text(
       text = label,
-      color = Color(0xFFFD7E13),
+      color = MaterialTheme.colorScheme.primary,
       fontWeight = FontWeight.Bold,
       style = MaterialTheme.typography.bodyMedium,
       modifier = Modifier.width(100.dp)
     )
     Text(
       text = value,
-      color = Color.Gray,
+      color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f),
       style = MaterialTheme.typography.bodyMedium
     )
   }

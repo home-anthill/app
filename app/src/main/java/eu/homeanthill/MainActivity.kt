@@ -37,7 +37,6 @@ import eu.homeanthill.ui.navigation.Destinations.HOME
 import eu.homeanthill.ui.navigation.Destinations.HOMES
 import eu.homeanthill.ui.navigation.Destinations.PROFILE
 import eu.homeanthill.ui.screens.devices.DevicesScreen
-import eu.homeanthill.ui.screens.main.MainViewModel
 import eu.homeanthill.ui.screens.homes.HomesScreen
 import eu.homeanthill.ui.screens.profile.ProfileScreen
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
@@ -47,7 +46,7 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     setContent {
-      AppTheme(dynamicColor = false) {
+      AppTheme {
         AppNavGraph()
       }
     }
@@ -76,9 +75,6 @@ fun AppNavGraph(
       snackbarHostState.showSnackbar(message = text, duration = SnackbarDuration.Long)
     }
   }
-
-  val mainViewModel = koinViewModel<MainViewModel>()
-  val mainUiState by mainViewModel.mainUiState.collectAsStateWithLifecycle()
 
   val currentNavBackStackEntry by navController.currentBackStackEntryAsState()
   val currentDestination = currentNavBackStackEntry?.destination

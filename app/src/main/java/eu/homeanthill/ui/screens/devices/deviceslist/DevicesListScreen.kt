@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -59,7 +59,7 @@ import eu.homeanthill.ui.theme.AppTheme
 @Composable
 fun DevicesListScreen(
   devicesUiState: DevicesListViewModel.DevicesUiState,
-  @Suppress("UNUSED_PARAMETER") devicesViewModel: DevicesListViewModel,
+  devicesViewModel: DevicesListViewModel,
   navController: NavController,
 ) {
   var isRefreshing by remember { mutableStateOf(false) }
@@ -75,16 +75,13 @@ fun DevicesListScreen(
   }
 
   Scaffold(
-    containerColor = Color.Black,
+    containerColor = MaterialTheme.colorScheme.background,
     content = { padding ->
       PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
+        isRefreshing = isRefreshing, onRefresh = {
           isRefreshing = true
           devicesViewModel.loadDevices()
-        },
-        state = rememberPullToRefreshState(),
-        modifier = Modifier
+        }, state = rememberPullToRefreshState(), modifier = Modifier
           .fillMaxSize()
           .padding(padding)
       ) {
@@ -106,7 +103,7 @@ fun DevicesListScreen(
 
             is DevicesListViewModel.DevicesUiState.Loading -> {
               if (!isRefreshing) {
-                CircularProgressIndicator(color = Color(0xFFFD7E13))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
               }
             }
 
@@ -118,58 +115,54 @@ fun DevicesListScreen(
                   text = stringResource(R.string.devices_unassigned),
                   style = MaterialTheme.typography.titleLarge,
                   fontWeight = FontWeight.Bold,
-                  color = Color(0xFFFD7E13),
+                  color = MaterialTheme.colorScheme.primary,
                   modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
                 )
                 deviceList.unassignedDevices.forEach { device ->
                   DeviceCard(
-                    device = device,
-                    onClick = {
+                    device = device, onClick = {
                       navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
                       navController.currentBackStackEntry?.savedStateHandle?.set("home", null)
                       navController.currentBackStackEntry?.savedStateHandle?.set("room", null)
                       navController.navigate(route = DevicesRoute.FeatureValues.name)
-                    }
-                  )
+                    })
                 }
               }
 
+              // homes
               deviceList?.homeDevices?.forEach { homeWithDevices ->
-                Spacer(modifier = Modifier.height(24.dp))
+                HorizontalDivider(
+                  thickness = 1.dp,
+                  color = MaterialTheme.colorScheme.outline,
+                  modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
+                )
                 Row(
-                  modifier = Modifier.fillMaxWidth(),
-                  verticalAlignment = Alignment.CenterVertically
+                  modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
                 ) {
                   Box(
                     modifier = Modifier
-                      .size(40.dp)
-                      .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
-                      .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
+                      .size(40.dp),
+                    contentAlignment = Alignment.CenterStart,
                   ) {
                     Icon(
                       imageVector = Icons.Default.Business,
                       contentDescription = null,
-                      tint = Color(0xFFFD7E13),
+                      tint = MaterialTheme.colorScheme.primary,
                       modifier = Modifier.size(24.dp)
                     )
                   }
-                  Spacer(modifier = Modifier.width(16.dp))
+                  Spacer(modifier = Modifier.width(8.dp))
                   Text(
                     text = "${homeWithDevices.home.name} (${homeWithDevices.home.location})",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.primary
                   )
                 }
-                HorizontalDivider(
-                  thickness = 1.dp,
-                  color = Color(0xFF2C2C2C),
-                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                )
 
+                // home rooms
                 homeWithDevices.rooms.forEach { roomWithDevices ->
                   Row(
                     modifier = Modifier
@@ -180,7 +173,7 @@ fun DevicesListScreen(
                     Icon(
                       imageVector = Icons.Default.MeetingRoom,
                       contentDescription = null,
-                      tint = Color.White,
+                      tint = MaterialTheme.colorScheme.tertiary,
                       modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -188,31 +181,35 @@ fun DevicesListScreen(
                       text = "${roomWithDevices.room.name} (${roomWithDevices.controllerDevices.size + roomWithDevices.sensorDevices.size})",
                       style = MaterialTheme.typography.titleMedium,
                       fontWeight = FontWeight.Bold,
-                      color = Color.White
+                      color = MaterialTheme.colorScheme.tertiary
                     )
                   }
 
                   roomWithDevices.controllerDevices.forEach { device ->
                     DeviceCard(
-                      device = device,
-                      onClick = {
+                      device = device, onClick = {
                         navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
-                        navController.currentBackStackEntry?.savedStateHandle?.set("home", homeWithDevices.home)
-                        navController.currentBackStackEntry?.savedStateHandle?.set("room", roomWithDevices.room)
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                          "home", homeWithDevices.home
+                        )
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                          "room", roomWithDevices.room
+                        )
                         navController.navigate(route = DevicesRoute.FeatureValues.name)
-                      }
-                    )
+                      })
                   }
                   roomWithDevices.sensorDevices.forEach { sensor ->
                     DeviceCard(
-                      device = sensor,
-                      onClick = {
+                      device = sensor, onClick = {
                         navController.currentBackStackEntry?.savedStateHandle?.set("device", sensor)
-                        navController.currentBackStackEntry?.savedStateHandle?.set("home", homeWithDevices.home)
-                        navController.currentBackStackEntry?.savedStateHandle?.set("room", roomWithDevices.room)
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                          "home", homeWithDevices.home
+                        )
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                          "room", roomWithDevices.room
+                        )
                         navController.navigate(route = DevicesRoute.FeatureValues.name)
-                      }
-                    )
+                      })
                   }
                 }
               }
@@ -236,9 +233,9 @@ fun DeviceCard(
       .fillMaxWidth()
       .padding(vertical = 8.dp)
       .clickable { onClick() },
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(16.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Column(
       modifier = Modifier
@@ -255,12 +252,10 @@ fun DeviceCard(
             text = if (!device.name.isNullOrBlank()) device.name else device.mac,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.tertiary
           )
           Text(
-            text = device.mac,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray
+            text = device.mac, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
           )
         }
         if (hasController) {
@@ -269,7 +264,7 @@ fun DeviceCard(
       }
 
       Spacer(modifier = Modifier.height(16.dp))
-      HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
+      HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
       Spacer(modifier = Modifier.height(16.dp))
 
       Row(
@@ -291,8 +286,8 @@ fun DeviceCard(
 @Composable
 fun CtrlBadge() {
   Surface(
-    color = Color(0xFF5D2412),
-    shape = RoundedCornerShape(12.dp)
+    modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
+    color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(12.dp),
   ) {
     Row(
       modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -301,13 +296,13 @@ fun CtrlBadge() {
       Icon(
         imageVector = Icons.Default.Tune,
         contentDescription = null,
-        tint = Color(0xFFFD7E13),
+        tint = MaterialTheme.colorScheme.primary,
         modifier = Modifier.size(14.dp)
       )
       Spacer(modifier = Modifier.width(4.dp))
       Text(
         text = "CTRL",
-        color = Color(0xFFFD7E13),
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold
       )
@@ -331,14 +326,14 @@ fun FeatureIcon(feature: Feature) {
   Box(
     modifier = Modifier
       .size(36.dp)
-      .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
-      .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp)),
+      .background(MaterialTheme.colorScheme.background, RoundedCornerShape(8.dp))
+      .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
     contentAlignment = Alignment.Center
   ) {
     Icon(
       imageVector = ImageVector.vectorResource(iconRes),
       contentDescription = feature.name,
-      tint = Color(0xFFFD7E13),
+      tint = MaterialTheme.colorScheme.primary,
       modifier = Modifier.size(20.dp)
     )
   }
@@ -347,7 +342,7 @@ fun FeatureIcon(feature: Feature) {
 @Preview(showBackground = true)
 @Composable
 fun DeviceCardPreview() {
-  AppTheme(darkTheme = true) {
+  AppTheme {
     DeviceCard(
       device = Device(
         id = "1",
@@ -365,8 +360,6 @@ fun DeviceCardPreview() {
         ),
         createdAt = "",
         modifiedAt = ""
-      ),
-      onClick = {}
-    )
+      ), onClick = {})
   }
 }

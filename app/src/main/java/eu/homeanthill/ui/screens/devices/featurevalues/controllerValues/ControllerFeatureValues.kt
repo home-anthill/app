@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.featurevalues.controllerValues
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -36,13 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import eu.homeanthill.R
 
+import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.DeviceFeatureValueResponse
 import eu.homeanthill.api.model.SendValueResult
@@ -89,14 +89,14 @@ fun ControllerValuesScreen(
         Box(
           modifier = Modifier
             .size(32.dp)
-            .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
-            .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(8.dp)),
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
           contentAlignment = Alignment.Center
         ) {
           Icon(
             imageVector = Icons.Default.Tune,
             contentDescription = null,
-            tint = Color(0xFFFD7E13),
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(18.dp)
           )
         }
@@ -105,7 +105,7 @@ fun ControllerValuesScreen(
           text = stringResource(R.string.controls),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold,
-          color = Color(0xFFFD7E13)
+          color = MaterialTheme.colorScheme.primary
         )
       }
 
@@ -116,8 +116,8 @@ fun ControllerValuesScreen(
           }
         },
         colors = ButtonDefaults.buttonColors(
-          containerColor = Color(0xFFBD5700),
-          contentColor = Color.White
+          containerColor = MaterialTheme.colorScheme.secondary,
+          contentColor = MaterialTheme.colorScheme.tertiary
         ),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.height(40.dp)
@@ -143,7 +143,7 @@ fun ControllerValuesScreen(
 
       is ControllerFeatureValuesViewModel.ValuesUiState.Loading -> {
         Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-          CircularProgressIndicator(color = Color(0xFFBD5700))
+          CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
       }
 
@@ -236,9 +236,9 @@ fun ControlCard(
     modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 8.dp),
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(16.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Column(modifier = Modifier.padding(20.dp)) {
       Row(
@@ -250,13 +250,13 @@ fun ControlCard(
           text = title,
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
-          color = Color.White
+          color = MaterialTheme.colorScheme.tertiary
         )
         if (lastUpdated.isNotEmpty()) {
           Text(
             text = stringResource(R.string.updated_at, lastUpdated),
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
           )
         }
       }
@@ -273,16 +273,16 @@ fun OnControl(isOn: Boolean, onToggle: (Boolean) -> Unit) {
       checked = isOn,
       onCheckedChange = onToggle,
       colors = SwitchDefaults.colors(
-        checkedThumbColor = Color.White,
-        checkedTrackColor = Color(0xFFBD5700),
-        uncheckedThumbColor = Color.Gray,
-        uncheckedTrackColor = Color(0xFF2C2C2C)
+        checkedThumbColor = MaterialTheme.colorScheme.tertiary,
+        checkedTrackColor = MaterialTheme.colorScheme.secondary,
+        uncheckedThumbColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f),
+        uncheckedTrackColor = MaterialTheme.colorScheme.outline
       )
     )
     Spacer(modifier = Modifier.width(16.dp))
     Text(
       text = if (isOn) stringResource(R.string.on) else stringResource(R.string.off),
-      color = Color.White,
+      color = MaterialTheme.colorScheme.tertiary,
       style = MaterialTheme.typography.bodyLarge
     )
   }
@@ -301,31 +301,31 @@ fun SliderControl(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.Bottom
     ) {
-      Text(text = range.start.toInt().toString(), color = Color.Gray, fontSize = 12.sp)
+      Text(text = range.start.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
       Text(
         text = "${value.toInt()}$unit",
-        color = Color(0xFFFD7E13),
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 20.sp,
         fontWeight = FontWeight.Bold
       )
-      Text(text = range.endInclusive.toInt().toString(), color = Color.Gray, fontSize = 12.sp)
+      Text(text = range.endInclusive.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
     }
     Slider(
       value = value,
       onValueChange = { onValueChange(it) },
       valueRange = range,
       colors = SliderDefaults.colors(
-        thumbColor = Color.White,
-        activeTrackColor = Color(0xFFBD5700),
-        inactiveTrackColor = Color(0xFF2C2C2C)
+        thumbColor = MaterialTheme.colorScheme.tertiary,
+        activeTrackColor = MaterialTheme.colorScheme.secondary,
+        inactiveTrackColor = MaterialTheme.colorScheme.outline
       )
     )
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween
     ) {
-      Text(text = range.start.toInt().toString(), color = Color.Gray, fontSize = 12.sp)
-      Text(text = range.endInclusive.toInt().toString(), color = Color.Gray, fontSize = 12.sp)
+      Text(text = range.start.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
+      Text(text = range.endInclusive.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
     }
   }
 }

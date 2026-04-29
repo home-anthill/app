@@ -1,5 +1,6 @@
 package eu.homeanthill.ui.screens.devices.featurevalues.sensorValues
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -43,7 +43,7 @@ fun SensorFeatureValues(
   val filteredValues = featureValues?.filter { it.feature.name.lowercase() != "online" }
 
   if (!filteredValues.isNullOrEmpty()) {
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+    Column {
       filteredValues.forEach { featureValue ->
         SensorCard(
           featureValue = featureValue,
@@ -69,7 +69,10 @@ fun SensorCard(
     type.contains("humidity") || name.contains("humidity") || name.contains("humidty") -> R.drawable.invert_colors_24px
     type.contains("light") || name.contains("light") -> R.drawable.light_mode_24px
     type.contains("pressure") || name.contains("pressure") -> R.drawable.compress_24px
-    type.contains("air quality") || name.contains("air quality") || type.contains("eco") || name.contains("eco") || name.contains("airquality") -> R.drawable.eco_24px
+    type.contains("air quality") || name.contains("air quality") || type.contains("eco") || name.contains(
+      "eco"
+    ) || name.contains("airquality") -> R.drawable.eco_24px
+
     type.contains("motion") || name.contains("motion") || type.contains("pir") || name.contains("pir") -> R.drawable.directions_run_24px
     else -> R.drawable.question_mark_24px
   }
@@ -77,10 +80,10 @@ fun SensorCard(
   Card(
     modifier = Modifier
       .fillMaxWidth()
-      .padding(vertical = 8.dp),
-    colors = CardDefaults.cardColors(containerColor = Color(0xFF121212)),
+      .padding(horizontal = 16.dp, vertical = 8.dp),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     shape = RoundedCornerShape(16.dp),
-    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C))
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
   ) {
     Box {
       // Orange top border accent
@@ -88,15 +91,17 @@ fun SensorCard(
         modifier = Modifier
           .fillMaxWidth()
           .height(4.dp)
-          .background(Color(0xFFBD5700).copy(alpha = 0.5f))
+          .background(MaterialTheme.colorScheme.secondary)
           .align(Alignment.TopCenter)
       )
 
+      // sensor card
       Column(
         modifier = Modifier
           .fillMaxWidth()
           .padding(20.dp)
       ) {
+        // header
         Row(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.Start
@@ -104,14 +109,14 @@ fun SensorCard(
           Box(
             modifier = Modifier
               .size(48.dp)
-              .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
-              .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(12.dp)),
+              .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+              .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
           ) {
             Icon(
               imageVector = ImageVector.vectorResource(iconRes),
               contentDescription = featureValue.feature.name,
-              tint = Color(0xFFFD7E13),
+              tint = MaterialTheme.colorScheme.primary,
               modifier = Modifier.size(24.dp)
             )
           }
@@ -119,27 +124,29 @@ fun SensorCard(
           Text(
             text = featureValue.feature.name,
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White
+            color = MaterialTheme.colorScheme.tertiary
           )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // value
         Text(
           text = displayValue,
           style = MaterialTheme.typography.headlineLarge,
           fontWeight = FontWeight.Bold,
-          color = Color(0xFFFD7E13)
+          color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
+        // date
         Text(
           text = stringResource(R.string.updated_at, lastUpdated),
           style = MaterialTheme.typography.bodySmall,
-          color = Color.Gray
+          color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
         )
       }
     }
@@ -149,7 +156,7 @@ fun SensorCard(
 @Preview(showBackground = true)
 @Composable
 fun SensorCardPreview() {
-  AppTheme(darkTheme = true) {
+  AppTheme {
     SensorCard(
       featureValue = FeatureValue(
         feature = Feature("1", "sensor", "temperature", true, 1, "C"),

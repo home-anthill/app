@@ -42,19 +42,11 @@ import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatur
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerFeatureValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValuesViewModel
-import eu.homeanthill.ui.screens.main.MainViewModel
 import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
 import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 val viewModelModule = module {
-  viewModel {
-    MainViewModel(
-      loginRepository = get(),
-      profileRepository = get(),
-      fcmTokenRepository = get()
-    )
-  }
   viewModel {
     ProfileViewModel(
       logoutRepository = get(),
