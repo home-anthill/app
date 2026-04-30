@@ -40,6 +40,7 @@ class ControllerFeatureValuesViewModelTest {
         id = "dev1",
         uuid = "uuid-1",
         mac = "aa:bb:cc:dd:ee:ff",
+        name = "AC Controller",
         manufacturer = "TestCo",
         model = "AC-1",
         features = listOf(

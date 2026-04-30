@@ -36,6 +36,7 @@ class OnlineFeatureValuesViewModelTest {
         id = "dev1",
         uuid = "uuid-1",
         mac = "aa:bb:cc:dd:ee:ff",
+        name = "Online Sensor",
         manufacturer = "TestCo",
         model = "Sensor-1",
         features = listOf(Feature(uuid = "f1", type = "sensor", name = "online", enable = true, order = 1, unit = "")),

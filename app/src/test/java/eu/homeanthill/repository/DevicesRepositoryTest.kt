@@ -31,6 +31,7 @@ class DevicesRepositoryTest {
         id = "dev1",
         uuid = "uuid-1",
         mac = "aa:bb:cc:dd:ee:ff",
+        name = "Test Device",
         manufacturer = "TestCo",
         model = "Model-X",
         features = listOf(
@@ -90,7 +91,7 @@ class DevicesRepositoryTest {
 
     @Test
     fun `repoAssignDeviceToHomeRoom returns message on success`() = runBlocking {
-        val body = PutDevice(homeId = "home1", roomId = "room1")
+        val body = PutDevice(name = "Test Device", homeId = "home1", roomId = "room1")
         coEvery { mockDevicesService.putAssignDeviceToHomeRoom("dev1", body) } returns Response.success(okMessage)
 
         val result = devicesRepository.repoAssignDeviceToHomeRoom("dev1", body)
@@ -101,7 +102,7 @@ class DevicesRepositoryTest {
 
     @Test
     fun `repoAssignDeviceToHomeRoom throws IOException on error response`() = runBlocking {
-        val body = PutDevice(homeId = "home1", roomId = "room1")
+        val body = PutDevice(name = "Test Device", homeId = "home1", roomId = "room1")
         coEvery { mockDevicesService.putAssignDeviceToHomeRoom("dev1", body) } returns Response.error(400, "{}".toResponseBody())
 
         try {
