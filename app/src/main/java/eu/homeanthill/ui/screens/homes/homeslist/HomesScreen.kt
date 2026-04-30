@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -227,8 +228,8 @@ fun NewHomeDialog(
   onDismissRequest: () -> Unit,
   onConfirmation: (name: String, location: String) -> Unit,
 ) {
-  var name by remember { mutableStateOf("") }
-  var location by remember { mutableStateOf("") }
+  var name by rememberSaveable { mutableStateOf("") }
+  var location by rememberSaveable { mutableStateOf("") }
 
   val isSaveEnabled = name.trim().isNotEmpty() && location.trim().isNotEmpty()
 

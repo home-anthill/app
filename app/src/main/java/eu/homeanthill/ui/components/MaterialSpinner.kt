@@ -19,8 +19,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import eu.homeanthill.R
 
 data class SpinnerItemObj(
   val key: String,
@@ -35,25 +37,32 @@ fun MaterialSpinner(
   onSelect: (option: SpinnerItemObj) -> Unit,
   modifier: Modifier = Modifier,
   selectedOption: SpinnerItemObj? = null,
+  placeholder: String? = null,
+  enabled: Boolean = true,
+  isError: Boolean = false,
 ) {
   if (BuildConfig.DEBUG && title == "mode") {
     Log.d("MaterialSpinner", "options = $options")
     Log.d("MaterialSpinner", "selectedOption = $selectedOption")
   }
   var expanded by remember { mutableStateOf(false) }
+  val isDropdownEnabled = enabled && options.isNotEmpty()
+  val placeholderText = placeholder ?: stringResource(R.string.spinner_placeholder)
 
   ExposedDropdownMenuBox(
     expanded = expanded,
-    onExpandedChange = { expanded = it },
+    onExpandedChange = { if (isDropdownEnabled) expanded = it },
     modifier = modifier
   ) {
     TextField(
       modifier = Modifier
         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         .fillMaxWidth(),
-      value = selectedOption?.value ?: SpinnerItemObj("---", "---").value,
+      value = selectedOption?.value ?: placeholderText,
       onValueChange = {},
       readOnly = true,
+      enabled = isDropdownEnabled,
+      isError = isError,
       singleLine = true,
       label = { Text(title, style = MaterialTheme.typography.labelSmall) },
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

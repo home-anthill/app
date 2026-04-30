@@ -49,6 +49,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,10 +62,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
@@ -73,9 +72,11 @@ import eu.homeanthill.api.model.Room
 import eu.homeanthill.ui.components.MaterialSpinner
 import eu.homeanthill.ui.components.SpinnerItemObj
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerFeatureValuesViewModel
+import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerFeatureValuesViewModel.ValuesUiState
 import eu.homeanthill.ui.screens.devices.featurevalues.controllerValues.ControllerValuesScreen
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValuesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValues
+import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValuesViewModel.OnlineValuesUiState
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValues
 import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatureValuesViewModel
 
@@ -84,6 +85,11 @@ import eu.homeanthill.ui.screens.devices.featurevalues.sensorValues.SensorFeatur
 fun FeaturesScreen(
   featureValuesUiState: FeaturesViewModel.FeatureValuesUiState,
   featureValuesViewModel: FeaturesViewModel,
+  onlineValuesUiState: OnlineValuesUiState,
+  onlineFeatureValuesViewModel: OnlineFeatureValuesViewModel,
+  sensorFeatureValuesViewModel: SensorFeatureValuesViewModel,
+  controllerValuesUiState: ValuesUiState,
+  controllerFeatureValuesViewModel: ControllerFeatureValuesViewModel,
   navController: NavController,
 ) {
   // inputs
@@ -238,8 +244,6 @@ fun FeaturesScreen(
                 SectionHeader(title = stringResource(R.string.sensors), icon = Icons.Default.MonitorHeart)
 
                 if (hasOnline) {
-                  val onlineFeatureValuesViewModel = koinViewModel<OnlineFeatureValuesViewModel>()
-                  val onlineValuesUiState by onlineFeatureValuesViewModel.onlineValuesUiState.collectAsStateWithLifecycle()
                   OnlineFeatureValues(
                     device = device,
                     onlineValuesUiState = onlineValuesUiState,
@@ -249,7 +253,6 @@ fun FeaturesScreen(
                 }
 
                 if (sensorFeatures.isNotEmpty()) {
-                  val sensorFeatureValuesViewModel = koinViewModel<SensorFeatureValuesViewModel>()
                   SensorFeatureValues(
                     featureValues = featureValuesUiState.deviceValue?.sensorFeatureValues,
                     sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
@@ -259,11 +262,9 @@ fun FeaturesScreen(
 
               // controls section
               if (featureValuesUiState.deviceValue?.controllerFeatureValues?.isNotEmpty() == true) {
-                val controllerFeatureValuesViewModel = koinViewModel<ControllerFeatureValuesViewModel>()
-                val getValueUiState by controllerFeatureValuesViewModel.getValueUiState.collectAsStateWithLifecycle()
                 ControllerValuesScreen(
                   device = device,
-                  getValueUiState = getValueUiState,
+                  getValueUiState = controllerValuesUiState,
                   controllerFeatureValuesViewModel = controllerFeatureValuesViewModel,
                   refreshTrigger = refreshTrigger,
                   onSendResult = { result ->
@@ -322,9 +323,12 @@ fun DeviceSettingsDialog(
   onDismissRequest: () -> Unit,
   onSave: (String, String, String) -> Unit
 ) {
-  var name by remember { mutableStateOf(device.name ?: "") }
-  var selectedHome by remember { mutableStateOf(initialHome) }
-  var selectedRoom by remember { mutableStateOf(initialRoom) }
+  var name by rememberSaveable(device.id) { mutableStateOf(device.name ?: "") }
+  var selectedHomeId by rememberSaveable(device.id) { mutableStateOf(initialHome?.id) }
+  var selectedRoomId by rememberSaveable(device.id) { mutableStateOf(initialRoom?.id) }
+
+  val selectedHome = homes.find { it.id == selectedHomeId } ?: initialHome?.takeIf { it.id == selectedHomeId }
+  val selectedRoom = selectedHome?.rooms?.find { it.id == selectedRoomId }
 
   val homesOptions = homes.map { SpinnerItemObj(it.id, it.name) }
   val roomsOptions = selectedHome?.rooms?.map { SpinnerItemObj(it.id, it.name) } ?: emptyList()
@@ -392,8 +396,8 @@ fun DeviceSettingsDialog(
           options = homesOptions,
           selectedOption = selectedHome?.let { SpinnerItemObj(it.id, it.name) },
           onSelect = { option ->
-            selectedHome = homes.find { it.id == option.key }
-            selectedRoom = null
+            selectedHomeId = option.key
+            selectedRoomId = null
           },
           modifier = Modifier.fillMaxWidth()
         )
@@ -412,7 +416,7 @@ fun DeviceSettingsDialog(
           options = roomsOptions,
           selectedOption = selectedRoom?.let { SpinnerItemObj(it.id, it.name) },
           onSelect = { option ->
-            selectedRoom = selectedHome?.rooms?.find { it.id == option.key }
+            selectedRoomId = option.key
           },
           modifier = Modifier.fillMaxWidth()
         )
@@ -431,7 +435,7 @@ fun DeviceSettingsDialog(
           TextButton(
             onClick = {
               if (selectedHome != null && selectedRoom != null) {
-                onSave(name, selectedHome!!.id, selectedRoom!!.id)
+                onSave(name, selectedHome.id, selectedRoom.id)
               }
             },
             enabled = isSaveEnabled

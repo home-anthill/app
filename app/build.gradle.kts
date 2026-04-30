@@ -12,7 +12,7 @@ plugins {
 
 android {
   namespace = "eu.homeanthill"
-  compileSdk = 36
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "eu.homeanthill"

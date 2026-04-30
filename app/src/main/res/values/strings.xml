@@ -39,15 +39,14 @@
     <string name="online">online</string>
     <string name="online_label">Online</string>
     <string name="offline_label">Offline</string>
+    <string name="spinner_placeholder">---</string>
 
     <!-- Homes Screen -->
     <string name="homes">Homes</string>
-    <string name="homes_subtitle">Manage your homes and rooms</string>
     <string name="homes_add">Add Home</string>
     <string name="homes_new_title">New home</string>
     <string name="homes_edit_title">Edit home</string>
     <string name="homes_delete_title">Delete home</string>
-    <string name="homes_delete_confirm">Would you remove this home?</string>
 
     <!-- Rooms / Home Details Screen -->
     <string name="home_details">Home Details</string>
@@ -63,12 +62,11 @@
 
     <!-- Devices Screen -->
     <string name="devices">Devices</string>
-    <string name="devices_subtitle">Manage all your smart devices from one place</string>
     <string name="devices_unassigned">Unassigned Devices</string>
     <string name="devices_back">Back to Devices</string>
+    <string name="controller_badge">CTRL</string>
 
     <!-- Device Details / Features Screen -->
-    <string name="device_details">Device Details</string>
     <string name="device_model">Model</string>
     <string name="device_mac">MAC address</string>
     <string name="device_location">Location</string>
@@ -85,10 +83,8 @@
     <string name="device_delete_important">Important</string>
     <string name="device_delete_warning">: Make sure to power off the device first to prevent it from automatically re-registering as an unassigned device.</string>
     <string name="sensors">Sensors</string>
-    <string name="connectivity">Connectivity</string>
     <string name="controls">Controls</string>
     <string name="send_commands">Send Commands</string>
-    <string name="last_command_sent">LAST COMMAND SENT</string>
     <string name="updated_at">Updated %s</string>
     <string name="device_state_updated">Device state updated successfully!</string>
     <string name="device_state_error">Cannot update device state!</string>

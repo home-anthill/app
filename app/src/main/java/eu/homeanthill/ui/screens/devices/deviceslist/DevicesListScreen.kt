@@ -129,15 +129,15 @@ fun DevicesListScreen(
                       navController.navigate(route = DevicesRoute.FeatureValues.name)
                     })
                 }
-              }
-
-              // homes
-              deviceList?.homeDevices?.forEach { homeWithDevices ->
                 HorizontalDivider(
                   thickness = 1.dp,
                   color = MaterialTheme.colorScheme.outline,
                   modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
                 )
+              }
+
+              // homes
+              deviceList?.homeDevices?.forEach { homeWithDevices ->
                 Row(
                   modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -212,6 +212,11 @@ fun DevicesListScreen(
                       })
                   }
                 }
+                HorizontalDivider(
+                  thickness = 1.dp,
+                  color = MaterialTheme.colorScheme.outline,
+                  modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
+                )
               }
             }
           }
@@ -301,7 +306,7 @@ fun CtrlBadge() {
       )
       Spacer(modifier = Modifier.width(4.dp))
       Text(
-        text = "CTRL",
+        text = stringResource(R.string.controller_badge),
         color = MaterialTheme.colorScheme.primary,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold

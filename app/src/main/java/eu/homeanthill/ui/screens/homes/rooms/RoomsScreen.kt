@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -172,8 +173,9 @@ fun RoomsContent(
       cancelText = stringResource(R.string.cancel),
       onDismissRequest = { showNewRoomDialog.value = false },
       onConfirmation = { name, floor ->
-        if (homeId != null) {
-          onCreateRoom(homeId, name, floor.toInt())
+        val floorValue = floor.toIntOrNull()
+        if (homeId != null && floorValue != null) {
+          onCreateRoom(homeId, name, floorValue)
           showNewRoomDialog.value = false
         }
       },
@@ -188,8 +190,9 @@ fun RoomsContent(
       roomEditObj = showEditRoomDialog,
       onDismissRequest = { showEditRoomDialog = showEditRoomDialog.copy(value = false) },
       onConfirmation = { name, floor ->
-        if (homeId != null) {
-          onUpdateRoom(homeId, showEditRoomDialog.id, name, floor.toInt())
+        val floorValue = floor.toIntOrNull()
+        if (homeId != null && floorValue != null) {
+          onUpdateRoom(homeId, showEditRoomDialog.id, name, floorValue)
           showEditRoomDialog = showEditRoomDialog.copy(value = false)
         }
       })
@@ -424,8 +427,8 @@ fun HomeEditDialog(
   onDismissRequest: () -> Unit,
   onConfirmation: (id: String, name: String, location: String) -> Unit,
 ) {
-  var name by remember { mutableStateOf(homeEditObj.name) }
-  var location by remember { mutableStateOf(homeEditObj.location) }
+  var name by rememberSaveable(homeEditObj.id) { mutableStateOf(homeEditObj.name) }
+  var location by rememberSaveable(homeEditObj.id) { mutableStateOf(homeEditObj.location) }
 
   val isSaveEnabled = name.trim().isNotEmpty() && location.trim().isNotEmpty()
 
@@ -556,10 +559,10 @@ fun EditRoomDialog(
   onDismissRequest: () -> Unit,
   onConfirmation: (name: String, floor: String) -> Unit,
 ) {
-  var name by remember { mutableStateOf(roomEditObj.name) }
-  var floor by remember { mutableStateOf(roomEditObj.floor.toString()) }
+  var name by rememberSaveable(roomEditObj.id) { mutableStateOf(roomEditObj.name) }
+  var floor by rememberSaveable(roomEditObj.id) { mutableStateOf(roomEditObj.floor.toString()) }
 
-  val isSaveEnabled = name.trim().isNotEmpty() && floor.trim().isNotEmpty()
+  val isSaveEnabled = name.trim().isNotEmpty() && floor.toIntOrNull() != null
 
   Dialog(onDismissRequest = { onDismissRequest() }) {
     Card(
@@ -594,7 +597,7 @@ fun EditRoomDialog(
         TextField(
           value = floor,
           onValueChange = {
-            if (it.isEmpty() || it == "-" || it.toIntOrNull() != null) {
+            if (it.isEmpty() || it.toIntOrNull() != null) {
               floor = it
             }
           },
@@ -692,10 +695,10 @@ fun NewRoomDialog(
   onDismissRequest: () -> Unit,
   onConfirmation: (name: String, floor: String) -> Unit,
 ) {
-  var name by remember { mutableStateOf("") }
-  var floor by remember { mutableStateOf("") }
+  var name by rememberSaveable { mutableStateOf("") }
+  var floor by rememberSaveable { mutableStateOf("") }
 
-  val isSaveEnabled = name.trim().isNotEmpty() && floor.trim().isNotEmpty()
+  val isSaveEnabled = name.trim().isNotEmpty() && floor.toIntOrNull() != null
 
   Dialog(onDismissRequest = { onDismissRequest() }) {
     Card(
@@ -730,7 +733,7 @@ fun NewRoomDialog(
         TextField(
           value = floor,
           onValueChange = {
-            if (it.isEmpty() || it == "-" || it.toIntOrNull() != null) {
+            if (it.isEmpty() || it.toIntOrNull() != null) {
               floor = it
             }
           },
