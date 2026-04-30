@@ -10,17 +10,22 @@ This file tracks significant changes made with AI assistance, organized by type.
 - **Per-build-type network security config** — Release and staging block cleartext HTTP and trust only system CAs; debug allows cleartext and user-added CA certificates for local/MITM inspection.
 - **Sensitive Logcat output removed** — OAuth deep-link query strings (containing `token`, `session_cookie`, `refresh_token`) removed from logs. All FCM, DI, and debug log calls guarded by `BuildConfig.DEBUG`.
 - **`HttpLoggingInterceptor` scoped to debug builds** — Level is `HEADERS` in debug, `NONE` in staging/release. `Authorization` and `Cookie` headers never appear in Logcat on production-like builds.
-- **OAuth callback validation hardened** — `LoginActivity.handleOAuthCallback(Uri)` now validates callback scheme and `/postlogin` path before exchanging an app code. Debug additionally accepts `http` callbacks for local development; host and port remain in manifest/property configuration.
-- **Localhost OAuth callback moved to debug-only manifest** — `http://localhost:8082/postlogin` is no longer declared in the main manifest, so staging/release only expose the HTTPS app-link callback.
+- **OAuth callback validation hardened** — `LoginActivity.handleOAuthCallback(Uri)` now validates callback scheme, host, port, and path from Gradle properties before exchanging an app code. Real callback hosts and local ports live in gitignored property files, not committed Kotlin or manifest XML.
+- **Mobile OAuth app-state validation added** — Android now generates an app-owned OAuth state, sends it as `app_state` on `/api/oauth/app/login`, requires the deep link to return the same value as `state`, and clears pending state/PKCE data on invalid, mismatched, or failed callbacks.
+- **OAuth verifier/state/code lengths maximized** — Android PKCE verifiers and app states now use 96 random bytes, producing the RFC 7636 maximum 128-character verifier/state strings. The api-server also uses 128-character OAuth states and 128-character one-time mobile app login codes.
+- **Mobile app-code format validation** — `/api/oauth/app/exchange-code` now rejects malformed app login codes before Mongo lookup; valid app codes must match the generated 128-character base64url format.
+- **Local OAuth callback moved to debug-only manifest** — The local development callback is no longer declared in the main manifest, so staging/release only expose the configured HTTPS app-link callback.
 - **Profile screenshots blocked** — `ProfileScreen` sets `FLAG_SECURE` while mounted and clears it on dispose to prevent screenshots/screen recording while the regenerated API token can be visible.
 - **Staging hardened** — Staging APKs are now non-debuggable, minified, resource-shrunk, cleartext-blocked, and use `HttpLoggingInterceptor.Level.NONE`.
 - **Token refresh on 401** — `AppAuthenticator` silently refreshes the JWT on first 401, retries the request, and only falls back to logout when the refresh itself fails. Prior-response guard fixed from `!= null` (true on 3xx redirects too) to `?.code == 401`.
+- **Token refresh serialized** — `AppAuthenticator` gates refresh attempts so concurrent 401 responses do not submit the same rotating mobile refresh token and accidentally trigger server-side reuse protection.
 - **Mobile refresh token flow implemented** — Full JWT refresh token cycle with `RefreshTokenServices`, `TokenResponse`, and `RefreshTokenRepository`. Mobile refresh now posts `{ refreshToken }` to `/api/oauth/app/refresh` and persists the rotated `refreshToken` from the JSON response.
 - **Mobile OAuth login migrated to PKCE code exchange** — App login now opens `/api/oauth/app/login` with `code_challenge` / `code_challenge_method=S256`, receives an app code through the deep link, and exchanges it at `/api/oauth/app/exchange-code` using the stored code verifier instead of receiving tokens directly in the callback URL.
 - **Thread-safe date formatting** — `SimpleDateFormat` (mutable, not thread-safe) replaced with immutable `DateTimeFormatter` to prevent coroutine data races.
 - **`MasterKey` cache made thread-safe** — `@Volatile` + double-checked locking ensures the key is built at most once even under concurrent access.
 - **Koin logger guarded by build type** — Debug logs only in `BuildConfig.DEBUG` to avoid leaking DI resolution info in release.
 - **Mobile refresh tokens kept out of cookies** — Android refresh/logout use JSON bodies on `/api/oauth/app/refresh` and `/api/oauth/app/logout`; the web-only `/api/oauth/refresh` cookie flow is not used by the app.
+- **Mobile session cookies removed** — The app no longer parses, stores, or sends `oauth_session`; mobile authenticated API calls use Bearer access JWTs and JSON refresh tokens only. The stale cookie interceptors and Koin wiring were deleted, and `/api/oauth/app/logout` no longer clears or renews Gin session cookies.
 
 ---
 
@@ -32,6 +37,7 @@ This file tracks significant changes made with AI assistance, organized by type.
 - **Mobile login rejected after successful code exchange** — Client cookie name updated from stale `mysession` to server-side `oauth_session`, so the session cookie returned by `/api/oauth/app/exchange-code` is persisted and sent with authenticated API requests.
 - **Koin dependency cycle after logout endpoint wiring** — Server logout call moved out of `LoginRepository` into `LogoutRepository`, breaking the `LoginRepository → LogoutServices → Retrofit → AuthInterceptor → LoginRepository` resolution loop.
 - **Android refresh called web endpoint** — The app was posting an empty request to `/api/oauth/refresh`, which validates web refresh cookies and returned 401 for mobile tokens. It now calls `/api/oauth/app/refresh` with the stored refresh token in JSON.
+- **Failed OAuth exchange left stale PKCE verifier** — Failed or invalid mobile OAuth callbacks now clear pending PKCE verifier and app-state values instead of leaving them in encrypted preferences.
 - **Out-of-bounds crash on controller feature values** — All four `getXxxByFeatureUuid` functions now bounds-check before array access.
 - **Reference equality on `String` and `null`** — `!==` replaced with `!isNullOrEmpty()` / `!= null` throughout.
 - **Broken string template** — `profileUiState.profile?.id}` missing `${` corrected.
@@ -54,6 +60,8 @@ This file tracks significant changes made with AI assistance, organized by type.
 - **`ControllerFeatureValuesViewModel` result emission** — `getValues` renamed `loadValues`, emits to `StateFlow`. `sendCommands` emits to `SharedFlow<SendValueResult>`. Composable uses separate `LaunchedEffect` blocks for each concern.
 - **`AppDrawer` de-coupled from Keystore** — Now receives `profile: Profile?` as a parameter. `MainViewModel` hoisted to `AppNavGraph` scope. Eliminates repeated Keystore decrypt + JSON parse on recomposition.
 - **OAuth callback logic deduplicated** — Shared extraction logic moved to `handleOAuthCallback(Uri): Boolean`.
+- **Mobile OAuth app-state contract with api-server** — `/api/oauth/app/login` now expects app clients to provide `app_state`, and `/postlogin` must echo that value as `state` together with the one-time app code.
+- **Mobile logout made session-free on api-server** — `/api/oauth/app/logout` now only revokes the submitted mobile refresh-token family; web session and refresh-cookie cleanup remains isolated to the web logout flow.
 
 ---
 

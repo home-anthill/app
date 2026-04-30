@@ -1,12 +1,10 @@
 package eu.homeanthill.di
 
-import java.net.CookieManager
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import okhttp3.JavaNetCookieJar
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -19,7 +17,6 @@ import eu.homeanthill.BuildConfig
 import eu.homeanthill.FcmTokenWorker
 import eu.homeanthill.api.AppAuthenticator
 import eu.homeanthill.api.AuthInterceptor
-import eu.homeanthill.api.SendSavedCookiesInterceptor
 import eu.homeanthill.api.requests.AppLoginExchangeServices
 import eu.homeanthill.api.requests.DevicesServices
 import eu.homeanthill.api.requests.FCMTokenServices
@@ -115,15 +112,11 @@ val retrofitModule = module {
 
   single { AppAuthenticator(loginRepository = get(), refreshTokenRepository = get()) }
 
-  single { SendSavedCookiesInterceptor(context = androidContext()) }
-
   // Main OkHttpClient: full interceptor chain + AppAuthenticator for 401 handling.
   single {
     OkHttpClient()
       .newBuilder()
-      .cookieJar(JavaNetCookieJar(CookieManager()))
       .addInterceptor(get<HttpLoggingInterceptor>())
-      .addInterceptor(get<SendSavedCookiesInterceptor>())
       .addInterceptor(get<AuthInterceptor>())
       .authenticator(get<AppAuthenticator>())
       .build()

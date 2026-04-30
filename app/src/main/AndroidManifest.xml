@@ -40,9 +40,9 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="https"
-                    android:host="homeanthill.eu"
-                    android:pathPrefix="/postlogin" />
+                    android:scheme="${oauthCallbackScheme}"
+                    android:host="${oauthCallbackHost}"
+                    android:pathPrefix="${oauthCallbackPath}" />
             </intent-filter>
         </activity>
         <activity

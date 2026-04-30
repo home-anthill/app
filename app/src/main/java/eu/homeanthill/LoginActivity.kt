@@ -22,9 +22,6 @@ class LoginActivity : ComponentActivity() {
 
   companion object {
     private const val TAG = "LoginActivity"
-    private const val PROD_CALLBACK_SCHEME = "https"
-    private const val DEBUG_CALLBACK_SCHEME = "http"
-    private const val CALLBACK_PATH = "/postlogin"
   }
 
   /**
@@ -34,29 +31,47 @@ class LoginActivity : ComponentActivity() {
   private fun handleOAuthCallback(data: Uri): Boolean {
     if (!isAllowedOAuthCallback(data)) {
       Log.e(TAG, "handleOAuthCallback - callback URI is not allowed")
+      clearPendingOAuth()
       return false
     }
-    val code = data.getQueryParameter("code") ?: return false
+    val code = data.getQueryParameter("code") ?: run {
+      Log.e(TAG, "handleOAuthCallback - login code is missing")
+      clearPendingOAuth()
+      return false
+    }
+    val returnedState = data.getQueryParameter("state") ?: run {
+      Log.e(TAG, "handleOAuthCallback - OAuth state is missing")
+      clearPendingOAuth()
+      return false
+    }
+    val storedState = this.securePrefs().getString(oauthStateKey, null) ?: run {
+      Log.e(TAG, "handleOAuthCallback - stored OAuth state is missing")
+      clearPendingOAuth()
+      return false
+    }
+    if (returnedState != storedState) {
+      Log.e(TAG, "handleOAuthCallback - OAuth state mismatch")
+      clearPendingOAuth()
+      return false
+    }
     val codeVerifier = this.securePrefs().getString(pkceCodeVerifierKey, null) ?: run {
       Log.e(TAG, "handleOAuthCallback - PKCE code verifier is missing")
+      clearPendingOAuth()
       return false
     }
     lifecycleScope.launch {
       val result = appLoginExchangeRepository.exchangeCode(code, codeVerifier)
       if (result == null) {
         Log.e(TAG, "handleOAuthCallback - code exchange failed")
+        clearPendingOAuth()
         return@launch
       }
 
-      val unixTime = System.currentTimeMillis() / 1000L
       this@LoginActivity.securePrefs().edit {
-        putString(jwtKey, result.tokenResponse.token)
-          .putString(refreshTokenKey, result.tokenResponse.refreshToken)
-          .putLong(loginTimestampKey, unixTime)
+        putString(jwtKey, result.token)
+          .putString(refreshTokenKey, result.refreshToken)
           .remove(pkceCodeVerifierKey)
-        if (!result.sessionCookie.isNullOrEmpty()) {
-          putString(cookieKey, result.sessionCookie)
-        }
+          .remove(oauthStateKey)
       }
       val i = Intent(this@LoginActivity, PermissionActivity::class.java)
       i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -67,10 +82,40 @@ class LoginActivity : ComponentActivity() {
   }
 
   private fun isAllowedOAuthCallback(data: Uri): Boolean {
-    val isAllowedScheme = data.scheme == PROD_CALLBACK_SCHEME ||
-        (BuildConfig.DEBUG && data.scheme == DEBUG_CALLBACK_SCHEME)
+    return matchesOAuthCallback(
+      data = data,
+      scheme = BuildConfig.OAUTH_CALLBACK_SCHEME,
+      host = BuildConfig.OAUTH_CALLBACK_HOST,
+      port = BuildConfig.OAUTH_CALLBACK_PORT,
+      path = BuildConfig.OAUTH_CALLBACK_PATH,
+    ) || (BuildConfig.DEBUG && matchesOAuthCallback(
+      data = data,
+      scheme = BuildConfig.DEBUG_OAUTH_CALLBACK_SCHEME,
+      host = BuildConfig.DEBUG_OAUTH_CALLBACK_HOST,
+      port = BuildConfig.DEBUG_OAUTH_CALLBACK_PORT,
+      path = BuildConfig.DEBUG_OAUTH_CALLBACK_PATH,
+    ))
+  }
 
-    return isAllowedScheme && data.path == CALLBACK_PATH
+  private fun matchesOAuthCallback(
+    data: Uri,
+    scheme: String,
+    host: String,
+    port: String,
+    path: String,
+  ): Boolean {
+    if (scheme.isBlank() || host.isBlank() || path.isBlank()) return false
+    return data.scheme == scheme &&
+        data.host == host &&
+        data.path == path &&
+        (port.isBlank() || data.port.toString() == port)
+  }
+
+  private fun clearPendingOAuth() {
+    this.securePrefs().edit {
+      remove(pkceCodeVerifierKey)
+        .remove(oauthStateKey)
+    }
   }
 
   override fun onNewIntent(intent: Intent) {
@@ -99,7 +144,7 @@ class LoginActivity : ComponentActivity() {
     // OAuth callback arriving via intent.data after the first callback already saved the JWT.
     val storedJwt = this.securePrefs().getString(jwtKey, null)
     if (storedJwt != null) {
-      this.securePrefs().edit { remove(pkceCodeVerifierKey) }
+      clearPendingOAuth()
       val i = Intent(this@LoginActivity, PermissionActivity::class.java)
       finish()
       startActivity(i)
@@ -119,14 +164,17 @@ class LoginActivity : ComponentActivity() {
           onLoginClick = {
             val codeVerifier = PKCE.generateCodeVerifier()
             val codeChallenge = PKCE.buildCodeChallenge(codeVerifier)
+            val oauthState = PKCE.generateState()
             context.securePrefs().edit {
               putString(pkceCodeVerifierKey, codeVerifier)
+                .putString(oauthStateKey, oauthState)
             }
             val loginUri = (BuildConfig.API_BASE_URL + "oauth/app/login")
               .toUri()
               .buildUpon()
               .appendQueryParameter("code_challenge", codeChallenge)
               .appendQueryParameter("code_challenge_method", "S256")
+              .appendQueryParameter("app_state", oauthState)
               .build()
             val intent = Intent(
               Intent.ACTION_VIEW,

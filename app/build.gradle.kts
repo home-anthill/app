@@ -1,4 +1,47 @@
+import com.android.build.api.dsl.ApplicationBuildType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+fun loadProperties(name: String): Properties {
+  val properties = Properties()
+  val file = rootProject.file(name)
+  if (file.exists()) {
+    file.inputStream().use(properties::load)
+  }
+  return properties
+}
+
+fun oauthProperties(vararg overlayFiles: String): Properties {
+  val properties = loadProperties("secrets.defaults.properties")
+  properties.putAll(loadProperties("secrets.properties"))
+  overlayFiles.forEach { properties.putAll(loadProperties(it)) }
+  return properties
+}
+
+fun Properties.requiredProperty(name: String): String =
+  getProperty(name)?.trim().orEmpty()
+
+fun buildConfigString(value: String): String =
+  "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+fun ApplicationBuildType.configureOAuthCallback(properties: Properties) {
+  manifestPlaceholders["oauthCallbackScheme"] = properties.requiredProperty("OAUTH_CALLBACK_SCHEME")
+  manifestPlaceholders["oauthCallbackHost"] = properties.requiredProperty("OAUTH_CALLBACK_HOST")
+  manifestPlaceholders["oauthCallbackPath"] = properties.requiredProperty("OAUTH_CALLBACK_PATH")
+  manifestPlaceholders["debugOauthCallbackScheme"] = properties.requiredProperty("DEBUG_OAUTH_CALLBACK_SCHEME")
+  manifestPlaceholders["debugOauthCallbackHost"] = properties.requiredProperty("DEBUG_OAUTH_CALLBACK_HOST")
+  manifestPlaceholders["debugOauthCallbackPort"] = properties.requiredProperty("DEBUG_OAUTH_CALLBACK_PORT")
+  manifestPlaceholders["debugOauthCallbackPath"] = properties.requiredProperty("DEBUG_OAUTH_CALLBACK_PATH")
+
+  buildConfigField("String", "OAUTH_CALLBACK_SCHEME", buildConfigString(properties.requiredProperty("OAUTH_CALLBACK_SCHEME")))
+  buildConfigField("String", "OAUTH_CALLBACK_HOST", buildConfigString(properties.requiredProperty("OAUTH_CALLBACK_HOST")))
+  buildConfigField("String", "OAUTH_CALLBACK_PORT", buildConfigString(properties.requiredProperty("OAUTH_CALLBACK_PORT")))
+  buildConfigField("String", "OAUTH_CALLBACK_PATH", buildConfigString(properties.requiredProperty("OAUTH_CALLBACK_PATH")))
+  buildConfigField("String", "DEBUG_OAUTH_CALLBACK_SCHEME", buildConfigString(properties.requiredProperty("DEBUG_OAUTH_CALLBACK_SCHEME")))
+  buildConfigField("String", "DEBUG_OAUTH_CALLBACK_HOST", buildConfigString(properties.requiredProperty("DEBUG_OAUTH_CALLBACK_HOST")))
+  buildConfigField("String", "DEBUG_OAUTH_CALLBACK_PORT", buildConfigString(properties.requiredProperty("DEBUG_OAUTH_CALLBACK_PORT")))
+  buildConfigField("String", "DEBUG_OAUTH_CALLBACK_PATH", buildConfigString(properties.requiredProperty("DEBUG_OAUTH_CALLBACK_PATH")))
+}
 
 plugins {
   alias(libs.plugins.android.application)
@@ -32,6 +75,7 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       // TODO change signingConfig to create a real release build
       signingConfig = signingConfigs.getByName("debug")
+      configureOAuthCallback(oauthProperties("release.properties"))
     }
     create("staging") {
       isMinifyEnabled = true
@@ -40,11 +84,13 @@ android {
       versionNameSuffix = "-staging"
       signingConfig = signingConfigs.getByName("debug")
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      configureOAuthCallback(oauthProperties("staging.properties"))
     }
     getByName("debug") {
       isMinifyEnabled = false
       isDebuggable = true
       versionNameSuffix = "-debug"
+      configureOAuthCallback(oauthProperties())
     }
   }
   compileOptions {
@@ -135,4 +181,12 @@ secrets {
   // A properties file containing default secret values. This file can be
   // checked in version control.
   defaultPropertiesFileName = "secrets.defaults.properties"
+  ignoreList.add("OAUTH_CALLBACK_SCHEME")
+  ignoreList.add("OAUTH_CALLBACK_HOST")
+  ignoreList.add("OAUTH_CALLBACK_PORT")
+  ignoreList.add("OAUTH_CALLBACK_PATH")
+  ignoreList.add("DEBUG_OAUTH_CALLBACK_SCHEME")
+  ignoreList.add("DEBUG_OAUTH_CALLBACK_HOST")
+  ignoreList.add("DEBUG_OAUTH_CALLBACK_PORT")
+  ignoreList.add("DEBUG_OAUTH_CALLBACK_PATH")
 }

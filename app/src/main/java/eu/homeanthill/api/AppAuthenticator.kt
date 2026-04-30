@@ -7,7 +7,6 @@ import okhttp3.Route
 
 import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.RefreshTokenRepository
-import eu.homeanthill.cookieName
 
 class AppAuthenticator(
   private val loginRepository: LoginRepository,
@@ -26,21 +25,26 @@ class AppAuthenticator(
       return null
     }
 
-    val tokenResponse = refreshTokenRepository.repoRefreshToken()
-    if (tokenResponse == null) {
-      loginRepository.logoutAndRedirect()
-      return null
+    return synchronized(this) {
+      val requestAuthorization = response.request.header("Authorization")
+      val currentAuthorization = loginRepository.getJWT()?.let { "Bearer $it" }
+      if (!currentAuthorization.isNullOrEmpty() && currentAuthorization != requestAuthorization) {
+        return@synchronized response.request.newBuilder()
+          .header("Authorization", currentAuthorization)
+          .build()
+      }
+
+      val tokenResponse = refreshTokenRepository.repoRefreshToken()
+      if (tokenResponse == null) {
+        loginRepository.logoutAndRedirect()
+        return@synchronized null
+      }
+
+      loginRepository.setJWT(tokenResponse.token)
+      response.request.newBuilder()
+        .header("Authorization", "Bearer ${tokenResponse.token}")
+        .build()
     }
-
-    loginRepository.setJWT(tokenResponse.token)
-    val retryRequest = response.request.newBuilder()
-      .header("Authorization", "Bearer ${tokenResponse.token}")
-
-    loginRepository.getSessionCookie()?.let { sessionCookie ->
-      retryRequest.header("Cookie", "$cookieName=$sessionCookie")
-    }
-
-    return retryRequest.build()
   }
 
   private fun Response.isUnauthorized() = this.code == 401

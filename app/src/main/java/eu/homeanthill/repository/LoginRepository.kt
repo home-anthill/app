@@ -8,10 +8,8 @@ import androidx.core.content.edit
 
 import eu.homeanthill.LoginActivity
 import eu.homeanthill.api.model.Profile
-import eu.homeanthill.cookieKey
 import eu.homeanthill.fcmTokenKey
 import eu.homeanthill.jwtKey
-import eu.homeanthill.loginTimestampKey
 import eu.homeanthill.profileKey
 import eu.homeanthill.refreshTokenKey
 import eu.homeanthill.securePrefs
@@ -32,14 +30,6 @@ class LoginRepository(private val context: Context) {
 
   fun setRefreshToken(token: String) {
     context.securePrefs().edit { putString(refreshTokenKey, token) }
-  }
-
-  fun getSessionCookie(): String? {
-    return context.securePrefs().getString(cookieKey, null)
-  }
-
-  fun setSessionCookie(cookie: String) {
-    context.securePrefs().edit { putString(cookieKey, cookie) }
   }
 
   fun setFCMToken(fcmToken: String) {
@@ -65,17 +55,16 @@ class LoginRepository(private val context: Context) {
   }
 
   fun logoutAndRedirect() {
-    this.logout()
+    clearLocalSession()
     val i = Intent(context, LoginActivity::class.java)
     i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
         Intent.FLAG_ACTIVITY_CLEAR_TASK
     context.startActivity(i)
   }
 
-  private fun logout() {
+  fun clearLocalSession() {
     context.securePrefs().edit {
-      remove(profileKey).remove(fcmTokenKey).remove(jwtKey).remove(cookieKey)
-        .remove(loginTimestampKey).remove(refreshTokenKey)
+      remove(profileKey).remove(fcmTokenKey).remove(jwtKey).remove(refreshTokenKey)
     }
   }
 }

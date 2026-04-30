@@ -37,8 +37,7 @@ app/src/main/java/eu/homeanthill/
 │   ├── requests/           # Retrofit service interfaces
 │   ├── model/              # Data classes (@Parcelize for navigation)
 │   ├── AuthInterceptor.kt
-│   ├── AppAuthenticator.kt
-│   └── SendSavedCookieInterceptor.kt
+│   └── AppAuthenticator.kt
 ├── repository/             # Data repositories (single source of truth)
 ├── ui/
 │   ├── screens/
@@ -69,7 +68,7 @@ XViewModel updates StateFlow<UiState> (sealed class with Loading/Idle/Error)
     ↓
 XRepository calls Retrofit XServices interface
     ↓
-Main OkHttpClient chain: LoggingInterceptor → SendSavedCookiesInterceptor → AuthInterceptor → AppAuthenticator
+Main OkHttpClient chain: LoggingInterceptor → AuthInterceptor → AppAuthenticator
     ↓ (on 401: AppAuthenticator calls RefreshTokenRepository using the refresh OkHttpClient)
 Refresh OkHttpClient chain: LoggingInterceptor → POST /api/oauth/app/refresh with JSON refreshToken
     ↓
@@ -100,7 +99,7 @@ Two separate OkHttp clients are registered in Koin:
 
 **Main client** (default, no qualifier):
 ```
-LoggingInterceptor → SendSavedCookiesInterceptor → AuthInterceptor → AppAuthenticator
+LoggingInterceptor → AuthInterceptor → AppAuthenticator
 ```
 Used by all standard API services (homes, devices, profile, etc.).
 
@@ -130,10 +129,10 @@ Exceptions bubble to the ViewModel where they're caught and mapped to `Error(mes
 ### Authentication Flow
 
 - `LoginActivity` handles GitHub OAuth2; stores JWT token and refresh token via `EncryptedSharedPreferences`
+- Mobile login sends an app-generated 128-character `app_state` to `/api/oauth/app/login`; the api-server must echo it as `state` on `/postlogin`
 - `AuthInterceptor` attaches JWT as Bearer token on every request
 - `AppAuthenticator` intercepts 401 responses: attempts silent token refresh first; only logs out and redirects to `LoginActivity` if the refresh also fails
-- `SendSavedCookiesInterceptor` adds the `oauth_session` session cookie to every request
-- Mobile refresh and logout send the stored refresh token as JSON to `/api/oauth/app/refresh` and `/api/oauth/app/logout`; they do not use the web refresh-token cookie endpoint.
+- Mobile refresh and logout send the stored refresh token as JSON to `/api/oauth/app/refresh` and `/api/oauth/app/logout`; the app does not persist or send web/session cookies.
 
 #### First-Install Deep-Link Handling
 
@@ -143,23 +142,26 @@ Two edge cases apply only on a fresh install (process has never run before):
 
 2. **Duplicate `LoginMobileAppCallback` calls**: On first install the server fires `LoginMobileAppCallback` twice in quick succession (~400 ms apart, caused by Chrome following the deep-link redirect). Each invocation carries a different server session. `onNewIntent()` (and the `intent.data` path in `onCreate()`) checks for an existing JWT in `EncryptedSharedPreferences` at entry; if one is already stored the second callback is discarded with `finish()` to prevent a valid session from being overwritten.
 
-`LoginActivity.handleOAuthCallback(Uri)` validates callback `scheme` and `path` before exchanging the code. Production/staging accepts `https` callbacks to `/postlogin`; debug additionally accepts `http` callbacks to `/postlogin` for local development. Host and port live in manifest/property configuration, not Kotlin constants.
+`LoginActivity.handleOAuthCallback(Uri)` validates callback `scheme`, `host`, `port`, `path`, and the app-generated OAuth state before exchanging the code. Callback values are loaded from Gradle properties into both manifest placeholders and `BuildConfig`; real hosts and local ports must stay in gitignored property files, not committed Kotlin or manifest XML.
+
+Invalid callbacks, state mismatches, missing code/state/verifier, and failed app-code exchanges must clear both `pkceCodeVerifierKey` and `oauthStateKey` so stale pending-login data is not reused.
 
 #### Refresh Token Flow (mobile)
 
-The api-server returns an app code to the deep link from `/api/oauth/app/callback`. Android then exchanges that code through `/api/oauth/app/exchange-code` and stores the returned access token and refresh token in `EncryptedSharedPreferences`.
+The api-server returns a 128-character app code and the app-generated OAuth state to the deep link from `/api/oauth/app/callback`. Android validates the state, exchanges that code through `/api/oauth/app/exchange-code`, and stores the returned access token and refresh token in `EncryptedSharedPreferences`. The api-server rejects malformed app codes before lookup; valid app codes are 128-character base64url strings.
 
 When `AppAuthenticator` receives a 401:
-1. It calls `RefreshTokenRepository.repoRefreshToken()` synchronously (using OkHttp `execute()`)
-2. `RefreshTokenRepository` reads `refreshTokenKey` from secure prefs and uses a **dedicated OkHttp client** (no `AppAuthenticator`, no `AuthInterceptor`) to `POST /api/oauth/app/refresh` with body `{ "refreshToken": "..." }`
-3. On success: stores the new JWT via `LoginRepository.setJWT()`, stores the rotated `refreshToken` from the JSON response via `LoginRepository.setRefreshToken()`, then retries the original request
-4. On failure (refresh 401 or network error): calls `LoginRepository.logoutAndRedirect()`
+1. It serializes refresh attempts so concurrent 401 responses do not reuse the same rotating refresh token.
+2. It calls `RefreshTokenRepository.repoRefreshToken()` synchronously (using OkHttp `execute()`)
+3. `RefreshTokenRepository` reads `refreshTokenKey` from secure prefs and uses a **dedicated OkHttp client** (no `AppAuthenticator`, no `AuthInterceptor`) to `POST /api/oauth/app/refresh` with body `{ "refreshToken": "..." }`
+4. On success: stores the new JWT via `LoginRepository.setJWT()`, stores the rotated `refreshToken` from the JSON response via `LoginRepository.setRefreshToken()`, then retries the original request
+5. On failure (refresh 401 or network error): calls `LoginRepository.logoutAndRedirect()`
 
 The dedicated OkHttp/Retrofit pair is registered in Koin under the `named("refresh")` qualifier to keep it separate from the main client.
 
 #### Logout Flow (mobile)
 
-`ProfileViewModel.logout()` calls `LogoutRepository.logoutWithServerAndRedirect()`. The repository reads `refreshTokenKey` and posts `{ "refreshToken": "..." }` to `/api/oauth/app/logout` so the api-server can revoke the mobile refresh-token family. Local logout and redirect still happen if the token is missing or the server call fails.
+`ProfileViewModel.logout()` calls `LogoutRepository.logoutWithServerAndRedirect()`. The repository reads `refreshTokenKey` and posts `{ "refreshToken": "..." }` to `/api/oauth/app/logout` so the api-server can revoke the mobile refresh-token family. The mobile logout endpoint does not clear or renew Gin session cookies; session/cookie cleanup belongs only to web logout. Local logout and redirect still happen if the token is missing or the server call fails.
 
 #### Credential storage (`PreferencesKeys.kt` + `SecurePrefs.kt`)
 
@@ -169,8 +171,7 @@ All credentials are stored in `EncryptedSharedPreferences` (AES256-GCM) via the 
 |-----|-------------|
 | `jwtKey` | Access JWT |
 | `refreshTokenKey` | Refresh token value |
-| `cookieKey` | `oauth_session` cookie value |
-| `loginTimestampKey` | Unix timestamp of last login |
+| `oauthStateKey` | Pending mobile OAuth app state |
 | `fcmTokenKey` | Firebase Cloud Messaging token |
 | `profileKey` | Serialised `Profile` JSON |
 
@@ -214,13 +215,11 @@ All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and
 
 `OnlineFeatureValuesViewModel` uses `private const val OFFLINE_THRESHOLD_MS = 60 * 1000L` for the device-offline detection threshold. Do not inline `60 * 1000` directly in `isOffline`.
 
-`AppAuthenticator` uses `response.priorResponse?.code == 401` (not `priorResponse != null`) to detect retry loops, so a 401 following an HTTP redirect still attempts a token refresh.
+`AppAuthenticator` uses `response.priorResponse?.code == 401` (not `priorResponse != null`) to detect retry loops, so a 401 following an HTTP redirect still attempts a token refresh. It also synchronizes refresh attempts and reuses an already-rotated JWT when another request refreshed first; do not remove this gate unless the server no longer rotates refresh tokens.
 
 `PostSetFeatureDeviceValue.value` is typed `Double`, consistent with all other value fields in the model layer. Do not use `Number` as a field type in models.
 
-`SendSavedCookiesInterceptor` expresses the 28-day session expiry as `private const val SESSION_EXPIRY_SECONDS = 28 * 24 * 60 * 60`. Do not use the raw magic number inline.
-
-`LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the app login `code`, exchanges it with the stored PKCE verifier, writes the returned credentials to `EncryptedSharedPreferences`, and starts `PermissionActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the callback handling logic.
+`LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the app login `code`, validates app state, exchanges it with the stored PKCE verifier, writes the returned credentials to `EncryptedSharedPreferences`, and starts `PermissionActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the callback handling logic. PKCE verifiers and app states are generated from 96 random bytes, producing 128-character strings, the RFC 7636 maximum.
 
 `ProfileScreen` sets `WindowManager.LayoutParams.FLAG_SECURE` while mounted and clears it on dispose. This prevents screenshots/screen recording while the regenerated API token can be visible; keep screenshot blocking scoped to this screen unless another screen displays similarly sensitive data.
 

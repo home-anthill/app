@@ -11,10 +11,10 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:scheme="http"
-                    android:host="localhost"
-                    android:port="8082"
-                    android:pathPrefix="/postlogin" />
+                    android:scheme="${debugOauthCallbackScheme}"
+                    android:host="${debugOauthCallbackHost}"
+                    android:port="${debugOauthCallbackPort}"
+                    android:pathPrefix="${debugOauthCallbackPath}" />
             </intent-filter>
         </activity>
     </application>
