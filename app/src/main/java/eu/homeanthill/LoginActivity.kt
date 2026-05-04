@@ -30,7 +30,15 @@ class LoginActivity : ComponentActivity() {
    */
   private fun handleOAuthCallback(data: Uri): Boolean {
     if (!isAllowedOAuthCallback(data)) {
-      Log.e(TAG, "handleOAuthCallback - callback URI is not allowed")
+      Log.e(
+        TAG,
+        "handleOAuthCallback - callback URI is not allowed: " +
+            "scheme=${data.scheme}, host=${data.host}, port=${data.port}, path=${data.path}; " +
+            "expected scheme=${BuildConfig.OAUTH_CALLBACK_SCHEME}, " +
+            "host=${BuildConfig.OAUTH_CALLBACK_HOST}, " +
+            "port=${BuildConfig.OAUTH_CALLBACK_PORT}, " +
+            "path=${BuildConfig.OAUTH_CALLBACK_PATH}",
+      )
       clearPendingOAuth()
       return false
     }
@@ -73,6 +81,7 @@ class LoginActivity : ComponentActivity() {
           .remove(pkceCodeVerifierKey)
           .remove(oauthStateKey)
       }
+      FcmScheduler.scheduleImmediateRefresh(this@LoginActivity.applicationContext)
       val i = Intent(this@LoginActivity, PermissionActivity::class.java)
       i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
       startActivity(i)
@@ -105,10 +114,18 @@ class LoginActivity : ComponentActivity() {
     path: String,
   ): Boolean {
     if (scheme.isBlank() || host.isBlank() || path.isBlank()) return false
+    val expectedPort = port.toIntOrNull()
+    val actualPort = data.port
     return data.scheme == scheme &&
         data.host == host &&
         data.path == path &&
-        (port.isBlank() || data.port.toString() == port)
+        when {
+          port.isBlank() -> true
+          actualPort == expectedPort -> true
+          actualPort == -1 && scheme == "https" && expectedPort == 443 -> true
+          actualPort == -1 && scheme == "http" && expectedPort == 80 -> true
+          else -> false
+        }
   }
 
   private fun clearPendingOAuth() {

@@ -129,7 +129,7 @@ Exceptions bubble to the ViewModel where they're caught and mapped to `Error(mes
 ### Authentication Flow
 
 - `LoginActivity` handles GitHub OAuth2; stores JWT token and refresh token via `EncryptedSharedPreferences`
-- Mobile login sends an app-generated 128-character `app_state` to `/api/oauth/app/login`; the api-server must echo it as `state` on `/postlogin`
+- Mobile login sends an app-generated 128-character `app_state` to `/api/oauth/app/login`; the api-server must echo it as `state` on `/app/postlogin`
 - `AuthInterceptor` attaches JWT as Bearer token on every request
 - `AppAuthenticator` intercepts 401 responses: attempts silent token refresh first; only logs out and redirects to `LoginActivity` if the refresh also fails
 - Mobile refresh and logout send the stored refresh token as JSON to `/api/oauth/app/refresh` and `/api/oauth/app/logout`; the app does not persist or send web/session cookies.
@@ -144,11 +144,15 @@ Two edge cases apply only on a fresh install (process has never run before):
 
 `LoginActivity.handleOAuthCallback(Uri)` validates callback `scheme`, `host`, `port`, `path`, and the app-generated OAuth state before exchanging the code. Callback values are loaded from Gradle properties into both manifest placeholders and `BuildConfig`; real hosts and local ports must stay in gitignored property files, not committed Kotlin or manifest XML.
 
+The app-link callback path is intentionally separate from the web app post-login path. Android should claim only `/app/postlogin`; browser web login continues to use `/postlogin#token=...` so mobile browser sessions and app sessions can coexist and logout independently.
+
+Callback port matching treats an omitted URI port as the default port for the scheme (`443` for HTTPS, `80` for HTTP). Keep explicit callback ports in properties only when the callback URL really includes a non-default port.
+
 Invalid callbacks, state mismatches, missing code/state/verifier, and failed app-code exchanges must clear both `pkceCodeVerifierKey` and `oauthStateKey` so stale pending-login data is not reused.
 
 #### Refresh Token Flow (mobile)
 
-The api-server returns a 128-character app code and the app-generated OAuth state to the deep link from `/api/oauth/app/callback`. Android validates the state, exchanges that code through `/api/oauth/app/exchange-code`, and stores the returned access token and refresh token in `EncryptedSharedPreferences`. The api-server rejects malformed app codes before lookup; valid app codes are 128-character base64url strings.
+The api-server returns a 128-character app code and the app-generated OAuth state to the `/app/postlogin` deep link after `/api/oauth/app/callback`. Android validates the state, exchanges that code through `/api/oauth/app/exchange-code`, and stores the returned access token and refresh token in `EncryptedSharedPreferences`. The api-server rejects malformed app codes before lookup; valid app codes are 128-character base64url strings.
 
 When `AppAuthenticator` receives a 401:
 1. It serializes refresh attempts so concurrent 401 responses do not reuse the same rotating refresh token.
@@ -220,6 +224,8 @@ All ViewModels declare delay durations as `private const val LOAD_DELAY_MS` (and
 `PostSetFeatureDeviceValue.value` is typed `Double`, consistent with all other value fields in the model layer. Do not use `Number` as a field type in models.
 
 `LoginActivity` has a private `handleOAuthCallback(data: Uri): Boolean` helper that extracts the app login `code`, validates app state, exchanges it with the stored PKCE verifier, writes the returned credentials to `EncryptedSharedPreferences`, and starts `PermissionActivity`. Both `onCreate` and `onNewIntent` delegate to this single function — do not duplicate the callback handling logic. PKCE verifiers and app states are generated from 96 random bytes, producing 128-character strings, the RFC 7636 maximum.
+
+After successful mobile code exchange, `LoginActivity` schedules an immediate FCM token refresh through `FcmScheduler.scheduleImmediateRefresh(applicationContext)` before navigating away. Keep this tied to successful credential persistence so the worker can authenticate its registration call.
 
 `ProfileScreen` sets `WindowManager.LayoutParams.FLAG_SECURE` while mounted and clears it on dispose. This prevents screenshots/screen recording while the regenerated API token can be visible; keep screenshot blocking scoped to this screen unless another screen displays similarly sensitive data.
 
