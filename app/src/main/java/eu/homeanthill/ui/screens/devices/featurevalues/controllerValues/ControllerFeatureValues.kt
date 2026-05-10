@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
@@ -172,6 +173,7 @@ fun ControllerValuesScreen(
                     SliderControl(
                       value = currentValue?.value?.toFloat() ?: 17f,
                       range = 17f..30f,
+                      steps = 12,
                       unit = "°C",
                       onValueChange = { newValue ->
                         featureValues = featureValues.map {
@@ -184,6 +186,7 @@ fun ControllerValuesScreen(
                     SliderControl(
                       value = currentValue?.value?.toFloat() ?: 0f,
                       range = 0f..10f,
+                      steps = 9,
                       onValueChange = { newValue ->
                         featureValues = featureValues.map {
                           if (it.featureUuid == feature.uuid) it.copy(value = newValue.toDouble()) else it
@@ -292,9 +295,14 @@ fun OnControl(isOn: Boolean, onToggle: (Boolean) -> Unit) {
 fun SliderControl(
   value: Float,
   range: ClosedFloatingPointRange<Float>,
+  steps: Int = 0,
   unit: String = "",
   onValueChange: (Float) -> Unit
 ) {
+  val start = range.start.roundToInt()
+  val end = range.endInclusive.roundToInt()
+  val integerValue = value.roundToInt().coerceIn(start, end)
+
   Column {
     Row(
       modifier = Modifier.fillMaxWidth(),
@@ -303,7 +311,7 @@ fun SliderControl(
     ) {
       Text(text = range.start.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
       Text(
-        text = "${value.toInt()}$unit",
+        text = "$integerValue$unit",
         color = MaterialTheme.colorScheme.primary,
         fontSize = 20.sp,
         fontWeight = FontWeight.Bold
@@ -311,9 +319,10 @@ fun SliderControl(
       Text(text = range.endInclusive.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
     }
     Slider(
-      value = value,
-      onValueChange = { onValueChange(it) },
+      value = integerValue.toFloat(),
+      onValueChange = { onValueChange(it.roundToInt().coerceIn(start, end).toFloat()) },
       valueRange = range,
+      steps = steps,
       colors = SliderDefaults.colors(
         thumbColor = MaterialTheme.colorScheme.tertiary,
         activeTrackColor = MaterialTheme.colorScheme.secondary,

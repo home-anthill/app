@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.repository.DevicesRepository
@@ -178,7 +179,7 @@ class ControllerFeatureValuesViewModel(
               featureUuid = it.featureUuid,
               type = it.type,
               name = it.name,
-              value = it.value,
+              value = normalizeCommandValue(it),
             )
           }
         val sendResponse: GenericMessageResponse =
@@ -188,6 +189,14 @@ class ControllerFeatureValuesViewModel(
         Log.e(TAG, "sendCommands - err = $err")
         _sendValueResult.emit(SendValueResult(err.message.toString(), true))
       }
+    }
+  }
+
+  private fun normalizeCommandValue(value: DeviceFeatureValueResponse): Double {
+    return when (value.name.lowercase()) {
+      "setpoint" -> value.value.roundToInt().coerceIn(setpoints.first(), setpoints.last()).toDouble()
+      "tolerance" -> value.value.roundToInt().coerceIn(tolerances.first(), tolerances.last()).toDouble()
+      else -> value.value
     }
   }
 }

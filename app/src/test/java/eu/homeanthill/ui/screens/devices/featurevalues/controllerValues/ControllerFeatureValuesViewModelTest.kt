@@ -4,6 +4,7 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -25,6 +26,7 @@ import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.DeviceFeatureValueResponse
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.GenericMessageResponse
+import eu.homeanthill.api.model.PostSetFeatureDeviceValue
 import eu.homeanthill.api.model.SendValueResult
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.ui.components.SpinnerItemObj
@@ -152,6 +154,30 @@ class ControllerFeatureValuesViewModelTest {
         collectJob.cancel()
     }
 
+    @Test
+    fun `sendCommands rounds and clamps setpoint and tolerance values`() = runTest(testScheduler) {
+        val sentValues = slot<List<PostSetFeatureDeviceValue>>()
+        coEvery { mockDevicesRepo.repoPostSetValues("dev1", capture(sentValues)) } returns
+                GenericMessageResponse("Commands sent")
+
+        val vm = ControllerFeatureValuesViewModel(mockDevicesRepo)
+        val fractionalSetpoint = setpointValue.copy(value = 30.7)
+        val fractionalTolerance = DeviceFeatureValueResponse(
+            featureUuid = "f-tol",
+            type = "controller",
+            name = "tolerance",
+            value = 1.6,
+            createdAt = 1704067200000L,
+            modifiedAt = 1704067200000L,
+        )
+
+        vm.sendCommands(testDevice, listOf(fractionalSetpoint, fractionalTolerance))
+        advanceUntilIdle()
+
+        assertEquals(30.0, sentValues.captured.first { it.name == "setpoint" }.value, 0.0)
+        assertEquals(2.0, sentValues.captured.first { it.name == "tolerance" }.value, 0.0)
+    }
+
     // --- getSetpointByFeatureUuid ---
 
     @Test
@@ -232,7 +258,7 @@ class ControllerFeatureValuesViewModelTest {
 
         val result = vm.getSetpointValue("22")
 
-        // setpoints start at 17, so 22 - 17 = 5, but value = index + 17 = 22
+        // setpoints are sent as their integer value
         assertEquals(22, result)
     }
 
