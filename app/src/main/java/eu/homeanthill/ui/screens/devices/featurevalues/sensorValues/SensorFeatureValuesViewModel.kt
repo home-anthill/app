@@ -5,6 +5,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.lifecycle.ViewModel
+import kotlin.math.ceil
+import kotlin.math.log10
+import kotlin.math.max
+import kotlin.math.min
 
 import eu.homeanthill.api.model.FeatureValue
 
@@ -28,27 +32,33 @@ class SensorFeatureValuesViewModel : ViewModel() {
 
   private fun getAirQualityValue(value: Int): String {
     return when (value) {
-      0 -> "Extreme pollution"
-      1 -> "High pollution"
-      2 -> "Mid pollution"
-      3 -> "Low pollution"
+      0 -> "Poor"
+      1 -> "Low"
+      2 -> "Good"
+      3 -> "Excellent"
       else -> "Unknown"
     }
   }
 
-  private fun toFixed(value: Double, precision: Int): String {
-    return String.format("%.${precision}f", value)
+  private fun formatByStep(value: Double, step: Float?): String {
+    val decimals = if (step == null || step <= 0f) {
+      DEFAULT_DECIMAL_PRECISION
+    } else {
+      max(0.0, ceil(-log10(step.toDouble()))).toInt()
+    }
+    return String.format(Locale.US, "%.${min(decimals, MAX_DECIMAL_PRECISION)}f", value)
   }
 
   fun getValue(featureValue: FeatureValue): String {
     return when (featureValue.feature.name) {
-      "temperature" -> "${toFixed(featureValue.value, 2)} ${featureValue.feature.unit}"
-      "humidity" -> "${toFixed(featureValue.value, 2)} ${featureValue.feature.unit}"
-      "light" -> "${toFixed(featureValue.value, 0)} ${featureValue.feature.unit}"
       "motion" -> getMotionValue(featureValue.value.toInt())
       "airquality" -> getAirQualityValue(featureValue.value.toInt())
-      "airpressure" -> "${toFixed(featureValue.value, 0)} ${featureValue.feature.unit}"
-      else -> "${featureValue.value} ${featureValue.feature.unit}"
+      else -> "${formatByStep(featureValue.value, featureValue.feature.spec.step)} ${featureValue.feature.unit}"
     }
+  }
+
+  companion object {
+    private const val DEFAULT_DECIMAL_PRECISION = 2
+    private const val MAX_DECIMAL_PRECISION = 2
   }
 }

@@ -4,6 +4,17 @@ import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
+enum class Format {
+  @SerializedName("bool")
+  BOOL,
+  @SerializedName("int")
+  INT,
+  @SerializedName("float")
+  FLOAT,
+  @SerializedName("list")
+  LIST
+}
+
 // ------------------------------------------
 // Classes with aggregated data to represent the list of devices groped by homes and rooms
 @Parcelize
@@ -49,7 +60,24 @@ data class Feature(
   @SerializedName("enable") val enable: Boolean,
   @SerializedName("order") val order: Int,
   @SerializedName("unit") val unit: String,
+  @SerializedName("spec") val spec: Spec = Spec(),
 ) : Parcelable
+
+@Parcelize
+data class Spec(
+  @SerializedName("format") val format: Format = Format.FLOAT,
+  @SerializedName("min") val min: Float? = null,
+  @SerializedName("max") val max: Float? = null,
+  @SerializedName("step") val step: Float? = null,
+  @SerializedName("list") val list: List<SpecListItem>? = null,
+) : Parcelable
+
+@Parcelize
+data class SpecListItem(
+  @SerializedName("value") val value: Int,
+  @SerializedName("text") val text: String,
+) : Parcelable
+
 
 // ------------------------------------------
 // classes used as body for API requests

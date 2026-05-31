@@ -47,6 +47,7 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.ksp)
+  alias(libs.plugins.kover)
   alias(libs.plugins.google.services)
   alias(libs.plugins.secrets)
   // Enable Kotlin Parcelize plugin

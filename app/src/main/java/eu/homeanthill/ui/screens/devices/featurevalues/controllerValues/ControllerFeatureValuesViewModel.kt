@@ -20,6 +20,8 @@ import kotlin.math.roundToInt
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.api.model.DeviceFeatureValueResponse
+import eu.homeanthill.api.model.Feature
+import eu.homeanthill.api.model.Format
 import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PostSetFeatureDeviceValue
 import eu.homeanthill.api.model.SendValueResult
@@ -46,91 +48,18 @@ class ControllerFeatureValuesViewModel(
   private val _sendValueResult = MutableSharedFlow<SendValueResult>(extraBufferCapacity = 1)
   val sendValueResult: SharedFlow<SendValueResult> = _sendValueResult
 
-  private val setpoints = (17..30).toList()
-  private val modes = arrayOf("Cool", "Auto", "Heat", "Fan", "Dry")
-  private val fanSpeeds = arrayOf("Min", "Med", "Max", "Auto", "Auto0")
-  private val tolerances = (0..10).toList()
-
-  // Pre-computed option lists — source arrays are constants so these never need to change.
-  private val setpointOptions: List<SpinnerItemObj> =
-    setpoints.map { t -> SpinnerItemObj(t.toString(), t.toString()) }
-  private val modeOptions: List<SpinnerItemObj> =
-    modes.map { mode -> SpinnerItemObj(mode, mode) }
-  private val fanSpeedOptions: List<SpinnerItemObj> =
-    fanSpeeds.map { fanSpeed -> SpinnerItemObj(fanSpeed, fanSpeed) }
-  private val toleranceOptions: List<SpinnerItemObj> =
-    tolerances.map { t -> SpinnerItemObj(t.toString(), t.toString()) }
-
-  fun getSetpointByFeatureUuid(
-    featureValues: List<DeviceFeatureValueResponse>, uuid: String
-  ): SpinnerItemObj {
-    val v: DeviceFeatureValueResponse? = featureValues.find { it.featureUuid == uuid }
-    val index = (v?.value?.toInt() ?: -999) - setpoints[0]
-    if (v == null || v.value.toInt() == -999 || index < 0 || index >= setpoints.size) {
-      return SpinnerItemObj(setpoints[0].toString(), setpoints[0].toString())
+  fun getOptions(feature: Feature): List<SpinnerItemObj> {
+    return feature.spec.list.orEmpty().map { item ->
+      SpinnerItemObj(key = item.value.toString(), value = item.text)
     }
-    val res = setpoints[index]
-    return SpinnerItemObj(res.toString(), res.toString())
   }
 
-  fun getSetpoints(): List<SpinnerItemObj> = setpointOptions
-
-  fun getSetpointValue(name: String): Int {
-    return setpoints.indexOfFirst { temp -> temp == name.toInt() } + setpoints[0]
-  }
-
-  fun getToleranceByFeatureUuid(
-    featureValues: List<DeviceFeatureValueResponse>, uuid: String
-  ): SpinnerItemObj {
-    val v: DeviceFeatureValueResponse? = featureValues.find { it.featureUuid == uuid }
-    val index = v?.value?.toInt() ?: -999
-    if (v == null || index == -999 || index < 0 || index >= tolerances.size) {
-      return SpinnerItemObj(tolerances[0].toString(), tolerances[0].toString())
-    }
-    val res = tolerances[index]
-    return SpinnerItemObj(res.toString(), res.toString())
-  }
-
-  fun getTolerances(): List<SpinnerItemObj> = toleranceOptions
-
-  fun getToleranceValue(name: String): Int {
-    return tolerances.indexOfFirst { temp -> temp == name.toInt() }
-  }
-
-  fun getModeByFeatureUuid(
-    featureValues: List<DeviceFeatureValueResponse>, uuid: String
-  ): SpinnerItemObj {
-    val v: DeviceFeatureValueResponse? = featureValues.find { it.featureUuid == uuid }
-    val index = (v?.value?.toInt() ?: -999) - 1
-    if (v == null || v.value.toInt() == -999 || index < 0 || index >= modes.size) {
-      return SpinnerItemObj(modes[0], modes[0])
-    }
-    val res = modes[index]
-    return SpinnerItemObj(res, res)
-  }
-
-  fun getModes(): List<SpinnerItemObj> = modeOptions
-
-  fun getModeValue(name: String): Int {
-    return modes.indexOfFirst { mode -> mode == name } + 1
-  }
-
-  fun getFanSpeedByFeatureUuid(
-    featureValues: List<DeviceFeatureValueResponse>, uuid: String
-  ): SpinnerItemObj {
-    val v: DeviceFeatureValueResponse? = featureValues.find { it.featureUuid == uuid }
-    val index = (v?.value?.toInt() ?: -999) - 1
-    if (v == null || v.value.toInt() == -999 || index < 0 || index >= fanSpeeds.size) {
-      return SpinnerItemObj(fanSpeeds[0], fanSpeeds[0])
-    }
-    val res = fanSpeeds[index]
-    return SpinnerItemObj(res, res)
-  }
-
-  fun getFanSpeeds(): List<SpinnerItemObj> = fanSpeedOptions
-
-  fun getFanSpeedValue(name: String): Int {
-    return fanSpeeds.indexOfFirst { fanSpeed -> fanSpeed == name } + 1
+  fun getSelectedOption(
+    feature: Feature,
+    currentValue: DeviceFeatureValueResponse?
+  ): SpinnerItemObj? {
+    val currentIntValue = currentValue?.value?.roundToInt()
+    return getOptions(feature).firstOrNull { it.key.toIntOrNull() == currentIntValue }
   }
 
   fun getPrettyDateFromUnixEpoch(unixEpoch: String?): String {
@@ -179,7 +108,7 @@ class ControllerFeatureValuesViewModel(
               featureUuid = it.featureUuid,
               type = it.type,
               name = it.name,
-              value = normalizeCommandValue(it),
+              value = normalizeCommandValue(device, it),
             )
           }
         val sendResponse: GenericMessageResponse =
@@ -192,11 +121,30 @@ class ControllerFeatureValuesViewModel(
     }
   }
 
-  private fun normalizeCommandValue(value: DeviceFeatureValueResponse): Double {
-    return when (value.name.lowercase()) {
-      "setpoint" -> value.value.roundToInt().coerceIn(setpoints.first(), setpoints.last()).toDouble()
-      "tolerance" -> value.value.roundToInt().coerceIn(tolerances.first(), tolerances.last()).toDouble()
+  private fun normalizeCommandValue(device: Device, value: DeviceFeatureValueResponse): Double {
+    val feature = device.features.find { it.uuid == value.featureUuid } ?: return value.value
+    val min = feature.spec.min?.toDouble()
+    val max = feature.spec.max?.toDouble()
+    val clamped = when {
+      min != null && max != null -> value.value.coerceIn(min, max)
+      min != null -> value.value.coerceAtLeast(min)
+      max != null -> value.value.coerceAtMost(max)
       else -> value.value
+    }
+
+    return when (feature.spec.format) {
+      Format.BOOL -> if (clamped >= 1.0) 1.0 else 0.0
+      Format.INT -> clamped.roundToInt().toDouble()
+      Format.LIST -> {
+        val allowedValues = feature.spec.list.orEmpty().map { it.value }
+        val roundedValue = clamped.roundToInt()
+        if (allowedValues.isEmpty() || roundedValue in allowedValues) {
+          roundedValue.toDouble()
+        } else {
+          allowedValues.first().toDouble()
+        }
+      }
+      Format.FLOAT -> clamped
     }
   }
 }

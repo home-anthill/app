@@ -41,11 +41,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
+import kotlin.math.ceil
+import kotlin.math.log10
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.DeviceFeatureValueResponse
+import eu.homeanthill.api.model.Feature
+import eu.homeanthill.api.model.Format
 import eu.homeanthill.api.model.SendValueResult
 import eu.homeanthill.ui.components.MaterialSpinner
 
@@ -65,9 +72,9 @@ fun ControllerValuesScreen(
     }
   }
 
-  LaunchedEffect(getValueUiState) {
+  LaunchedEffect(getValueUiState, device) {
     if (getValueUiState is ControllerFeatureValuesViewModel.ValuesUiState.Idle) {
-      featureValues = getValueUiState.values ?: listOf()
+      featureValues = controllerValuesWithDefaults(device, getValueUiState.values.orEmpty())
     }
   }
 
@@ -158,8 +165,8 @@ fun ControllerValuesScreen(
                 title = feature.name.replaceFirstChar { it.uppercase() },
                 lastUpdated = controllerFeatureValuesViewModel.getPrettyDateFromLong(currentValue?.modifiedAt)
               ) {
-                when (feature.name.lowercase()) {
-                  "on" -> {
+                when (feature.spec.format) {
+                  Format.BOOL -> {
                     OnControl(
                       isOn = currentValue?.value?.toInt() == 1,
                       onToggle = { isOn ->
@@ -169,12 +176,15 @@ fun ControllerValuesScreen(
                       }
                     )
                   }
-                  "setpoint" -> {
+                  Format.INT, Format.FLOAT -> {
+                    val minValue = feature.spec.min ?: DEFAULT_SLIDER_MIN
+                    val maxValue = feature.spec.max ?: DEFAULT_SLIDER_MAX
+                    val step = feature.spec.step ?: DEFAULT_SLIDER_STEP
                     SliderControl(
-                      value = currentValue?.value?.toFloat() ?: 17f,
-                      range = 17f..30f,
-                      steps = 12,
-                      unit = "°C",
+                      value = currentValue?.value?.toFloat() ?: minValue,
+                      range = minValue..maxValue,
+                      step = step,
+                      unit = feature.unit,
                       onValueChange = { newValue ->
                         featureValues = featureValues.map {
                           if (it.featureUuid == feature.uuid) it.copy(value = newValue.toDouble()) else it
@@ -182,39 +192,15 @@ fun ControllerValuesScreen(
                       }
                     )
                   }
-                  "tolerance" -> {
-                    SliderControl(
-                      value = currentValue?.value?.toFloat() ?: 0f,
-                      range = 0f..10f,
-                      steps = 9,
-                      onValueChange = { newValue ->
-                        featureValues = featureValues.map {
-                          if (it.featureUuid == feature.uuid) it.copy(value = newValue.toDouble()) else it
-                        }
-                      }
-                    )
-                  }
-                  "mode" -> {
+                  Format.LIST -> {
                     MaterialSpinner(
                       title = "",
-                      options = controllerFeatureValuesViewModel.getModes(),
-                      selectedOption = controllerFeatureValuesViewModel.getModeByFeatureUuid(featureValues, feature.uuid),
+                      options = controllerFeatureValuesViewModel.getOptions(feature),
+                      selectedOption = controllerFeatureValuesViewModel.getSelectedOption(feature, currentValue),
                       onSelect = { option ->
+                        val selectedValue = option.key.toDoubleOrNull() ?: return@MaterialSpinner
                         featureValues = featureValues.map {
-                          if (it.featureUuid == feature.uuid) it.copy(value = controllerFeatureValuesViewModel.getModeValue(option.value).toDouble()) else it
-                        }
-                      },
-                      modifier = Modifier.fillMaxWidth()
-                    )
-                  }
-                  "fanspeed" -> {
-                    MaterialSpinner(
-                      title = "",
-                      options = controllerFeatureValuesViewModel.getFanSpeeds(),
-                      selectedOption = controllerFeatureValuesViewModel.getFanSpeedByFeatureUuid(featureValues, feature.uuid),
-                      onSelect = { option ->
-                        featureValues = featureValues.map {
-                          if (it.featureUuid == feature.uuid) it.copy(value = controllerFeatureValuesViewModel.getFanSpeedValue(option.value).toDouble()) else it
+                          if (it.featureUuid == feature.uuid) it.copy(value = selectedValue) else it
                         }
                       },
                       modifier = Modifier.fillMaxWidth()
@@ -295,13 +281,15 @@ fun OnControl(isOn: Boolean, onToggle: (Boolean) -> Unit) {
 fun SliderControl(
   value: Float,
   range: ClosedFloatingPointRange<Float>,
-  steps: Int = 0,
+  step: Float = DEFAULT_SLIDER_STEP,
   unit: String = "",
   onValueChange: (Float) -> Unit
 ) {
-  val start = range.start.roundToInt()
-  val end = range.endInclusive.roundToInt()
-  val integerValue = value.roundToInt().coerceIn(start, end)
+  val start = range.start
+  val end = range.endInclusive
+  val snappedValue = snapToStep(value, start, end, step)
+  val stepCount = sliderSteps(start, end, step)
+  val displayValue = formatSliderValue(snappedValue, step)
 
   Column {
     Row(
@@ -309,20 +297,20 @@ fun SliderControl(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.Bottom
     ) {
-      Text(text = range.start.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
+      Text(text = formatSliderValue(range.start, step), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
       Text(
-        text = "$integerValue$unit",
+        text = "$displayValue$unit",
         color = MaterialTheme.colorScheme.primary,
         fontSize = 20.sp,
         fontWeight = FontWeight.Bold
       )
-      Text(text = range.endInclusive.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
+      Text(text = formatSliderValue(range.endInclusive, step), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
     }
     Slider(
-      value = integerValue.toFloat(),
-      onValueChange = { onValueChange(it.roundToInt().coerceIn(start, end).toFloat()) },
+      value = snappedValue,
+      onValueChange = { onValueChange(snapToStep(it, start, end, step)) },
       valueRange = range,
-      steps = steps,
+      steps = stepCount,
       colors = SliderDefaults.colors(
         thumbColor = MaterialTheme.colorScheme.tertiary,
         activeTrackColor = MaterialTheme.colorScheme.secondary,
@@ -333,8 +321,68 @@ fun SliderControl(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween
     ) {
-      Text(text = range.start.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
-      Text(text = range.endInclusive.toInt().toString(), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
+      Text(text = formatSliderValue(range.start, step), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
+      Text(text = formatSliderValue(range.endInclusive, step), color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f), fontSize = 12.sp)
     }
   }
 }
+
+private fun controllerValuesWithDefaults(
+  device: Device?,
+  values: List<DeviceFeatureValueResponse>
+): List<DeviceFeatureValueResponse> {
+  if (device == null) {
+    return values
+  }
+  return device.features
+    .filter { it.type == "controller" }
+    .sortedBy { it.order }
+    .map { feature ->
+      values.find { it.featureUuid == feature.uuid } ?: DeviceFeatureValueResponse(
+        featureUuid = feature.uuid,
+        type = feature.type,
+        name = feature.name,
+        value = defaultControllerValue(feature),
+        createdAt = 0L,
+        modifiedAt = 0L,
+      )
+    }
+}
+
+private fun defaultControllerValue(feature: Feature): Double {
+  return when (feature.spec.format) {
+    Format.BOOL -> 0.0
+    Format.INT, Format.FLOAT -> feature.spec.min?.toDouble() ?: 0.0
+    Format.LIST -> feature.spec.list?.firstOrNull()?.value?.toDouble() ?: 0.0
+  }
+}
+
+private fun sliderSteps(start: Float, end: Float, step: Float): Int {
+  if (step <= 0f || end <= start) {
+    return 0
+  }
+  return max(((end - start) / step).roundToInt() - 1, 0)
+}
+
+private fun snapToStep(value: Float, start: Float, end: Float, step: Float): Float {
+  val clampedValue = value.coerceIn(start, end)
+  if (step <= 0f) {
+    return clampedValue
+  }
+  val stepIndex = ((clampedValue - start) / step).roundToInt()
+  return (start + stepIndex * step).coerceIn(start, end)
+}
+
+private fun formatSliderValue(value: Float, step: Float): String {
+  val decimals = if (step <= 0f) {
+    MAX_DECIMAL_PRECISION
+  } else {
+    max(0.0, ceil(-log10(step.toDouble()))).toInt()
+  }
+  return String.format(Locale.US, "%.${min(decimals, MAX_DECIMAL_PRECISION)}f", value)
+}
+
+private const val DEFAULT_SLIDER_MIN = 0f
+private const val DEFAULT_SLIDER_MAX = 100f
+private const val DEFAULT_SLIDER_STEP = 1f
+private const val MAX_DECIMAL_PRECISION = 2

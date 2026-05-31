@@ -6,12 +6,19 @@ import org.junit.Test
 
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.FeatureValue
+import eu.homeanthill.api.model.Format
+import eu.homeanthill.api.model.Spec
 
 class SensorFeatureValuesViewModelTest {
 
     private val vm = SensorFeatureValuesViewModel()
 
-    private fun makeFeatureValue(name: String, value: Double, unit: String = ""): FeatureValue {
+    private fun makeFeatureValue(
+        name: String,
+        value: Double,
+        unit: String = "",
+        spec: Spec = Spec(format = Format.FLOAT, step = 0.01f),
+    ): FeatureValue {
         return FeatureValue(
             feature = Feature(
                 uuid = "test-uuid",
@@ -20,6 +27,7 @@ class SensorFeatureValuesViewModelTest {
                 enable = true,
                 order = 1,
                 unit = unit,
+                spec = spec,
             ),
             value = value,
             createdAt = 1704067200000L,
@@ -61,11 +69,20 @@ class SensorFeatureValuesViewModelTest {
         assertTrue(result.matches(Regex("65[.,]43 %")))
     }
 
+    @Test
+    fun `getValue caps spec step precision at two decimal places`() {
+        val fv = makeFeatureValue("temperature", 12.3456, "°C", Spec(format = Format.FLOAT, step = 0.001f))
+
+        val result = vm.getValue(fv)
+
+        assertEquals("12.35 °C", result)
+    }
+
     // --- getValue: light ---
 
     @Test
     fun `getValue returns formatted light with no decimal places`() {
-        val fv = makeFeatureValue("light", 512.8, "lx")
+        val fv = makeFeatureValue("light", 512.8, "lx", Spec(format = Format.FLOAT, step = 1f))
 
         val result = vm.getValue(fv)
 
@@ -95,31 +112,31 @@ class SensorFeatureValuesViewModelTest {
     // --- getValue: airquality ---
 
     @Test
-    fun `getValue returns Extreme pollution for airquality 0`() {
+    fun `getValue returns Poor for airquality 0`() {
         val fv = makeFeatureValue("airquality", 0.0)
 
-        assertEquals("Extreme pollution", vm.getValue(fv))
+        assertEquals("Poor", vm.getValue(fv))
     }
 
     @Test
-    fun `getValue returns High pollution for airquality 1`() {
+    fun `getValue returns Low for airquality 1`() {
         val fv = makeFeatureValue("airquality", 1.0)
 
-        assertEquals("High pollution", vm.getValue(fv))
+        assertEquals("Low", vm.getValue(fv))
     }
 
     @Test
-    fun `getValue returns Mid pollution for airquality 2`() {
+    fun `getValue returns Good for airquality 2`() {
         val fv = makeFeatureValue("airquality", 2.0)
 
-        assertEquals("Mid pollution", vm.getValue(fv))
+        assertEquals("Good", vm.getValue(fv))
     }
 
     @Test
-    fun `getValue returns Low pollution for airquality 3`() {
+    fun `getValue returns Excellent for airquality 3`() {
         val fv = makeFeatureValue("airquality", 3.0)
 
-        assertEquals("Low pollution", vm.getValue(fv))
+        assertEquals("Excellent", vm.getValue(fv))
     }
 
     @Test
@@ -133,7 +150,7 @@ class SensorFeatureValuesViewModelTest {
 
     @Test
     fun `getValue returns formatted airpressure with no decimal places`() {
-        val fv = makeFeatureValue("airpressure", 1013.25, "hPa")
+        val fv = makeFeatureValue("airpressure", 1013.25, "hPa", Spec(format = Format.FLOAT, step = 1f))
 
         val result = vm.getValue(fv)
 
@@ -143,11 +160,11 @@ class SensorFeatureValuesViewModelTest {
     // --- getValue: unknown feature ---
 
     @Test
-    fun `getValue returns raw value and unit for unknown feature name`() {
+    fun `getValue formats unknown numeric feature from spec step`() {
         val fv = makeFeatureValue("unknown_sensor", 42.0, "units")
 
         val result = vm.getValue(fv)
 
-        assertEquals("42.0 units", result)
+        assertEquals("42.00 units", result)
     }
 }

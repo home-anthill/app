@@ -17,7 +17,8 @@ retrofit = "3.0.0"
 loggingInterceptor = "5.3.2"
 urlconnection = "5.3.2"
 koin = "4.2.1"
-firebase = "34.13.0"
+kover = "0.9.8"
+firebase = "34.14.0"
 googleServices = "4.4.4"
 accompanist = "0.37.3"
 secretsGradlePlugin = "2.0.1"
@@ -92,5 +93,6 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref 
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }

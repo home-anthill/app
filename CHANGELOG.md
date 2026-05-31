@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.0.0
+
+### Features
+
+- Updated device feature UI handling to use `Feature.spec` for sensor value precision, controller slider bounds/steps, list options, and command normalization.
+
+### Tests
+
+- increase test coverage
+
+
 ## 3.0.0
 
 ### Features
