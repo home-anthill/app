@@ -73,6 +73,7 @@ class FeaturesViewModelTest {
 
     @Test
     fun `initDeviceValues emits Idle with device values and homes on success`() = runTest(testScheduler) {
+        coEvery { mockDevicesRepo.repoGetDevices() } returns listOf(testDevice)
         coEvery { mockDevicesRepo.repoGetDeviceValues("dev1") } returns emptyList()
         coEvery { mockHomesRepo.repoGetHomes() } returns listOf(testHome)
 
@@ -85,12 +86,14 @@ class FeaturesViewModelTest {
         val idle = state as FeaturesViewModel.FeatureValuesUiState.Idle
         assertEquals(testDevice, idle.deviceValue?.device)
         assertEquals(listOf(testHome), idle.homes)
+        coVerify(exactly = 1) { mockDevicesRepo.repoGetDevices() }
         coVerify(exactly = 1) { mockDevicesRepo.repoGetDeviceValues("dev1") }
         coVerify(exactly = 1) { mockHomesRepo.repoGetHomes() }
     }
 
     @Test
     fun `initDeviceValues emits Error when repoGetHomes throws IOException`() = runTest(testScheduler) {
+        coEvery { mockDevicesRepo.repoGetDevices() } returns listOf(testDevice)
         coEvery { mockDevicesRepo.repoGetDeviceValues("dev1") } returns emptyList()
         coEvery { mockHomesRepo.repoGetHomes() } throws IOException("Load homes failed")
 
@@ -105,6 +108,10 @@ class FeaturesViewModelTest {
 
     @Test
     fun `updateDeviceSettings assigns device and refreshes values on success`() = runTest(testScheduler) {
+        coEvery { mockDevicesRepo.repoGetDevices() } returnsMany listOf(
+            listOf(testDevice),
+            listOf(testDevice.copy(name = "New Name")),
+        )
         coEvery { mockDevicesRepo.repoGetDeviceValues("dev1") } returns emptyList()
         coEvery { mockHomesRepo.repoGetHomes() } returns listOf(testHome)
         coEvery { mockDevicesRepo.repoAssignDeviceToHomeRoom(any(), any()) } returns okMessage
@@ -125,6 +132,7 @@ class FeaturesViewModelTest {
                 PutDevice(name = "New Name", homeId = "home1", roomId = "room1")
             )
         }
+        coVerify(exactly = 2) { mockDevicesRepo.repoGetDevices() }
         coVerify(exactly = 2) { mockDevicesRepo.repoGetDeviceValues("dev1") }
         coVerify(exactly = 2) { mockHomesRepo.repoGetHomes() }
     }

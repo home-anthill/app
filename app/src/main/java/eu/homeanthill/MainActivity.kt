@@ -35,9 +35,12 @@ import eu.homeanthill.ui.theme.AppTheme
 import eu.homeanthill.ui.navigation.Destinations.DEVICES
 import eu.homeanthill.ui.navigation.Destinations.HOME
 import eu.homeanthill.ui.navigation.Destinations.HOMES
+import eu.homeanthill.ui.navigation.Destinations.NOTIFICATIONS
 import eu.homeanthill.ui.navigation.Destinations.PROFILE
 import eu.homeanthill.ui.screens.devices.DevicesScreen
 import eu.homeanthill.ui.screens.homes.HomesScreen
+import eu.homeanthill.ui.screens.notifications.NotificationsScreen
+import eu.homeanthill.ui.screens.notifications.NotificationsViewModel
 import eu.homeanthill.ui.screens.profile.ProfileScreen
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
@@ -87,6 +90,7 @@ fun AppNavGraph(
         val items = listOf(
           Triple(DEVICES, R.string.devices, R.drawable.list_24px),
           Triple(HOMES, R.string.homes, R.drawable.home_24px),
+          Triple(NOTIFICATIONS, R.string.notifications, R.drawable.notifications_24px),
           Triple(PROFILE, R.string.profile, R.drawable.account_circle_24px)
         )
         items.forEach { (route, labelRes, icon) ->
@@ -126,6 +130,14 @@ fun AppNavGraph(
       }
       composable(HOMES) {
         HomesScreen()
+      }
+      composable(NOTIFICATIONS) {
+        val notificationsViewModel = koinViewModel<NotificationsViewModel>()
+        val notificationsUiState by notificationsViewModel.notificationsUiState.collectAsStateWithLifecycle()
+        NotificationsScreen(
+          notificationsUiState = notificationsUiState,
+          notificationsViewModel = notificationsViewModel,
+        )
       }
       composable(DEVICES) {
         DevicesScreen()

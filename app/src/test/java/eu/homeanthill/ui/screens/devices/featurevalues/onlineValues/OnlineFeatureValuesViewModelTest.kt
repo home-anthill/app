@@ -23,6 +23,7 @@ import java.io.IOException
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.OnlineValue
+import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.OnlineRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,6 +32,7 @@ class OnlineFeatureValuesViewModelTest {
     private val testScheduler = TestCoroutineScheduler()
     private val mainDispatcher = StandardTestDispatcher(testScheduler)
     private val mockOnlineRepo = mockk<OnlineRepository>()
+    private val mockDevicesRepo = mockk<DevicesRepository>()
 
     private val testDevice = Device(
         id = "dev1",
@@ -67,7 +69,7 @@ class OnlineFeatureValuesViewModelTest {
     fun `initDeviceValues emits Idle with online value on success`() = runTest(testScheduler) {
         coEvery { mockOnlineRepo.repoGetOnlineValues("dev1") } returns testOnlineValue
 
-        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo)
+        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo, mockDevicesRepo)
         vm.initDeviceValues(testDevice)
         advanceUntilIdle()
 
@@ -81,7 +83,7 @@ class OnlineFeatureValuesViewModelTest {
     fun `initDeviceValues emits Error when repoGetOnlineValues throws IOException`() = runTest(testScheduler) {
         coEvery { mockOnlineRepo.repoGetOnlineValues("dev1") } throws IOException("Online fetch failed")
 
-        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo)
+        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo, mockDevicesRepo)
         vm.initDeviceValues(testDevice)
         advanceUntilIdle()
 
@@ -97,7 +99,7 @@ class OnlineFeatureValuesViewModelTest {
 
     @Test
     fun `isOffline returns false when device updated within 60 seconds`() = runTest(testScheduler) {
-        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo)
+        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo, mockDevicesRepo)
         // 30 seconds apart — device is online
         val result = vm.isOffline(
             modifiedAtISO = "2024-01-01T10:00:00",
@@ -109,7 +111,7 @@ class OnlineFeatureValuesViewModelTest {
 
     @Test
     fun `isOffline returns true when device has not been updated for more than 60 seconds`() = runTest(testScheduler) {
-        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo)
+        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo, mockDevicesRepo)
         // 90 seconds apart — device is offline
         val result = vm.isOffline(
             modifiedAtISO = "2024-01-01T10:00:00",
@@ -121,7 +123,7 @@ class OnlineFeatureValuesViewModelTest {
 
     @Test
     fun `isOffline returns false when device updated exactly 60 seconds ago (boundary)`() = runTest(testScheduler) {
-        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo)
+        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo, mockDevicesRepo)
         // Exactly 60 seconds — NOT offline (threshold is strictly less than 60s ago)
         val result = vm.isOffline(
             modifiedAtISO = "2024-01-01T10:00:00",
@@ -135,7 +137,7 @@ class OnlineFeatureValuesViewModelTest {
 
     @Test
     fun `getPrettyDateFromUnixEpoch returns non-empty formatted date string`() = runTest(testScheduler) {
-        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo)
+        val vm = OnlineFeatureValuesViewModel(mockOnlineRepo, mockDevicesRepo)
 
         val result = vm.getPrettyDateFromUnixEpoch("2024-01-15T10:30:00")
 

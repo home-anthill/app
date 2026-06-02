@@ -44,13 +44,15 @@ class FeaturesViewModel(
       _featureValuesUiState.emit(FeatureValuesUiState.Loading)
       delay(LOAD_DELAY_MS)
       try {
+        val devices: List<Device> = devicesRepository.repoGetDevices()
+        val currentDevice = devices.find { it.id == device.id } ?: device
         val values: List<DeviceFeatureValueResponse> =
-          devicesRepository.repoGetDeviceValues(device.id)
+          devicesRepository.repoGetDeviceValues(currentDevice.id)
         val homes: List<Home> = homesRepository.repoGetHomes()
         val deviceValue = DeviceValue(
-          device = device,
-          sensorFeatureValues = getFeatureValues(device, values, "sensor"),
-          controllerFeatureValues = getFeatureValues(device, values, "controller"),
+          device = currentDevice,
+          sensorFeatureValues = getFeatureValues(currentDevice, values, "sensor"),
+          controllerFeatureValues = getFeatureValues(currentDevice, values, "controller"),
         )
         _featureValuesUiState.emit(FeatureValuesUiState.Idle(deviceValue, homes))
       } catch (err: IOException) {

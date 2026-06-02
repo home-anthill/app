@@ -18,10 +18,12 @@ import kotlinx.coroutines.launch
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.OnlineValue
 import eu.homeanthill.BuildConfig
+import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.OnlineRepository
 
 class OnlineFeatureValuesViewModel(
-  private val onlineRepository: OnlineRepository
+  private val onlineRepository: OnlineRepository,
+  private val devicesRepository: DevicesRepository,
 ) : ViewModel() {
   companion object {
     private const val TAG = "OnlineValuesViewModel"
@@ -68,6 +70,24 @@ class OnlineFeatureValuesViewModel(
         _onlineValuesUiState.emit(OnlineValuesUiState.Idle(value))
       } catch (err: IOException) {
         _onlineValuesUiState.emit(OnlineValuesUiState.Error(err.message.toString()))
+      }
+    }
+  }
+
+  fun setFeatureNotificationSilenced(
+    device: Device,
+    featureUuid: String,
+    notificationSilenced: Boolean,
+    onSuccess: () -> Unit = {},
+    onError: () -> Unit = {},
+  ) {
+    viewModelScope.launch {
+      try {
+        devicesRepository.repoSetFeatureNotification(device.id, featureUuid, notificationSilenced)
+        onSuccess()
+      } catch (err: IOException) {
+        Log.e(TAG, "setFeatureNotificationSilenced - err = $err")
+        onError()
       }
     }
   }

@@ -108,6 +108,8 @@ fun FeaturesScreen(
 
   val deviceStateUpdatedMsg = stringResource(R.string.device_state_updated)
   val deviceStateErrorMsg = stringResource(R.string.device_state_error)
+  val notificationsSilencedMsg = stringResource(R.string.notifications_silenced)
+  val notificationsEnabledMsg = stringResource(R.string.notifications_enabled)
 
   LaunchedEffect(Unit) {
     if (device != null) {
@@ -245,10 +247,22 @@ fun FeaturesScreen(
 
                 if (hasOnline) {
                   OnlineFeatureValues(
-                    device = device,
+                    device = featureValuesUiState.deviceValue?.device ?: device,
                     onlineValuesUiState = onlineValuesUiState,
                     onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
                     refreshTrigger = refreshTrigger,
+                    onNotificationUpdated = { notificationSilenced ->
+                      coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                          message = if (notificationSilenced) {
+                            notificationsSilencedMsg
+                          } else {
+                            notificationsEnabledMsg
+                          },
+                          duration = SnackbarDuration.Short,
+                        )
+                      }
+                    },
                   )
                 }
 

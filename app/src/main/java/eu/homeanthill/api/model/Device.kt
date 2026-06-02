@@ -61,6 +61,7 @@ data class Feature(
   @SerializedName("order") val order: Int,
   @SerializedName("unit") val unit: String,
   @SerializedName("spec") val spec: Spec = Spec(),
+  @SerializedName("notificationSilenced") val notificationSilenced: Boolean = false,
 ) : Parcelable
 
 @Parcelize
@@ -87,3 +88,7 @@ data class PutDevice(
   @SerializedName("homeId") val homeId: String,
   @SerializedName("roomId") val roomId: String,
 ) : Parcelable
+
+data class PutFeatureNotification(
+  @SerializedName("notificationSilenced") val notificationSilenced: Boolean,
+)

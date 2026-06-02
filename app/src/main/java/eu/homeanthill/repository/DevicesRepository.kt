@@ -6,6 +6,7 @@ import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PostSetFeatureDeviceValue
 import eu.homeanthill.api.model.PutDevice
+import eu.homeanthill.api.model.PutFeatureNotification
 import eu.homeanthill.api.model.DeviceFeatureValueResponse
 import eu.homeanthill.api.requests.DevicesServices
 
@@ -55,6 +56,23 @@ class DevicesRepository(private val devicesService: DevicesServices) {
       return result.body()!!
     } else {
       throw IOException("Error repoPostSetValues")
+    }
+  }
+
+  suspend fun repoSetFeatureNotification(
+    id: String,
+    featureUuid: String,
+    notificationSilenced: Boolean
+  ): GenericMessageResponse {
+    val result = devicesService.putFeatureNotification(
+      id = id,
+      featureUuid = featureUuid,
+      body = PutFeatureNotification(notificationSilenced = notificationSilenced),
+    )
+    if (result.isSuccessful) {
+      return result.body()!!
+    } else {
+      throw IOException("Error repoSetFeatureNotification")
     }
   }
 }

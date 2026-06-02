@@ -5,4 +5,5 @@ object Destinations {
   const val PROFILE = "Profile"
   const val HOMES = "Homes"
   const val DEVICES = "Devices"
+  const val NOTIFICATIONS = "Notifications"
 }

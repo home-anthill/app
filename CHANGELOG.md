@@ -5,10 +5,14 @@
 ### Features
 
 - Updated device feature UI handling to use `Feature.spec` for sensor value precision, controller slider bounds/steps, list options, and command normalization.
+- Added an online-feature notification silence icon toggle backed by the new device feature
+  notification API.
+- Added a Notifications bottom-tab screen backed by `GET /api/notifications`.
 
 ### Tests
 
 - increase test coverage
+- Added Kover coverage reporting for the Android app and documented debug coverage commands in `AGENTS.md`.
 
 
 ## 3.0.0

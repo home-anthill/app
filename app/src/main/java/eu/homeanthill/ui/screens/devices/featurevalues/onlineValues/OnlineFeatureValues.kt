@@ -19,10 +19,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,6 +49,7 @@ fun OnlineFeatureValues(
   onlineValuesUiState: OnlineFeatureValuesViewModel.OnlineValuesUiState,
   onlineFeatureValuesViewModel: OnlineFeatureValuesViewModel,
   refreshTrigger: Int = 0,
+  onNotificationUpdated: (notificationSilenced: Boolean) -> Unit = {},
 ) {
   LaunchedEffect(refreshTrigger) {
     if (device != null) {
@@ -66,6 +75,13 @@ fun OnlineFeatureValues(
           onlineValuesUiState.onlineValue.modifiedAt,
           onlineValuesUiState.onlineValue.currentTime
         )
+        val onlineFeature = device?.features?.firstOrNull { feature ->
+          feature.type == "sensor" && feature.name == "online"
+        }
+        var notificationSilenced by remember(device?.id, onlineFeature?.uuid, onlineFeature?.notificationSilenced) {
+          mutableStateOf(onlineFeature?.notificationSilenced ?: false)
+        }
+        var notificationUpdating by remember(device?.id, onlineFeature?.uuid) { mutableStateOf(false) }
 
         Card(
           modifier = Modifier
@@ -93,36 +109,89 @@ fun OnlineFeatureValues(
             ) {
               // header
               Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.SpaceBetween
               ) {
-                Box(
-                  modifier = Modifier
-                    .size(48.dp)
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
-                  contentAlignment = Alignment.Center
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  modifier = Modifier.weight(1f)
                 ) {
-                  Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.bolt_24px),
-                    contentDescription = "Online",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                  Box(
+                    modifier = Modifier
+                      .size(48.dp)
+                      .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                      .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                  ) {
+                    Icon(
+                      imageVector = ImageVector.vectorResource(R.drawable.bolt_24px),
+                      contentDescription = "Online",
+                      tint = MaterialTheme.colorScheme.primary,
+                      modifier = Modifier.size(24.dp)
+                    )
+                  }
+                  Spacer(modifier = Modifier.width(16.dp))
+                  Text(
+                    text = stringResource(R.string.online),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.tertiary
                   )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                  text = stringResource(R.string.online),
-                  style = MaterialTheme.typography.titleMedium,
-                  color = MaterialTheme.colorScheme.tertiary
-                )
+                IconButton(
+                  onClick = notification@{
+                    val currentDevice = device ?: return@notification
+                    val feature = onlineFeature ?: return@notification
+                    val nextNotificationSilenced = !notificationSilenced
+
+                    notificationSilenced = nextNotificationSilenced
+                    notificationUpdating = true
+                    onlineFeatureValuesViewModel.setFeatureNotificationSilenced(
+                      device = currentDevice,
+                      featureUuid = feature.uuid,
+                      notificationSilenced = nextNotificationSilenced,
+                      onSuccess = {
+                        notificationUpdating = false
+                        onNotificationUpdated(nextNotificationSilenced)
+                      },
+                      onError = {
+                        notificationSilenced = !nextNotificationSilenced
+                        notificationUpdating = false
+                      },
+                    )
+                  },
+                  enabled = device != null && onlineFeature != null && !notificationUpdating,
+                  modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                ) {
+                  val notificationIcon = if (notificationSilenced) {
+                    Icons.Default.NotificationsOff
+                  } else {
+                    Icons.Default.Notifications
+                  }
+                  Icon(
+                    imageVector = notificationIcon,
+                    contentDescription = if (notificationSilenced) {
+                      stringResource(R.string.enable_notifications)
+                    } else {
+                      stringResource(R.string.silence_notifications)
+                    },
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(20.dp)
+                  )
+                }
               }
 
               Spacer(modifier = Modifier.height(24.dp))
 
               // value
               Text(
-                text = if (isOffline) stringResource(R.string.offline_label) else stringResource(R.string.online_label),
+                text = if (isOffline) {
+                  stringResource(R.string.offline_label)
+                } else {
+                  stringResource(R.string.online_label)
+                },
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = if (isOffline) MaterialTheme.colorScheme.error else Color(0xFF388E3C)

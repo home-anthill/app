@@ -22,6 +22,7 @@ import eu.homeanthill.api.requests.DevicesServices
 import eu.homeanthill.api.requests.FCMTokenServices
 import eu.homeanthill.api.requests.HomesServices
 import eu.homeanthill.api.requests.LogoutServices
+import eu.homeanthill.api.requests.NotificationsServices
 import eu.homeanthill.api.requests.OnlineServices
 import eu.homeanthill.api.requests.ProfileServices
 import eu.homeanthill.api.requests.RefreshTokenServices
@@ -31,6 +32,7 @@ import eu.homeanthill.repository.FCMTokenRepository
 import eu.homeanthill.repository.HomesRepository
 import eu.homeanthill.repository.LoginRepository
 import eu.homeanthill.repository.LogoutRepository
+import eu.homeanthill.repository.NotificationsRepository
 import eu.homeanthill.repository.OnlineRepository
 import eu.homeanthill.repository.ProfileRepository
 import eu.homeanthill.repository.RefreshTokenRepository
@@ -41,6 +43,7 @@ import eu.homeanthill.ui.screens.devices.featurevalues.FeaturesViewModel
 import eu.homeanthill.ui.screens.devices.featurevalues.onlineValues.OnlineFeatureValuesViewModel
 import eu.homeanthill.ui.screens.homes.rooms.RoomsViewModel
 import eu.homeanthill.ui.screens.homes.homeslist.HomesListViewModel
+import eu.homeanthill.ui.screens.notifications.NotificationsViewModel
 import eu.homeanthill.ui.screens.profile.ProfileViewModel
 
 val viewModelModule = module {
@@ -55,8 +58,9 @@ val viewModelModule = module {
   viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get()) }
   viewModel { SensorFeatureValuesViewModel() }
   viewModel { ControllerFeatureValuesViewModel(devicesRepository = get()) }
-  viewModel { OnlineFeatureValuesViewModel(onlineRepository = get()) }
+  viewModel { OnlineFeatureValuesViewModel(onlineRepository = get(), devicesRepository = get()) }
   viewModel { FeaturesViewModel(devicesRepository = get(), homesRepository = get()) }
+  viewModel { NotificationsViewModel(notificationsRepository = get()) }
 }
 
 val repositoryModule = module {
@@ -69,6 +73,7 @@ val repositoryModule = module {
   single { HomesRepository(homesService = get()) }
   single { DevicesRepository(devicesService = get()) }
   single { OnlineRepository(onlineService = get()) }
+  single { NotificationsRepository(notificationsService = get()) }
 }
 
 val fcmModule = module {
@@ -91,6 +96,7 @@ val apiModule = module {
   single { get<Retrofit>().create(HomesServices::class.java) }
   single { get<Retrofit>().create(DevicesServices::class.java) }
   single { get<Retrofit>().create(OnlineServices::class.java) }
+  single { get<Retrofit>().create(NotificationsServices::class.java) }
   // RefreshTokenServices uses the dedicated refresh Retrofit instance (no AppAuthenticator)
   // to avoid infinite recursion when AppAuthenticator calls the refresh endpoint.
   single { get<Retrofit>(named("refresh")).create(RefreshTokenServices::class.java) }

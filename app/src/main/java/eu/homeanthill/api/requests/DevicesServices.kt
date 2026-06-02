@@ -12,6 +12,7 @@ import retrofit2.http.Path
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.GenericMessageResponse
 import eu.homeanthill.api.model.PutDevice
+import eu.homeanthill.api.model.PutFeatureNotification
 import eu.homeanthill.api.model.DeviceFeatureValueResponse
 import eu.homeanthill.api.model.PostSetFeatureDeviceValue
 
@@ -44,5 +45,13 @@ interface DevicesServices {
   suspend fun postSetValues(
     @Path("id") id: String,
     @Body body: List<PostSetFeatureDeviceValue>
+  ): Response<GenericMessageResponse>
+
+  @Headers("Accept: application/json")
+  @PUT("devices/{id}/features/{featureUuid}/notifications")
+  suspend fun putFeatureNotification(
+    @Path("id") id: String,
+    @Path("featureUuid") featureUuid: String,
+    @Body body: PutFeatureNotification,
   ): Response<GenericMessageResponse>
 }

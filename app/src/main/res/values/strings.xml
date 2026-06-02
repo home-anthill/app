@@ -39,6 +39,13 @@
     <string name="online">online</string>
     <string name="online_label">Online</string>
     <string name="offline_label">Offline</string>
+    <string name="silence_notifications">Silence notifications</string>
+    <string name="enable_notifications">Enable notifications</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_silenced">Notifications silenced</string>
+    <string name="notifications_enabled">Notifications enabled</string>
+    <string name="notifications_subtitle">Profile notification history</string>
+    <string name="notifications_empty">No notifications found</string>
     <string name="spinner_placeholder">---</string>
 
     <!-- Homes Screen -->
