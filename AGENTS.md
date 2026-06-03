@@ -321,4 +321,4 @@ Cleartext traffic is controlled per build type via `network_security_config.xml`
 
 ## AI Changelog
 
-Append significant changes (new features, bug fixes, refactors) to `CHANGELOG_CLAUDE.md` in the repo root.
+Append significant changes (new features, bug fixes, refactors) to `CHANGELOG.md` in this directory.
