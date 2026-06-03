@@ -8,6 +8,8 @@
 - Added an online-feature notification silence icon toggle backed by the new device feature
   notification API.
 - Added a Notifications bottom-tab screen backed by `GET /api/notifications`.
+- Updated Android device details to render sensor values first, controls second, and the online feature section last.
+- Added `/online` status loading to the Android devices list and displayed online/offline dots above the controller badge on device cards.
 
 ### Tests
 

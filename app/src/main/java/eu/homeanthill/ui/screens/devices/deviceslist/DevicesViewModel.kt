@@ -1,6 +1,9 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
 import java.io.IOException
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,17 +19,25 @@ import eu.homeanthill.api.model.Room
 import eu.homeanthill.api.model.RoomSplitDevices
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.HomesRepository
+import eu.homeanthill.repository.OnlineRepository
 
 class DevicesListViewModel(
   private val devicesRepository: DevicesRepository,
-  private val homesRepository: HomesRepository
+  private val homesRepository: HomesRepository,
+  private val onlineRepository: OnlineRepository? = null,
 ) : ViewModel() {
   companion object {
     private const val LOAD_DELAY_MS = 500L
+    private const val OFFLINE_THRESHOLD_MS = 60 * 1000L
   }
 
+  data class DeviceOnlineStatus(val isOffline: Boolean)
+
   sealed class DevicesUiState {
-    data class Idle(val deviceList: MyDevicesList?) : DevicesUiState()
+    data class Idle(
+      val deviceList: MyDevicesList?,
+      val onlineStatuses: Map<String, DeviceOnlineStatus> = emptyMap(),
+    ) : DevicesUiState()
     data object Loading : DevicesUiState()
     data class Error(val errorMessage: String) : DevicesUiState()
   }
@@ -47,7 +58,8 @@ class DevicesListViewModel(
       .filter { !it.devices.isNullOrEmpty() }
       .flatMap { it.devices!! }
       .toSet()
-    return devices.filter { it.id !in assignedIds }
+    val unassignedDevices = devices.filter { it.id !in assignedIds }
+    return getSensors(unassignedDevices) + getControllers(unassignedDevices)
   }
 
   private fun getControllers(devices: List<Device>): List<Device> {
@@ -58,6 +70,37 @@ class DevicesListViewModel(
   private fun getSensors(devices: List<Device>): List<Device> {
     // if a device has only sensor features, it's a sensor
     return devices.filter { device -> device.features.none { it.type == "controller" } }
+  }
+
+  private fun hasOnlineFeature(device: Device): Boolean {
+    return device.features.any { feature ->
+      feature.type.lowercase() == "sensor" && feature.name.lowercase() == "online"
+    }
+  }
+
+  private fun isOffline(modifiedAtISO: String, currentTimeISO: String): Boolean {
+    val modEpoch = LocalDateTime.parse(modifiedAtISO, DateTimeFormatter.ISO_DATE_TIME)
+      .toInstant(ZoneOffset.UTC).toEpochMilli()
+    val currentEpoch = LocalDateTime.parse(currentTimeISO, DateTimeFormatter.ISO_DATE_TIME)
+      .toInstant(ZoneOffset.UTC).toEpochMilli()
+    return modEpoch < currentEpoch - OFFLINE_THRESHOLD_MS
+  }
+
+  private suspend fun getOnlineStatuses(devices: List<Device>): Map<String, DeviceOnlineStatus> {
+    val repository = onlineRepository ?: return emptyMap()
+    return devices
+      .filter { hasOnlineFeature(it) }
+      .mapNotNull { device ->
+        try {
+          val onlineValue = repository.repoGetOnlineValues(device.id)
+          device.id to DeviceOnlineStatus(
+            isOffline = isOffline(onlineValue.modifiedAt, onlineValue.currentTime)
+          )
+        } catch (_: Exception) {
+          null
+        }
+      }
+      .toMap()
   }
 
   private fun getHomeDevices(
@@ -104,13 +147,14 @@ class DevicesListViewModel(
       try {
         val devices: List<Device> = devicesRepository.repoGetDevices()
         val homes: List<Home> = homesRepository.repoGetHomes()
+        val onlineStatuses = getOnlineStatuses(devices)
         val result = MyDevicesList(
           // 1) add unassigned devices to `result.unassignedDevices`
           unassignedDevices = getUnassignedDevices(homes, devices),
           // 2) add assigned devices with homes and rooms to `result.homeDevices`
           homeDevices = getHomeDevices(homes, devices),
         )
-        _deviceUiState.emit(DevicesUiState.Idle(result))
+        _deviceUiState.emit(DevicesUiState.Idle(result, onlineStatuses))
       } catch (err: IOException) {
         _deviceUiState.emit(DevicesUiState.Error(err.message.toString()))
       }

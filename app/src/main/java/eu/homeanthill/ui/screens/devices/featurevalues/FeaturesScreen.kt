@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -241,37 +242,14 @@ fun FeaturesScreen(
                 it.feature.name.lowercase() != "online"
               } ?: emptyList()
 
-              // sensors/online section
-              if (hasOnline || sensorFeatures.isNotEmpty()) {
+              // sensors section
+              if (sensorFeatures.isNotEmpty()) {
                 SectionHeader(title = stringResource(R.string.sensors), icon = Icons.Default.MonitorHeart)
 
-                if (hasOnline) {
-                  OnlineFeatureValues(
-                    device = featureValuesUiState.deviceValue?.device ?: device,
-                    onlineValuesUiState = onlineValuesUiState,
-                    onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
-                    refreshTrigger = refreshTrigger,
-                    onNotificationUpdated = { notificationSilenced ->
-                      coroutineScope.launch {
-                        snackbarHostState.showSnackbar(
-                          message = if (notificationSilenced) {
-                            notificationsSilencedMsg
-                          } else {
-                            notificationsEnabledMsg
-                          },
-                          duration = SnackbarDuration.Short,
-                        )
-                      }
-                    },
-                  )
-                }
-
-                if (sensorFeatures.isNotEmpty()) {
-                  SensorFeatureValues(
-                    featureValues = featureValuesUiState.deviceValue?.sensorFeatureValues,
-                    sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
-                  )
-                }
+                SensorFeatureValues(
+                  featureValues = featureValuesUiState.deviceValue?.sensorFeatureValues,
+                  sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
+                )
               }
 
               // controls section
@@ -294,6 +272,32 @@ fun FeaturesScreen(
                       )
                     }
                   }
+                )
+              }
+
+              // online section
+              if (hasOnline) {
+                SectionHeader(
+                  title = stringResource(R.string.online_label),
+                  icon = ImageVector.vectorResource(R.drawable.bolt_24px)
+                )
+                OnlineFeatureValues(
+                  device = featureValuesUiState.deviceValue?.device ?: device,
+                  onlineValuesUiState = onlineValuesUiState,
+                  onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
+                  refreshTrigger = refreshTrigger,
+                  onNotificationUpdated = { notificationSilenced ->
+                    coroutineScope.launch {
+                      snackbarHostState.showSnackbar(
+                        message = if (notificationSilenced) {
+                          notificationsSilencedMsg
+                        } else {
+                          notificationsEnabledMsg
+                        },
+                        duration = SnackbarDuration.Short,
+                      )
+                    }
+                  },
                 )
               }
 

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,9 +42,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -109,6 +113,7 @@ fun DevicesListScreen(
 
             is DevicesListViewModel.DevicesUiState.Idle -> {
               val deviceList = devicesUiState.deviceList
+              val onlineStatuses = devicesUiState.onlineStatuses
 
               if (deviceList?.unassignedDevices?.isNotEmpty() == true) {
                 Text(
@@ -122,7 +127,9 @@ fun DevicesListScreen(
                 )
                 deviceList.unassignedDevices.forEach { device ->
                   DeviceCard(
-                    device = device, onClick = {
+                    device = device,
+                    onlineStatus = onlineStatuses[device.id],
+                    onClick = {
                       navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
                       navController.currentBackStackEntry?.savedStateHandle?.set("home", null)
                       navController.currentBackStackEntry?.savedStateHandle?.set("room", null)
@@ -185,10 +192,12 @@ fun DevicesListScreen(
                     )
                   }
 
-                  roomWithDevices.controllerDevices.forEach { device ->
+                  roomWithDevices.sensorDevices.forEach { sensor ->
                     DeviceCard(
-                      device = device, onClick = {
-                        navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
+                      device = sensor,
+                      onlineStatus = onlineStatuses[sensor.id],
+                      onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("device", sensor)
                         navController.currentBackStackEntry?.savedStateHandle?.set(
                           "home", homeWithDevices.home
                         )
@@ -198,10 +207,12 @@ fun DevicesListScreen(
                         navController.navigate(route = DevicesRoute.FeatureValues.name)
                       })
                   }
-                  roomWithDevices.sensorDevices.forEach { sensor ->
+                  roomWithDevices.controllerDevices.forEach { device ->
                     DeviceCard(
-                      device = sensor, onClick = {
-                        navController.currentBackStackEntry?.savedStateHandle?.set("device", sensor)
+                      device = device,
+                      onlineStatus = onlineStatuses[device.id],
+                      onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("device", device)
                         navController.currentBackStackEntry?.savedStateHandle?.set(
                           "home", homeWithDevices.home
                         )
@@ -229,9 +240,13 @@ fun DevicesListScreen(
 @Composable
 fun DeviceCard(
   device: Device,
+  onlineStatus: DevicesListViewModel.DeviceOnlineStatus? = null,
   onClick: () -> Unit,
 ) {
   val hasController = device.features.any { it.type.lowercase().contains("controller") }
+  val hasOnline = device.features.any {
+    it.enable && it.type.lowercase() == "sensor" && it.name.lowercase() == "online"
+  }
 
   Card(
     modifier = Modifier
@@ -263,8 +278,16 @@ fun DeviceCard(
             text = device.mac, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
           )
         }
-        if (hasController) {
-          CtrlBadge()
+        Column(horizontalAlignment = Alignment.End) {
+          if (hasOnline) {
+            OnlineStatusDot(onlineStatus)
+          }
+          if (hasController) {
+            if (hasOnline) {
+              Spacer(modifier = Modifier.height(8.dp))
+            }
+            CtrlBadge()
+          }
         }
       }
 
@@ -279,13 +302,37 @@ fun DeviceCard(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
       ) {
-        device.features.filter { it.enable && it.type.lowercase() == "sensor" }.forEach { feature ->
+        device.features.filter {
+          it.enable && it.type.lowercase() == "sensor" && it.name.lowercase() != "online"
+        }.forEach { feature ->
           FeatureIcon(feature)
           Spacer(modifier = Modifier.width(8.dp))
         }
       }
     }
   }
+}
+
+@Composable
+fun OnlineStatusDot(onlineStatus: DevicesListViewModel.DeviceOnlineStatus?) {
+  val color = when (onlineStatus?.isOffline) {
+    true -> MaterialTheme.colorScheme.error
+    false -> Color(0xFF388E3C)
+    null -> MaterialTheme.colorScheme.outlineVariant
+  }
+  val label = when (onlineStatus?.isOffline) {
+    true -> stringResource(R.string.offline_label)
+    false -> stringResource(R.string.online_label)
+    null -> stringResource(R.string.online_label)
+  }
+
+  Box(
+    modifier = Modifier
+      .size(14.dp)
+      .background(color, CircleShape)
+      .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape)
+      .semantics { contentDescription = label }
+  )
 }
 
 @Composable
