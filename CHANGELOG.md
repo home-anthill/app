@@ -16,6 +16,10 @@
 - increase test coverage
 - Added Kover coverage reporting for the Android app and documented debug coverage commands in `AGENTS.md`.
 
+### Bug fixes
+
+- Moved Kotlin compiler options out of the Android DSL block to remove the suspicious receiver warning in `app/build.gradle.kts`.
+
 
 ## 3.0.0
 

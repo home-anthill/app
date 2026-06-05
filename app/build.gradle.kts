@@ -98,11 +98,6 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-  kotlin {
-    compilerOptions {
-      jvmTarget = JvmTarget.fromTarget("11")
-    }
-  }
   buildFeatures {
     buildConfig = true
     compose = true
@@ -110,6 +105,12 @@ android {
 
   testOptions {
     unitTests.isReturnDefaultValues = true
+  }
+}
+
+kotlin {
+  compilerOptions {
+    jvmTarget = JvmTarget.fromTarget("11")
   }
 }
 
