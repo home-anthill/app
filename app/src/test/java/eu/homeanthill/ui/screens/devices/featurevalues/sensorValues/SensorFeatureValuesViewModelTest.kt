@@ -167,4 +167,18 @@ class SensorFeatureValuesViewModelTest {
 
         assertEquals("42.00 units", result)
     }
+
+    @Test
+    fun `getThermostatMode maps supported mode sensor values`() {
+        assertEquals(SensorFeatureValuesViewModel.ThermostatMode.ERROR, vm.getThermostatMode(makeFeatureValue("mode", -1.0)))
+        assertEquals(SensorFeatureValuesViewModel.ThermostatMode.SLEEP, vm.getThermostatMode(makeFeatureValue("mode", 0.0)))
+        assertEquals(SensorFeatureValuesViewModel.ThermostatMode.COLD, vm.getThermostatMode(makeFeatureValue("mode", 1.0)))
+        assertEquals(SensorFeatureValuesViewModel.ThermostatMode.HEAT, vm.getThermostatMode(makeFeatureValue("mode", 2.0)))
+    }
+
+    @Test
+    fun `getThermostatMode returns null for unsupported values and other sensors`() {
+        assertEquals(null, vm.getThermostatMode(makeFeatureValue("mode", 3.0)))
+        assertEquals(null, vm.getThermostatMode(makeFeatureValue("temperature", 2.0)))
+    }
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0
+
+### Features
+
+- Added thermostat `mode` sensor cards with error, sleep, cooling, and heating status icons.
+
+
 ## 4.0.0
 
 ### Features

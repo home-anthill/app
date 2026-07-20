@@ -18,6 +18,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AcUnit
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,7 +53,8 @@ fun SensorFeatureValues(
         SensorCard(
           featureValue = featureValue,
           displayValue = sensorFeatureValuesViewModel.getValue(featureValue),
-          lastUpdated = sensorFeatureValuesViewModel.getPrettyDateFromUnixEpoch(featureValue.modifiedAt)
+          lastUpdated = sensorFeatureValuesViewModel.getPrettyDateFromUnixEpoch(featureValue.modifiedAt),
+          thermostatMode = sensorFeatureValuesViewModel.getThermostatMode(featureValue),
         )
       }
     }
@@ -59,12 +65,14 @@ fun SensorFeatureValues(
 fun SensorCard(
   featureValue: FeatureValue,
   displayValue: String,
-  lastUpdated: String
+  lastUpdated: String,
+  thermostatMode: SensorFeatureValuesViewModel.ThermostatMode? = null,
 ) {
   val type = featureValue.feature.type.lowercase()
   val name = featureValue.feature.name.lowercase()
 
   val iconRes = when {
+    name == "mode" -> R.drawable.device_thermostat_24px
     type.contains("temperature") || name.contains("temperature") -> R.drawable.device_thermostat_24px
     type.contains("humidity") || name.contains("humidity") || name.contains("humidty") -> R.drawable.invert_colors_24px
     type.contains("light") || name.contains("light") -> R.drawable.light_mode_24px
@@ -131,12 +139,27 @@ fun SensorCard(
         Spacer(modifier = Modifier.height(24.dp))
 
         // value
-        Text(
-          text = displayValue,
-          style = MaterialTheme.typography.headlineLarge,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.primary
-        )
+        if (thermostatMode != null) {
+          val (modeIcon, modeDescription) = when (thermostatMode) {
+            SensorFeatureValuesViewModel.ThermostatMode.ERROR -> Icons.Filled.Error to "Error"
+            SensorFeatureValuesViewModel.ThermostatMode.SLEEP -> Icons.Filled.Snooze to "Sleep"
+            SensorFeatureValuesViewModel.ThermostatMode.COLD -> Icons.Filled.AcUnit to "Cold"
+            SensorFeatureValuesViewModel.ThermostatMode.HEAT -> Icons.Filled.LocalFireDepartment to "Heat"
+          }
+          Icon(
+            imageVector = modeIcon,
+            contentDescription = modeDescription,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(42.dp)
+          )
+        } else {
+          Text(
+            text = displayValue,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+          )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
