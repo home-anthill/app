@@ -177,8 +177,20 @@ class SensorFeatureValuesViewModelTest {
     }
 
     @Test
-    fun `getThermostatMode returns null for unsupported values and other sensors`() {
+    fun `getThermostatMode returns null for unsupported and fractional values`() {
         assertEquals(null, vm.getThermostatMode(makeFeatureValue("mode", 3.0)))
+        assertEquals(null, vm.getThermostatMode(makeFeatureValue("mode", 1.5)))
+    }
+
+    @Test
+    fun `getThermostatMode only accepts float mode sensors`() {
+        val integerMode = makeFeatureValue(
+            name = "mode",
+            value = 1.0,
+            spec = Spec(format = Format.INT, step = 1f),
+        )
+
+        assertEquals(null, vm.getThermostatMode(integerMode))
         assertEquals(null, vm.getThermostatMode(makeFeatureValue("temperature", 2.0)))
     }
 }

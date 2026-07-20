@@ -11,13 +11,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 import eu.homeanthill.api.model.FeatureValue
+import eu.homeanthill.api.model.Format
 
 class SensorFeatureValuesViewModel : ViewModel() {
-  enum class ThermostatMode {
-    ERROR,
-    SLEEP,
-    COLD,
-    HEAT,
+  enum class ThermostatMode(val sensorValue: Float) {
+    ERROR(-1.0f),
+    SLEEP(0.0f),
+    COLD(1.0f),
+    HEAT(2.0f),
   }
 
   // DateTimeFormatter is immutable and thread-safe; no risk of concurrent access issues.
@@ -65,14 +66,13 @@ class SensorFeatureValuesViewModel : ViewModel() {
   }
 
   fun getThermostatMode(featureValue: FeatureValue): ThermostatMode? {
-    if (featureValue.feature.name != "mode") return null
+    if (
+      featureValue.feature.name != "mode" ||
+      featureValue.feature.spec.format != Format.FLOAT
+    ) return null
 
-    return when (featureValue.value) {
-      -1.0 -> ThermostatMode.ERROR
-      0.0 -> ThermostatMode.SLEEP
-      1.0 -> ThermostatMode.COLD
-      2.0 -> ThermostatMode.HEAT
-      else -> null
+    return ThermostatMode.entries.firstOrNull { mode ->
+      featureValue.value == mode.sensorValue.toDouble()
     }
   }
 
