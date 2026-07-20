@@ -1,16 +1,11 @@
 # Changelog
 
-## 4.1.0
-
-### Features
-
-- Added thermostat `mode` sensor cards with error, sleep, cooling, and heating status icons.
-
 
 ## 4.0.0
 
 ### Features
 
+- Added thermostat `mode` sensor cards with error, sleep, cooling, and heating status icons.
 - Updated device feature UI handling to use `Feature.spec` for sensor value precision, controller slider bounds/steps, list options, and command normalization.
 - Added an online-feature notification silence icon toggle backed by the new device feature
   notification API.
