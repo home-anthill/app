@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Hvac
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material3.MaterialTheme
@@ -71,18 +72,18 @@ fun SensorCard(
   val type = featureValue.feature.type.lowercase()
   val name = featureValue.feature.name.lowercase()
 
-  val iconRes = when {
-    name == "mode" -> R.drawable.device_thermostat_24px
-    type.contains("temperature") || name.contains("temperature") -> R.drawable.device_thermostat_24px
-    type.contains("humidity") || name.contains("humidity") || name.contains("humidty") -> R.drawable.invert_colors_24px
-    type.contains("light") || name.contains("light") -> R.drawable.light_mode_24px
-    type.contains("pressure") || name.contains("pressure") -> R.drawable.compress_24px
+  val icon = when {
+    name == "mode" -> Icons.Filled.Hvac
+    type.contains("temperature") || name.contains("temperature") -> ImageVector.vectorResource(R.drawable.device_thermostat_24px)
+    type.contains("humidity") || name.contains("humidity") || name.contains("humidty") -> ImageVector.vectorResource(R.drawable.invert_colors_24px)
+    type.contains("light") || name.contains("light") -> ImageVector.vectorResource(R.drawable.light_mode_24px)
+    type.contains("pressure") || name.contains("pressure") -> ImageVector.vectorResource(R.drawable.compress_24px)
     type.contains("air quality") || name.contains("air quality") || type.contains("eco") || name.contains(
       "eco"
-    ) || name.contains("airquality") -> R.drawable.eco_24px
+    ) || name.contains("airquality") -> ImageVector.vectorResource(R.drawable.eco_24px)
 
-    type.contains("motion") || name.contains("motion") || type.contains("pir") || name.contains("pir") -> R.drawable.directions_run_24px
-    else -> R.drawable.question_mark_24px
+    type.contains("motion") || name.contains("motion") || type.contains("pir") || name.contains("pir") -> ImageVector.vectorResource(R.drawable.directions_run_24px)
+    else -> ImageVector.vectorResource(R.drawable.question_mark_24px)
   }
 
   Card(
@@ -122,7 +123,7 @@ fun SensorCard(
             contentAlignment = Alignment.Center
           ) {
             Icon(
-              imageVector = ImageVector.vectorResource(iconRes),
+              imageVector = icon,
               contentDescription = featureValue.feature.name,
               tint = MaterialTheme.colorScheme.primary,
               modifier = Modifier.size(24.dp)

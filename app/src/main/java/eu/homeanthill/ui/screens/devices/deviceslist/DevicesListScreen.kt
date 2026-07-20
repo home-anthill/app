@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Hvac
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
@@ -364,15 +365,16 @@ fun CtrlBadge() {
 
 @Composable
 fun FeatureIcon(feature: Feature) {
-  val iconRes = when (feature.name) {
-    "temperature" -> R.drawable.device_thermostat_24px
-    "humidity" -> R.drawable.invert_colors_24px
-    "light" -> R.drawable.light_mode_24px
-    "airpressure" -> R.drawable.compress_24px
-    "airquality" -> R.drawable.eco_24px
-    "motion" -> R.drawable.directions_run_24px
-    "online" -> R.drawable.bolt_24px
-    else -> R.drawable.question_mark_24px
+  val icon = when (feature.name.lowercase()) {
+    "mode" -> Icons.Filled.Hvac
+    "temperature" -> ImageVector.vectorResource(R.drawable.device_thermostat_24px)
+    "humidity" -> ImageVector.vectorResource(R.drawable.invert_colors_24px)
+    "light" -> ImageVector.vectorResource(R.drawable.light_mode_24px)
+    "airpressure" -> ImageVector.vectorResource(R.drawable.compress_24px)
+    "airquality" -> ImageVector.vectorResource(R.drawable.eco_24px)
+    "motion" -> ImageVector.vectorResource(R.drawable.directions_run_24px)
+    "online" -> ImageVector.vectorResource(R.drawable.bolt_24px)
+    else -> ImageVector.vectorResource(R.drawable.question_mark_24px)
   }
 
   Box(
@@ -383,7 +385,7 @@ fun FeatureIcon(feature: Feature) {
     contentAlignment = Alignment.Center
   ) {
     Icon(
-      imageVector = ImageVector.vectorResource(iconRes),
+      imageVector = icon,
       contentDescription = feature.name,
       tint = MaterialTheme.colorScheme.primary,
       modifier = Modifier.size(20.dp)
