@@ -10,3 +10,10 @@ data class OnlineValue(
   @SerializedName("modifiedAt") val modifiedAt: String,
   @SerializedName("currentTime") val currentTime: String,
 ) : Parcelable
+
+data class OnlineDeviceStatus(
+  @SerializedName("createdAt") val createdAt: String,
+  @SerializedName("modifiedAt") val modifiedAt: String,
+  @SerializedName("currentTime") val currentTime: String,
+  @SerializedName("device") val device: Device,
+)

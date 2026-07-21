@@ -15,10 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Hvac
@@ -69,10 +69,6 @@ fun DevicesListScreen(
 ) {
   var isRefreshing by remember { mutableStateOf(false) }
 
-  LaunchedEffect(Unit) {
-    devicesViewModel.loadDevices()
-  }
-
   LaunchedEffect(devicesUiState) {
     if (devicesUiState !is DevicesListViewModel.DevicesUiState.Loading) {
       isRefreshing = false
@@ -90,25 +86,28 @@ fun DevicesListScreen(
           .fillMaxSize()
           .padding(padding)
       ) {
-        Column(
+        LazyColumn(
           modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(horizontal = 16.dp),
           verticalArrangement = Arrangement.Top,
           horizontalAlignment = Alignment.CenterHorizontally,
         ) {
           when (devicesUiState) {
             is DevicesListViewModel.DevicesUiState.Error -> {
-              Text(
-                text = devicesUiState.errorMessage,
-                color = MaterialTheme.colorScheme.error,
-              )
+              item(key = "devices-error") {
+                Text(
+                  text = devicesUiState.errorMessage,
+                  color = MaterialTheme.colorScheme.error,
+                )
+              }
             }
 
             is DevicesListViewModel.DevicesUiState.Loading -> {
               if (!isRefreshing) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                item(key = "devices-loading") {
+                  CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
               }
             }
 
@@ -117,16 +116,21 @@ fun DevicesListScreen(
               val onlineStatuses = devicesUiState.onlineStatuses
 
               if (deviceList?.unassignedDevices?.isNotEmpty() == true) {
-                Text(
-                  text = stringResource(R.string.devices_unassigned),
-                  style = MaterialTheme.typography.titleLarge,
-                  fontWeight = FontWeight.Bold,
-                  color = MaterialTheme.colorScheme.primary,
-                  modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                )
-                deviceList.unassignedDevices.forEach { device ->
+                item(key = "unassigned-devices-header") {
+                  Text(
+                    text = stringResource(R.string.devices_unassigned),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                      .fillMaxWidth()
+                      .padding(vertical = 16.dp)
+                  )
+                }
+                items(
+                  items = deviceList.unassignedDevices,
+                  key = { device -> "unassigned-${device.id}" },
+                ) { device ->
                   DeviceCard(
                     device = device,
                     onlineStatus = onlineStatuses[device.id],
@@ -137,63 +141,75 @@ fun DevicesListScreen(
                       navController.navigate(route = DevicesRoute.FeatureValues.name)
                     })
                 }
-                HorizontalDivider(
-                  thickness = 1.dp,
-                  color = MaterialTheme.colorScheme.outline,
-                  modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
-                )
+                item(key = "unassigned-devices-divider") {
+                  HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
+                  )
+                }
               }
 
               // homes
               deviceList?.homeDevices?.forEach { homeWithDevices ->
-                Row(
-                  modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-                ) {
-                  Box(
-                    modifier = Modifier
-                      .size(40.dp),
-                    contentAlignment = Alignment.CenterStart,
+                item(key = "home-${homeWithDevices.home.id}") {
+                  Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                   ) {
-                    Icon(
-                      imageVector = Icons.Default.Business,
-                      contentDescription = null,
-                      tint = MaterialTheme.colorScheme.primary,
-                      modifier = Modifier.size(24.dp)
+                    Box(
+                      modifier = Modifier
+                        .size(40.dp),
+                      contentAlignment = Alignment.CenterStart,
+                    ) {
+                      Icon(
+                        imageVector = Icons.Default.Business,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                      )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                      text = "${homeWithDevices.home.name} (${homeWithDevices.home.location})",
+                      style = MaterialTheme.typography.headlineSmall,
+                      fontWeight = FontWeight.Bold,
+                      color = MaterialTheme.colorScheme.primary
                     )
                   }
-                  Spacer(modifier = Modifier.width(8.dp))
-                  Text(
-                    text = "${homeWithDevices.home.name} (${homeWithDevices.home.location})",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                  )
                 }
 
                 // home rooms
                 homeWithDevices.rooms.forEach { roomWithDevices ->
-                  Row(
-                    modifier = Modifier
-                      .fillMaxWidth()
-                      .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                  ) {
-                    Icon(
-                      imageVector = Icons.Default.MeetingRoom,
-                      contentDescription = null,
-                      tint = MaterialTheme.colorScheme.tertiary,
-                      modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                      text = "${roomWithDevices.room.name} (${roomWithDevices.controllerDevices.size + roomWithDevices.sensorDevices.size})",
-                      style = MaterialTheme.typography.titleMedium,
-                      fontWeight = FontWeight.Bold,
-                      color = MaterialTheme.colorScheme.tertiary
-                    )
+                  item(key = "room-${homeWithDevices.home.id}-${roomWithDevices.room.id}") {
+                    Row(
+                      modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                      verticalAlignment = Alignment.CenterVertically
+                    ) {
+                      Icon(
+                        imageVector = Icons.Default.MeetingRoom,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(20.dp)
+                      )
+                      Spacer(modifier = Modifier.width(12.dp))
+                      Text(
+                        text = "${roomWithDevices.room.name} (${roomWithDevices.controllerDevices.size + roomWithDevices.sensorDevices.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                      )
+                    }
                   }
 
-                  roomWithDevices.sensorDevices.forEach { sensor ->
+                  items(
+                    items = roomWithDevices.sensorDevices,
+                    key = { sensor ->
+                      "sensor-${homeWithDevices.home.id}-${roomWithDevices.room.id}-${sensor.id}"
+                    },
+                  ) { sensor ->
                     DeviceCard(
                       device = sensor,
                       onlineStatus = onlineStatuses[sensor.id],
@@ -208,7 +224,12 @@ fun DevicesListScreen(
                         navController.navigate(route = DevicesRoute.FeatureValues.name)
                       })
                   }
-                  roomWithDevices.controllerDevices.forEach { device ->
+                  items(
+                    items = roomWithDevices.controllerDevices,
+                    key = { device ->
+                      "controller-${homeWithDevices.home.id}-${roomWithDevices.room.id}-${device.id}"
+                    },
+                  ) { device ->
                     DeviceCard(
                       device = device,
                       onlineStatus = onlineStatuses[device.id],
@@ -224,11 +245,13 @@ fun DevicesListScreen(
                       })
                   }
                 }
-                HorizontalDivider(
-                  thickness = 1.dp,
-                  color = MaterialTheme.colorScheme.outline,
-                  modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
-                )
+                item(key = "home-${homeWithDevices.home.id}-divider") {
+                  HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(top = 32.dp, bottom = 32.dp)
+                  )
+                }
               }
             }
           }

@@ -12,6 +12,7 @@
 - Added a Notifications bottom-tab screen backed by `GET /api/notifications`.
 - Updated Android device details to render sensor values first, controls second, and the online feature section last.
 - Added `/online` status loading to the Android devices list and displayed online/offline dots above the controller badge on device cards.
+- Improved device-list loading by removing duplicate and artificial startup work, fetching core data concurrently, rendering online statuses progressively from one bulk request, skipping status loading for disabled features, and lazily composing device cards.
 
 ### Tests
 

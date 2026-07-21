@@ -2,13 +2,16 @@ package eu.homeanthill.ui.screens.devices.deviceslist
 
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -22,9 +25,11 @@ import java.io.IOException
 import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.Home
+import eu.homeanthill.api.model.OnlineDeviceStatus
 import eu.homeanthill.api.model.Room
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.HomesRepository
+import eu.homeanthill.repository.OnlineRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DevicesListViewModelTest {
@@ -33,6 +38,7 @@ class DevicesListViewModelTest {
     private val mainDispatcher = StandardTestDispatcher(testScheduler)
     private val mockDevicesRepo = mockk<DevicesRepository>()
     private val mockHomesRepo = mockk<HomesRepository>()
+    private val mockOnlineRepo = mockk<OnlineRepository>()
 
     private val sensorDevice = Device(
         id = "dev-sensor",
@@ -100,6 +106,99 @@ class DevicesListViewModelTest {
     }
 
     // --- init ---
+
+    @Test
+    fun `init requests devices and homes concurrently without startup delay`() = runTest(testScheduler) {
+        val devicesResponse = CompletableDeferred<List<Device>>()
+        val homesResponse = CompletableDeferred<List<Home>>()
+        coEvery { mockDevicesRepo.repoGetDevices() } coAnswers { devicesResponse.await() }
+        coEvery { mockHomesRepo.repoGetHomes() } coAnswers { homesResponse.await() }
+
+        val vm = DevicesListViewModel(mockDevicesRepo, mockHomesRepo)
+        runCurrent()
+
+        coVerify(exactly = 1) { mockDevicesRepo.repoGetDevices() }
+        coVerify(exactly = 1) { mockHomesRepo.repoGetHomes() }
+        assertTrue(vm.devicesUiState.value is DevicesListViewModel.DevicesUiState.Loading)
+
+        devicesResponse.complete(emptyList())
+        homesResponse.complete(emptyList())
+        advanceUntilIdle()
+
+        assertTrue(vm.devicesUiState.value is DevicesListViewModel.DevicesUiState.Idle)
+    }
+
+    @Test
+    fun `init exposes device list before online status request completes`() = runTest(testScheduler) {
+        val onlineDevice = sensorDevice.copy(
+            features = sensorDevice.features + Feature(
+                uuid = "online-feature",
+                type = "sensor",
+                name = "online",
+                enable = true,
+                order = 2,
+                unit = "",
+            )
+        )
+        val onlineResponse = CompletableDeferred<List<OnlineDeviceStatus>>()
+        coEvery { mockDevicesRepo.repoGetDevices() } returns listOf(onlineDevice)
+        coEvery { mockHomesRepo.repoGetHomes() } returns emptyList()
+        coEvery { mockOnlineRepo.repoGetOnlineStatuses() } coAnswers {
+            onlineResponse.await()
+        }
+
+        val vm = DevicesListViewModel(mockDevicesRepo, mockHomesRepo, mockOnlineRepo)
+        runCurrent()
+
+        val listState = vm.devicesUiState.value
+        assertTrue(listState is DevicesListViewModel.DevicesUiState.Idle)
+        assertEquals(
+            emptyMap<String, DevicesListViewModel.DeviceOnlineStatus>(),
+            (listState as DevicesListViewModel.DevicesUiState.Idle).onlineStatuses,
+        )
+        assertEquals(onlineDevice.id, listState.deviceList!!.unassignedDevices.single().id)
+        coVerify(exactly = 1) { mockOnlineRepo.repoGetOnlineStatuses() }
+        coVerify(exactly = 0) { mockOnlineRepo.repoGetOnlineValues(any()) }
+
+        onlineResponse.complete(
+            listOf(
+                OnlineDeviceStatus(
+                    createdAt = "2024-01-01T00:00:00",
+                    modifiedAt = "2024-01-01T00:00:00",
+                    currentTime = "2024-01-01T00:02:00",
+                    device = onlineDevice,
+                )
+            )
+        )
+        advanceUntilIdle()
+
+        val statusState = vm.devicesUiState.value as DevicesListViewModel.DevicesUiState.Idle
+        assertEquals(true, statusState.onlineStatuses[onlineDevice.id]?.isOffline)
+    }
+
+    @Test
+    fun `init skips online request when online feature is disabled`() = runTest(testScheduler) {
+        val disabledOnlineDevice = sensorDevice.copy(
+            features = sensorDevice.features + Feature(
+                uuid = "online-feature",
+                type = "sensor",
+                name = "online",
+                enable = false,
+                order = 2,
+                unit = "",
+            )
+        )
+        coEvery { mockDevicesRepo.repoGetDevices() } returns listOf(disabledOnlineDevice)
+        coEvery { mockHomesRepo.repoGetHomes() } returns emptyList()
+
+        val vm = DevicesListViewModel(mockDevicesRepo, mockHomesRepo, mockOnlineRepo)
+        advanceUntilIdle()
+
+        val state = vm.devicesUiState.value as DevicesListViewModel.DevicesUiState.Idle
+        assertTrue(state.onlineStatuses.isEmpty())
+        coVerify(exactly = 0) { mockOnlineRepo.repoGetOnlineStatuses() }
+        coVerify(exactly = 0) { mockOnlineRepo.repoGetOnlineValues(any()) }
+    }
 
     @Test
     fun `init builds MyDevicesList with assigned and unassigned devices on success`() = runTest(testScheduler) {
