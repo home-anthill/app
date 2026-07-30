@@ -2,16 +2,48 @@ package eu.homeanthill.ui.screens.devices.featurevalues.sensorValues
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
+import io.mockk.clearAllMocks
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
+import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.FeatureValue
 import eu.homeanthill.api.model.Format
 import eu.homeanthill.api.model.Spec
+import eu.homeanthill.api.model.GenericMessageResponse
+import eu.homeanthill.repository.DevicesRepository
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SensorFeatureValuesViewModelTest {
 
-    private val vm = SensorFeatureValuesViewModel()
+    private val testScheduler = TestCoroutineScheduler()
+    private val mainDispatcher = StandardTestDispatcher(testScheduler)
+    private val mockDevicesRepository = mockk<DevicesRepository>()
+    private val vm = SensorFeatureValuesViewModel(mockDevicesRepository)
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(mainDispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+        clearAllMocks()
+    }
 
     private fun makeFeatureValue(
         name: String,
@@ -192,5 +224,52 @@ class SensorFeatureValuesViewModelTest {
 
         assertEquals(null, vm.getThermostatMode(integerMode))
         assertEquals(null, vm.getThermostatMode(makeFeatureValue("temperature", 2.0)))
+    }
+
+    @Test
+    fun `supportsNotifications accepts motion and thermostat mode only`() {
+        assertTrue(vm.supportsNotifications(makeFeatureValue("motion", 1.0)))
+        assertTrue(vm.supportsNotifications(makeFeatureValue("mode", -1.0)))
+        assertEquals(false, vm.supportsNotifications(makeFeatureValue("temperature", 22.0)))
+    }
+
+    @Test
+    fun `setFeatureNotificationSilenced updates the selected sensor feature`() = runTest(testScheduler) {
+        val device = Device(
+            id = "device-id",
+            uuid = "device-uuid",
+            mac = "AA:BB:CC:DD:EE:FF",
+            name = "Device",
+            manufacturer = "home-anthill",
+            model = "sensor",
+            features = emptyList(),
+            createdAt = "",
+            modifiedAt = "",
+        )
+        var succeeded = false
+        coEvery {
+            mockDevicesRepository.repoSetFeatureNotification(
+                device.id,
+                "motion-feature",
+                true,
+            )
+        } returns GenericMessageResponse("updated")
+
+        vm.setFeatureNotificationSilenced(
+            device = device,
+            featureUuid = "motion-feature",
+            notificationSilenced = true,
+            onSuccess = { succeeded = true },
+        )
+        advanceUntilIdle()
+
+        assertTrue(succeeded)
+        coVerify(exactly = 1) {
+            mockDevicesRepository.repoSetFeatureNotification(
+                device.id,
+                "motion-feature",
+                true,
+            )
+        }
     }
 }

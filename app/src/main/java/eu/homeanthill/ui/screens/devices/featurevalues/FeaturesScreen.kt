@@ -247,8 +247,21 @@ fun FeaturesScreen(
                 SectionHeader(title = stringResource(R.string.sensors), icon = Icons.Default.MonitorHeart)
 
                 SensorFeatureValues(
+                  device = featureValuesUiState.deviceValue?.device ?: device,
                   featureValues = featureValuesUiState.deviceValue?.sensorFeatureValues,
                   sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
+                  onNotificationUpdated = { notificationSilenced ->
+                    coroutineScope.launch {
+                      snackbarHostState.showSnackbar(
+                        message = if (notificationSilenced) {
+                          notificationsSilencedMsg
+                        } else {
+                          notificationsEnabledMsg
+                        },
+                        duration = SnackbarDuration.Short,
+                      )
+                    }
+                  },
                 )
               }
 

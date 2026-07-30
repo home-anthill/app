@@ -18,15 +18,22 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Hvac
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,14 +44,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 import eu.homeanthill.R
+import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.FeatureValue
 import eu.homeanthill.ui.theme.AppTheme
 
 @Composable
 fun SensorFeatureValues(
+  device: Device?,
   featureValues: List<FeatureValue>?,
   sensorFeatureValuesViewModel: SensorFeatureValuesViewModel,
+  onNotificationUpdated: (notificationSilenced: Boolean) -> Unit = {},
 ) {
   val filteredValues = featureValues?.filter { it.feature.name.lowercase() != "online" }
 
@@ -56,6 +66,9 @@ fun SensorFeatureValues(
           displayValue = sensorFeatureValuesViewModel.getValue(featureValue),
           lastUpdated = sensorFeatureValuesViewModel.getPrettyDateFromUnixEpoch(featureValue.modifiedAt),
           thermostatMode = sensorFeatureValuesViewModel.getThermostatMode(featureValue),
+          device = device,
+          sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
+          onNotificationUpdated = onNotificationUpdated,
         )
       }
     }
@@ -68,9 +81,24 @@ fun SensorCard(
   displayValue: String,
   lastUpdated: String,
   thermostatMode: SensorFeatureValuesViewModel.ThermostatMode? = null,
+  device: Device? = null,
+  sensorFeatureValuesViewModel: SensorFeatureValuesViewModel? = null,
+  onNotificationUpdated: (notificationSilenced: Boolean) -> Unit = {},
 ) {
   val type = featureValue.feature.type.lowercase()
   val name = featureValue.feature.name.lowercase()
+  val supportsNotifications =
+    sensorFeatureValuesViewModel?.supportsNotifications(featureValue) == true
+  var notificationSilenced by remember(
+    device?.id,
+    featureValue.feature.uuid,
+    featureValue.feature.notificationSilenced,
+  ) {
+    mutableStateOf(featureValue.feature.notificationSilenced)
+  }
+  var notificationUpdating by remember(device?.id, featureValue.feature.uuid) {
+    mutableStateOf(false)
+  }
 
   val icon = when {
     name == "mode" -> Icons.Filled.Hvac
@@ -112,29 +140,79 @@ fun SensorCard(
       ) {
         // header
         Row(
+          modifier = Modifier.fillMaxWidth(),
           verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.Start
+          horizontalArrangement = Arrangement.SpaceBetween
         ) {
-          Box(
-            modifier = Modifier
-              .size(48.dp)
-              .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-              .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f),
           ) {
-            Icon(
-              imageVector = icon,
-              contentDescription = featureValue.feature.name,
-              tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(24.dp)
+            Box(
+              modifier = Modifier
+                .size(48.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+              contentAlignment = Alignment.Center
+            ) {
+              Icon(
+                imageVector = icon,
+                contentDescription = featureValue.feature.name,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+              )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+              text = featureValue.feature.name,
+              style = MaterialTheme.typography.titleMedium,
+              color = MaterialTheme.colorScheme.tertiary
             )
           }
-          Spacer(modifier = Modifier.width(16.dp))
-          Text(
-            text = featureValue.feature.name,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.tertiary
-          )
+          if (supportsNotifications) {
+            IconButton(
+              onClick = notification@{
+                val currentDevice = device ?: return@notification
+                val viewModel = sensorFeatureValuesViewModel
+                val nextNotificationSilenced = !notificationSilenced
+
+                notificationSilenced = nextNotificationSilenced
+                notificationUpdating = true
+                viewModel.setFeatureNotificationSilenced(
+                  device = currentDevice,
+                  featureUuid = featureValue.feature.uuid,
+                  notificationSilenced = nextNotificationSilenced,
+                  onSuccess = {
+                    notificationUpdating = false
+                    onNotificationUpdated(nextNotificationSilenced)
+                  },
+                  onError = {
+                    notificationSilenced = !nextNotificationSilenced
+                    notificationUpdating = false
+                  },
+                )
+              },
+              enabled = device != null && !notificationUpdating,
+              modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+            ) {
+              Icon(
+                imageVector = if (notificationSilenced) {
+                  Icons.Default.NotificationsOff
+                } else {
+                  Icons.Default.Notifications
+                },
+                contentDescription = if (notificationSilenced) {
+                  stringResource(R.string.enable_notifications)
+                } else {
+                  stringResource(R.string.silence_notifications)
+                },
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(20.dp),
+              )
+            }
+          }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

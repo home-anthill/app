@@ -56,7 +56,7 @@ val viewModelModule = module {
   viewModel { HomesListViewModel(homesRepository = get()) }
   viewModel { RoomsViewModel(homesRepository = get()) }
   viewModel { DevicesListViewModel(devicesRepository = get(), homesRepository = get(), onlineRepository = get()) }
-  viewModel { SensorFeatureValuesViewModel() }
+  viewModel { SensorFeatureValuesViewModel(devicesRepository = get()) }
   viewModel { ControllerFeatureValuesViewModel(devicesRepository = get()) }
   viewModel { OnlineFeatureValuesViewModel(onlineRepository = get(), devicesRepository = get()) }
   viewModel { FeaturesViewModel(devicesRepository = get(), homesRepository = get()) }

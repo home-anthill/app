@@ -9,6 +9,7 @@
 - Updated device feature UI handling to use `Feature.spec` for sensor value precision, controller slider bounds/steps, list options, and command normalization.
 - Added an online-feature notification silence icon toggle backed by the new device feature
   notification API.
+- Added the same notification silence toggle to motion and thermostat mode sensor cards.
 - Added a Notifications bottom-tab screen backed by `GET /api/notifications`.
 - Updated Android device details to render sensor values first, controls second, and the online feature section last.
 - Added `/online` status loading to the Android devices list and displayed online/offline dots above the controller badge on device cards.

@@ -199,7 +199,7 @@ Navigation passes objects via `savedStateHandle`. All model classes (`Device`, `
 
 Devices have typed features. `FeaturesScreen` reads device from `savedStateHandle` and conditionally renders based on feature type:
 - `sensor` + name `online` → `OnlineFeatureValues` (from `OnlineRepository`)
-- `sensor` (other) → `SensorFeatureValues` (read-only sensor readings)
+- `sensor` (other) → `SensorFeatureValues` (sensor readings; motion and thermostat mode include notification silence controls)
 - `controller` → `ControllerFeatureValues` (read/write device state via `DevicesRepository`)
 
 Each feature value composable:

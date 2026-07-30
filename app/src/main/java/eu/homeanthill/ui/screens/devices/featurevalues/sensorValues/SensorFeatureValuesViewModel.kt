@@ -1,19 +1,27 @@
 package eu.homeanthill.ui.screens.devices.featurevalues.sensorValues
 
+import android.util.Log
+import java.io.IOException
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
 
+import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.FeatureValue
 import eu.homeanthill.api.model.Format
+import eu.homeanthill.repository.DevicesRepository
 
-class SensorFeatureValuesViewModel : ViewModel() {
+class SensorFeatureValuesViewModel(
+  private val devicesRepository: DevicesRepository,
+) : ViewModel() {
   enum class ThermostatMode(val sensorValue: Float) {
     ERROR(-1.0f),
     SLEEP(0.0f),
@@ -76,8 +84,32 @@ class SensorFeatureValuesViewModel : ViewModel() {
     }
   }
 
+  fun supportsNotifications(featureValue: FeatureValue): Boolean {
+    return featureValue.feature.name in NOTIFICATION_FEATURE_NAMES
+  }
+
+  fun setFeatureNotificationSilenced(
+    device: Device,
+    featureUuid: String,
+    notificationSilenced: Boolean,
+    onSuccess: () -> Unit = {},
+    onError: () -> Unit = {},
+  ) {
+    viewModelScope.launch {
+      try {
+        devicesRepository.repoSetFeatureNotification(device.id, featureUuid, notificationSilenced)
+        onSuccess()
+      } catch (err: IOException) {
+        Log.e(TAG, "setFeatureNotificationSilenced - err = $err")
+        onError()
+      }
+    }
+  }
+
   companion object {
+    private const val TAG = "SensorValuesViewModel"
     private const val DEFAULT_DECIMAL_PRECISION = 2
     private const val MAX_DECIMAL_PRECISION = 2
+    private val NOTIFICATION_FEATURE_NAMES = setOf("motion", "mode")
   }
 }
