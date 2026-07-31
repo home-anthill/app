@@ -22,6 +22,7 @@
 
 ### Bug fixes
 
+- Scheduled an immediate FCM token registration on every app process start, so updating the app while already logged in no longer leaves Redis online records without `fcmToken` until the retained daily worker runs.
 - Moved Kotlin compiler options out of the Android DSL block to remove the suspicious receiver warning in `app/build.gradle.kts`.
 
 

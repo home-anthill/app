@@ -34,7 +34,10 @@ class App : Application(), Configuration.Provider {
       )
     }
 
-    // Start scheduling
+    // Refresh immediately on every process start so an app update with an existing login does not
+    // wait for the retained periodic WorkManager schedule. The worker exits successfully when no
+    // JWT is available, and LoginActivity schedules it again after authentication.
+    FcmScheduler.scheduleImmediateRefresh(this)
     FcmScheduler.schedulePeriodically(this)
   }
 

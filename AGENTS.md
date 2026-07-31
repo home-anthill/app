@@ -241,7 +241,8 @@ After successful mobile code exchange, `LoginActivity` schedules an immediate FC
 
 ### FCM Token Lifecycle
 
-- On first launch, `MainViewModel.init()` fetches a token from Firebase and registers it with the server via `FCMTokenRepository`
+- On every app process start, `App.onCreate()` schedules an immediate `FcmTokenWorker`; the worker registers the Firebase token when a JWT is present and exits successfully otherwise. This also covers app updates that preserve an existing login and periodic WorkManager state.
+- `LoginActivity` schedules the immediate worker again after successful authentication, covering the unauthenticated first-start case.
 - When Firebase rotates the token, `FCMService.onNewToken()` persists the new token via `LoginRepository` and immediately re-registers it with the server (only if a JWT is present — i.e. the user is logged in). This is wired via Koin `inject()` inside `FCMService`.
 
 ## Testing
