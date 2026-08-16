@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
+import eu.homeanthill.api.model.OnlineStatus
 
 @Composable
 fun OnlineFeatureValues(
@@ -70,13 +71,10 @@ fun OnlineFeatureValues(
     }
 
     is OnlineFeatureValuesViewModel.OnlineValuesUiState.Idle -> {
-      if (onlineValuesUiState.onlineValue != null) {
-        val isOffline = onlineFeatureValuesViewModel.isOffline(
-          onlineValuesUiState.onlineValue.modifiedAt,
-          onlineValuesUiState.onlineValue.currentTime
-        )
+      if (onlineValuesUiState.onlineStatus != null) {
+        val status = onlineValuesUiState.onlineStatus.status
         val onlineFeature = device?.features?.firstOrNull { feature ->
-          feature.type == "sensor" && feature.name == "online"
+          feature.enable && feature.type == "sensor" && feature.name == "online"
         }
         var notificationSilenced by remember(device?.id, onlineFeature?.uuid, onlineFeature?.notificationSilenced) {
           mutableStateOf(onlineFeature?.notificationSilenced ?: false)
@@ -187,14 +185,18 @@ fun OnlineFeatureValues(
 
               // value
               Text(
-                text = if (isOffline) {
-                  stringResource(R.string.offline_label)
-                } else {
-                  stringResource(R.string.online_label)
+                text = when (status) {
+                  OnlineStatus.ONLINE -> stringResource(R.string.online_label)
+                  OnlineStatus.OFFLINE -> stringResource(R.string.offline_label)
+                  OnlineStatus.UNKNOWN -> stringResource(R.string.unknown_label)
                 },
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (isOffline) MaterialTheme.colorScheme.error else Color(0xFF388E3C)
+                color = when (status) {
+                  OnlineStatus.ONLINE -> Color(0xFF388E3C)
+                  OnlineStatus.OFFLINE -> MaterialTheme.colorScheme.error
+                  OnlineStatus.UNKNOWN -> MaterialTheme.colorScheme.outlineVariant
+                }
               )
 
               Spacer(modifier = Modifier.height(16.dp))
@@ -202,14 +204,16 @@ fun OnlineFeatureValues(
               Spacer(modifier = Modifier.height(16.dp))
 
               // date
-              Text(
-                text = stringResource(
-                  R.string.updated_at,
-                  onlineFeatureValuesViewModel.getPrettyDateFromUnixEpoch(onlineValuesUiState.onlineValue.modifiedAt)
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
-              )
+              onlineValuesUiState.onlineStatus.modifiedAt?.let { modifiedAt ->
+                Text(
+                  text = stringResource(
+                    R.string.updated_at,
+                    onlineFeatureValuesViewModel.getPrettyDateFromUnixEpoch(modifiedAt)
+                  ),
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f)
+                )
+              }
             }
           }
         }

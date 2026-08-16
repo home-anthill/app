@@ -56,7 +56,9 @@ fun SensorFeatureValues(
   sensorFeatureValuesViewModel: SensorFeatureValuesViewModel,
   onNotificationUpdated: (notificationSilenced: Boolean) -> Unit = {},
 ) {
-  val filteredValues = featureValues?.filter { it.feature.name.lowercase() != "online" }
+  val filteredValues = featureValues?.filter {
+    it.feature.enable && it.feature.name.lowercase() != "online"
+  }
 
   if (!filteredValues.isNullOrEmpty()) {
     Column {

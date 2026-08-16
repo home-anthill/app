@@ -1,9 +1,6 @@
 package eu.homeanthill.ui.screens.devices.deviceslist
 
 import java.io.IOException
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
@@ -18,6 +15,7 @@ import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.HomeWithDevices
 import eu.homeanthill.api.model.MyDevicesList
+import eu.homeanthill.api.model.OnlineStatus
 import eu.homeanthill.api.model.Room
 import eu.homeanthill.api.model.RoomSplitDevices
 import eu.homeanthill.repository.DevicesRepository
@@ -29,11 +27,7 @@ class DevicesListViewModel(
   private val homesRepository: HomesRepository,
   private val onlineRepository: OnlineRepository? = null,
 ) : ViewModel() {
-  companion object {
-    private const val OFFLINE_THRESHOLD_MS = 60 * 1000L
-  }
-
-  data class DeviceOnlineStatus(val isOffline: Boolean)
+  data class DeviceOnlineStatus(val status: OnlineStatus)
 
   sealed class DevicesUiState {
     data class Idle(
@@ -67,12 +61,16 @@ class DevicesListViewModel(
 
   private fun getControllers(devices: List<Device>): List<Device> {
     // if a device has a controller feature, it's a controller and it cannot have any sensor feature!
-    return devices.filter { device -> device.features.any { it.type == "controller" } }
+    return devices.filter { device ->
+      device.features.any { feature -> feature.enable && feature.type == "controller" }
+    }
   }
 
   private fun getSensors(devices: List<Device>): List<Device> {
     // if a device has only sensor features, it's a sensor
-    return devices.filter { device -> device.features.none { it.type == "controller" } }
+    return devices.filter { device ->
+      device.features.none { feature -> feature.enable && feature.type == "controller" }
+    }
   }
 
   private fun hasOnlineFeature(device: Device): Boolean {
@@ -81,14 +79,6 @@ class DevicesListViewModel(
         feature.type.lowercase() == "sensor" &&
         feature.name.lowercase() == "online"
     }
-  }
-
-  private fun isOffline(modifiedAtISO: String, currentTimeISO: String): Boolean {
-    val modEpoch = LocalDateTime.parse(modifiedAtISO, DateTimeFormatter.ISO_DATE_TIME)
-      .toInstant(ZoneOffset.UTC).toEpochMilli()
-    val currentEpoch = LocalDateTime.parse(currentTimeISO, DateTimeFormatter.ISO_DATE_TIME)
-      .toInstant(ZoneOffset.UTC).toEpochMilli()
-    return modEpoch < currentEpoch - OFFLINE_THRESHOLD_MS
   }
 
   private suspend fun getOnlineStatuses(devices: List<Device>): Map<String, DeviceOnlineStatus> {
@@ -101,11 +91,9 @@ class DevicesListViewModel(
     return try {
       repository.repoGetOnlineStatuses()
         .asSequence()
-        .filter { it.device.id in enabledOnlineDeviceIds }
+        .filter { it.deviceId in enabledOnlineDeviceIds }
         .associate { onlineStatus ->
-          onlineStatus.device.id to DeviceOnlineStatus(
-            isOffline = isOffline(onlineStatus.modifiedAt, onlineStatus.currentTime)
-          )
+          onlineStatus.deviceId to DeviceOnlineStatus(onlineStatus.status)
         }
     } catch (err: CancellationException) {
       throw err

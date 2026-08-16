@@ -53,9 +53,11 @@
 - **Kotlin idioms cleaned up** — Range construction, side-effect iteration, controller/sensor lookup logic, null-check branches, override modifiers, empty constructors, trailing semicolons, explicit lambdas, and redundant conversions were simplified.
 - **Magic numbers named** — Extracted constants including `SESSION_EXPIRY_SECONDS`, `LOAD_DELAY_MS`, `FCM_REGISTER_DELAY_MS`, and `OFFLINE_THRESHOLD_MS`.
 - **`scheduleMonthlyRefresh` renamed to `schedulePeriodically`** — The method runs daily, so the name now matches the actual behavior.
+- **Device online status bulk contract** — Device lists and details now consume the bulk status enum directly and no longer call the legacy per-device online endpoint.
 
 ### Bug fixes
 
+- **Disabled feature visibility** — Device lists and details now hide disabled sensors, controls, online sections, and status indicators.
 - **First-install OAuth deep-link crash loop** — `onCreate()` now handles deep links after process death while the browser was open.
 - **Duplicate OAuth callback handling** — `onCreate()` and `onNewIntent()` now discard a second callback when a JWT is already stored, preventing valid sessions from being overwritten.
 - **Missing `return` after JWT redirect** — `onCreate()` no longer falls through to render the login UI after launching `MainActivity`.

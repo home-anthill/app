@@ -92,6 +92,27 @@ class FeaturesViewModelTest {
     }
 
     @Test
+    fun `initDeviceValues excludes disabled features`() = runTest(testScheduler) {
+        val deviceWithDisabledFeatures = testDevice.copy(
+            features = testDevice.features + listOf(
+                Feature(uuid = "disabled-sensor", type = "sensor", name = "humidity", enable = false, order = 2, unit = "%"),
+                Feature(uuid = "disabled-controller", type = "controller", name = "on", enable = false, order = 3, unit = ""),
+            )
+        )
+        coEvery { mockDevicesRepo.repoGetDevices() } returns listOf(deviceWithDisabledFeatures)
+        coEvery { mockDevicesRepo.repoGetDeviceValues("dev1") } returns emptyList()
+        coEvery { mockHomesRepo.repoGetHomes() } returns emptyList()
+
+        val vm = FeaturesViewModel(mockDevicesRepo, mockHomesRepo)
+        vm.initDeviceValues(deviceWithDisabledFeatures)
+        advanceUntilIdle()
+
+        val state = vm.featureValuesUiState.value as FeaturesViewModel.FeatureValuesUiState.Idle
+        assertEquals(listOf("feat-1"), state.deviceValue?.sensorFeatureValues?.map { it.feature.uuid })
+        assertTrue(state.deviceValue?.controllerFeatureValues?.isEmpty() == true)
+    }
+
+    @Test
     fun `initDeviceValues emits Error when repoGetHomes throws IOException`() = runTest(testScheduler) {
         coEvery { mockDevicesRepo.repoGetDevices() } returns listOf(testDevice)
         coEvery { mockDevicesRepo.repoGetDeviceValues("dev1") } returns emptyList()

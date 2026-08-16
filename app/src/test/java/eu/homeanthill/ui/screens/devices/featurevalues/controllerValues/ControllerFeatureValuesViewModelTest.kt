@@ -213,6 +213,24 @@ class ControllerFeatureValuesViewModelTest {
         assertEquals(2.0, sentValues.captured.first { it.name == "tolerance" }.value, 0.0)
     }
 
+    @Test
+    fun `sendCommands excludes disabled controller features`() = runTest(testScheduler) {
+        val sentValues = slot<List<PostSetFeatureDeviceValue>>()
+        coEvery { mockDevicesRepo.repoPostSetValues("dev1", capture(sentValues)) } returns
+                GenericMessageResponse("Commands sent")
+        val deviceWithDisabledSetpoint = testDevice.copy(
+            features = testDevice.features.map {
+                if (it.uuid == "f-setpoint") it.copy(enable = false) else it
+            }
+        )
+
+        val vm = ControllerFeatureValuesViewModel(mockDevicesRepo)
+        vm.sendCommands(deviceWithDisabledSetpoint, listOf(setpointValue, modeValue))
+        advanceUntilIdle()
+
+        assertEquals(listOf("f-mode"), sentValues.captured.map { it.featureUuid })
+    }
+
     // --- spec list options ---
 
     @Test

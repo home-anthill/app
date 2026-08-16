@@ -100,7 +100,7 @@ class FeaturesViewModel(
     // order by 'order'
     val sortedFeatures = device.features.sortedBy { it.order }
     val featureValues = sortedFeatures
-      .filter { feature -> feature.type == type }
+      .filter { feature -> feature.enable && feature.type == type }
       .map { feature ->
         val sensorValue: DeviceFeatureValueResponse? =
           values.find { value -> value.featureUuid == feature.uuid }

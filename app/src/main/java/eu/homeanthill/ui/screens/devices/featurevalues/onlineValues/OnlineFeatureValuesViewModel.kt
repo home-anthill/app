@@ -2,7 +2,6 @@ package eu.homeanthill.ui.screens.devices.featurevalues.onlineValues
 
 import android.util.Log
 import java.io.IOException
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -16,7 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 import eu.homeanthill.api.model.Device
-import eu.homeanthill.api.model.OnlineValue
+import eu.homeanthill.api.model.OnlineDeviceStatus
 import eu.homeanthill.BuildConfig
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.OnlineRepository
@@ -27,7 +26,6 @@ class OnlineFeatureValuesViewModel(
 ) : ViewModel() {
   companion object {
     private const val TAG = "OnlineValuesViewModel"
-    private const val OFFLINE_THRESHOLD_MS = 60 * 1000L
     private const val LOAD_DELAY_MS = 500L
   }
 
@@ -37,7 +35,7 @@ class OnlineFeatureValuesViewModel(
     .withZone(ZoneId.systemDefault())
 
   sealed class OnlineValuesUiState {
-    data class Idle(val onlineValue: OnlineValue?) : OnlineValuesUiState()
+    data class Idle(val onlineStatus: OnlineDeviceStatus?) : OnlineValuesUiState()
     data object Loading : OnlineValuesUiState()
     data class Error(val errorMessage: String) : OnlineValuesUiState()
   }
@@ -53,21 +51,14 @@ class OnlineFeatureValuesViewModel(
     return dtf.format(instant)
   }
 
-  fun isOffline(modifiedAtISO: String, currentTimeISO: String): Boolean {
-    val modEpoch = LocalDateTime.parse(modifiedAtISO, DateTimeFormatter.ISO_DATE_TIME)
-      .toInstant(ZoneOffset.UTC).toEpochMilli()
-    val currentEpoch = LocalDateTime.parse(currentTimeISO, DateTimeFormatter.ISO_DATE_TIME)
-      .toInstant(ZoneOffset.UTC).toEpochMilli()
-    return modEpoch < currentEpoch - OFFLINE_THRESHOLD_MS
-  }
-
   fun initDeviceValues(device: Device) {
     viewModelScope.launch {
       _onlineValuesUiState.emit(OnlineValuesUiState.Loading)
       delay(LOAD_DELAY_MS)
       try {
-        val value: OnlineValue = onlineRepository.repoGetOnlineValues(device.id)
-        _onlineValuesUiState.emit(OnlineValuesUiState.Idle(value))
+        val status = onlineRepository.repoGetOnlineStatuses()
+          .firstOrNull { it.deviceId == device.id }
+        _onlineValuesUiState.emit(OnlineValuesUiState.Idle(status))
       } catch (err: IOException) {
         _onlineValuesUiState.emit(OnlineValuesUiState.Error(err.message.toString()))
       }

@@ -158,7 +158,7 @@ fun ControllerValuesScreen(
       is ControllerFeatureValuesViewModel.ValuesUiState.Idle -> {
         if (device != null) {
           device.features
-            .filter { it.type == "controller" }
+            .filter { it.enable && it.type == "controller" }
             .forEach { feature ->
               val currentValue = featureValues.find { it.featureUuid == feature.uuid }
               ControlCard(
@@ -335,7 +335,7 @@ private fun controllerValuesWithDefaults(
     return values
   }
   return device.features
-    .filter { it.type == "controller" }
+    .filter { it.enable && it.type == "controller" }
     .sortedBy { it.order }
     .map { feature ->
       values.find { it.featureUuid == feature.uuid } ?: DeviceFeatureValueResponse(

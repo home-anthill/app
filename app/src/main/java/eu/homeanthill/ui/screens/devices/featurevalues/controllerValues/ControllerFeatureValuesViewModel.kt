@@ -102,8 +102,13 @@ class ControllerFeatureValuesViewModel(
   ) {
     viewModelScope.launch {
       try {
+        val enabledControllerFeatureIds = device.features
+          .filter { it.enable && it.type == "controller" }
+          .mapTo(mutableSetOf()) { it.uuid }
         val listToSend: List<PostSetFeatureDeviceValue> =
-          controllerFeatureValues.filter { it.type == "controller" }.map {
+          controllerFeatureValues
+            .filter { it.type == "controller" && it.featureUuid in enabledControllerFeatureIds }
+            .map {
             PostSetFeatureDeviceValue(
               featureUuid = it.featureUuid,
               type = it.type,

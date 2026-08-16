@@ -39,6 +39,7 @@
     <string name="online">online</string>
     <string name="online_label">Online</string>
     <string name="offline_label">Offline</string>
+    <string name="unknown_label">Unknown</string>
     <string name="silence_notifications">Silence notifications</string>
     <string name="enable_notifications">Enable notifications</string>
     <string name="notifications">Notifications</string>

@@ -57,6 +57,7 @@ import androidx.navigation.NavController
 
 import eu.homeanthill.R
 import eu.homeanthill.api.model.Device
+import eu.homeanthill.api.model.OnlineStatus
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.ui.screens.devices.DevicesRoute
 import eu.homeanthill.ui.theme.AppTheme
@@ -267,7 +268,9 @@ fun DeviceCard(
   onlineStatus: DevicesListViewModel.DeviceOnlineStatus? = null,
   onClick: () -> Unit,
 ) {
-  val hasController = device.features.any { it.type.lowercase().contains("controller") }
+  val hasController = device.features.any {
+    it.enable && it.type.lowercase().contains("controller")
+  }
   val hasOnline = device.features.any {
     it.enable && it.type.lowercase() == "sensor" && it.name.lowercase() == "online"
   }
@@ -339,15 +342,15 @@ fun DeviceCard(
 
 @Composable
 fun OnlineStatusDot(onlineStatus: DevicesListViewModel.DeviceOnlineStatus?) {
-  val color = when (onlineStatus?.isOffline) {
-    true -> MaterialTheme.colorScheme.error
-    false -> Color(0xFF388E3C)
-    null -> MaterialTheme.colorScheme.outlineVariant
+  val color = when (onlineStatus?.status) {
+    OnlineStatus.OFFLINE -> MaterialTheme.colorScheme.error
+    OnlineStatus.ONLINE -> Color(0xFF388E3C)
+    OnlineStatus.UNKNOWN, null -> MaterialTheme.colorScheme.outlineVariant
   }
-  val label = when (onlineStatus?.isOffline) {
-    true -> stringResource(R.string.offline_label)
-    false -> stringResource(R.string.online_label)
-    null -> stringResource(R.string.online_label)
+  val label = when (onlineStatus?.status) {
+    OnlineStatus.OFFLINE -> stringResource(R.string.offline_label)
+    OnlineStatus.ONLINE -> stringResource(R.string.online_label)
+    OnlineStatus.UNKNOWN, null -> stringResource(R.string.unknown_label)
   }
 
   Box(

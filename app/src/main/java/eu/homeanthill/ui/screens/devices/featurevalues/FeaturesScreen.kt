@@ -234,8 +234,9 @@ fun FeaturesScreen(
             }
 
             is FeaturesViewModel.FeatureValuesUiState.Idle -> {
-              val hasOnline = device?.features?.any { feature ->
-                feature.type == "sensor" && feature.name == "online"
+              val currentDevice = featureValuesUiState.deviceValue?.device ?: device
+              val hasOnline = currentDevice?.features?.any { feature ->
+                feature.enable && feature.type == "sensor" && feature.name == "online"
               } == true
 
               val sensorFeatures = featureValuesUiState.deviceValue?.sensorFeatureValues?.filter {
@@ -247,8 +248,8 @@ fun FeaturesScreen(
                 SectionHeader(title = stringResource(R.string.sensors), icon = Icons.Default.MonitorHeart)
 
                 SensorFeatureValues(
-                  device = featureValuesUiState.deviceValue?.device ?: device,
-                  featureValues = featureValuesUiState.deviceValue?.sensorFeatureValues,
+                  device = currentDevice,
+                  featureValues = sensorFeatures,
                   sensorFeatureValuesViewModel = sensorFeatureValuesViewModel,
                   onNotificationUpdated = { notificationSilenced ->
                     coroutineScope.launch {
@@ -268,7 +269,7 @@ fun FeaturesScreen(
               // controls section
               if (featureValuesUiState.deviceValue?.controllerFeatureValues?.isNotEmpty() == true) {
                 ControllerValuesScreen(
-                  device = device,
+                  device = currentDevice,
                   getValueUiState = controllerValuesUiState,
                   controllerFeatureValuesViewModel = controllerFeatureValuesViewModel,
                   refreshTrigger = refreshTrigger,
@@ -295,7 +296,7 @@ fun FeaturesScreen(
                   icon = ImageVector.vectorResource(R.drawable.bolt_24px)
                 )
                 OnlineFeatureValues(
-                  device = featureValuesUiState.deviceValue?.device ?: device,
+                  device = currentDevice,
                   onlineValuesUiState = onlineValuesUiState,
                   onlineFeatureValuesViewModel = onlineFeatureValuesViewModel,
                   refreshTrigger = refreshTrigger,

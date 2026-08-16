@@ -26,6 +26,7 @@ import eu.homeanthill.api.model.Device
 import eu.homeanthill.api.model.Feature
 import eu.homeanthill.api.model.Home
 import eu.homeanthill.api.model.OnlineDeviceStatus
+import eu.homeanthill.api.model.OnlineStatus
 import eu.homeanthill.api.model.Room
 import eu.homeanthill.repository.DevicesRepository
 import eu.homeanthill.repository.HomesRepository
@@ -158,22 +159,22 @@ class DevicesListViewModelTest {
         )
         assertEquals(onlineDevice.id, listState.deviceList!!.unassignedDevices.single().id)
         coVerify(exactly = 1) { mockOnlineRepo.repoGetOnlineStatuses() }
-        coVerify(exactly = 0) { mockOnlineRepo.repoGetOnlineValues(any()) }
-
         onlineResponse.complete(
             listOf(
                 OnlineDeviceStatus(
+                    deviceId = onlineDevice.id,
+                    featureUuid = "online-feature",
+                    status = OnlineStatus.OFFLINE,
                     createdAt = "2024-01-01T00:00:00",
                     modifiedAt = "2024-01-01T00:00:00",
                     currentTime = "2024-01-01T00:02:00",
-                    device = onlineDevice,
                 )
             )
         )
         advanceUntilIdle()
 
         val statusState = vm.devicesUiState.value as DevicesListViewModel.DevicesUiState.Idle
-        assertEquals(true, statusState.onlineStatuses[onlineDevice.id]?.isOffline)
+        assertEquals(OnlineStatus.OFFLINE, statusState.onlineStatuses[onlineDevice.id]?.status)
     }
 
     @Test
@@ -197,7 +198,6 @@ class DevicesListViewModelTest {
         val state = vm.devicesUiState.value as DevicesListViewModel.DevicesUiState.Idle
         assertTrue(state.onlineStatuses.isEmpty())
         coVerify(exactly = 0) { mockOnlineRepo.repoGetOnlineStatuses() }
-        coVerify(exactly = 0) { mockOnlineRepo.repoGetOnlineValues(any()) }
     }
 
     @Test
