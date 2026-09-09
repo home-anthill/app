@@ -112,7 +112,7 @@ fun SensorCard(
       "eco"
     ) || name.contains("airquality") -> ImageVector.vectorResource(R.drawable.eco_24px)
 
-    type.contains("motion") || name.contains("motion") || type.contains("pir") || name.contains("pir") -> ImageVector.vectorResource(R.drawable.directions_run_24px)
+    type.contains("motion") || name.contains("motion") || type.contains("motion") || name.contains("motion") -> ImageVector.vectorResource(R.drawable.directions_run_24px)
     else -> ImageVector.vectorResource(R.drawable.question_mark_24px)
   }
 
