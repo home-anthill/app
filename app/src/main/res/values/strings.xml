@@ -22,6 +22,7 @@
     <string name="profile_api_token">API Token</string>
     <string name="profile_api_token_caption">Use this API token in firmwares</string>
     <string name="profile_logout">Logout</string>
+    <string name="profile_logout_failed">Logout failed. Please check your connection and try again.</string>
 
     <!-- General -->
     <string name="ok">OK</string>

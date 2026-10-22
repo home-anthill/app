@@ -42,6 +42,9 @@ class ProfileViewModel(
     MutableStateFlow<ApiTokenUiState>(ApiTokenUiState.Idle("********-****-****-****-************"))
   val apiTokenUiState: StateFlow<ApiTokenUiState> = _apiTokenUiState
 
+  private val _logoutFailed = MutableStateFlow(false)
+  val logoutFailed: StateFlow<Boolean> = _logoutFailed
+
   init {
     init()
   }
@@ -68,7 +71,12 @@ class ProfileViewModel(
 
   fun logout() {
     viewModelScope.launch {
-      logoutRepository.logoutWithServerAndRedirect()
+      _logoutFailed.value = false
+      try {
+        logoutRepository.logoutWithServerAndRedirect()
+      } catch (err: IOException) {
+        _logoutFailed.value = true
+      }
     }
   }
 

@@ -103,6 +103,9 @@ fun SensorCard(
   }
 
   val icon = when {
+    name == "altitude" -> ImageVector.vectorResource(R.drawable.compress_24px)
+    name == "iaq" || name == "voc" || name == "eco2" || name == "co2" -> ImageVector.vectorResource(R.drawable.eco_24px)
+    name == "level" || name == "ph" -> ImageVector.vectorResource(R.drawable.invert_colors_24px)
     name == "mode" -> Icons.Filled.Hvac
     type.contains("temperature") || name.contains("temperature") -> ImageVector.vectorResource(R.drawable.device_thermostat_24px)
     type.contains("humidity") || name.contains("humidity") || name.contains("humidty") -> ImageVector.vectorResource(R.drawable.invert_colors_24px)

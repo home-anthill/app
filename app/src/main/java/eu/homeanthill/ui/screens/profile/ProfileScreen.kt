@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 
 import eu.homeanthill.R
@@ -58,6 +59,7 @@ fun ProfileScreen(
   apiTokenUiState: ProfileViewModel.ApiTokenUiState,
   profileViewModel: ProfileViewModel
 ) {
+  val logoutFailed by profileViewModel.logoutFailed.collectAsStateWithLifecycle()
   var showRegenDialog by remember { mutableStateOf(false) }
   val profile = (profileUiState as? ProfileViewModel.ProfileUiState.Idle)?.profile
   val view = LocalView.current
@@ -89,7 +91,8 @@ fun ProfileScreen(
     profileUiState = profileUiState,
     apiTokenUiState = apiTokenUiState,
     onRegenToken = { _ -> showRegenDialog = true },
-    onLogout = { profileViewModel.logout() }
+    onLogout = { profileViewModel.logout() },
+    logoutFailed = logoutFailed
   )
 }
 
@@ -99,7 +102,8 @@ fun ProfileContent(
   apiTokenUiState: ProfileViewModel.ApiTokenUiState,
   onRegenToken: (String?) -> Unit,
   onLogout: () -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  logoutFailed: Boolean = false
 ) {
   Box(
     modifier = modifier
@@ -252,6 +256,14 @@ fun ProfileContent(
               Spacer(modifier = Modifier.height(24.dp))
               HorizontalDivider(color = MaterialTheme.colorScheme.outline)
               Spacer(modifier = Modifier.height(24.dp))
+
+              if (logoutFailed) {
+                Text(
+                  text = stringResource(R.string.profile_logout_failed),
+                  color = MaterialTheme.colorScheme.error,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+              }
 
               Button(
                 onClick = onLogout,

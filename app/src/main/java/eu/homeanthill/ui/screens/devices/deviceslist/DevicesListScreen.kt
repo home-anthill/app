@@ -392,12 +392,15 @@ fun CtrlBadge() {
 @Composable
 fun FeatureIcon(feature: Feature) {
   val icon = when (feature.name.lowercase()) {
+    "altitude" -> ImageVector.vectorResource(R.drawable.compress_24px)
+    "co2" -> ImageVector.vectorResource(R.drawable.eco_24px)
+    "level", "ph" -> ImageVector.vectorResource(R.drawable.data_thresholding_24px)
     "mode" -> Icons.Filled.Hvac
     "temperature" -> ImageVector.vectorResource(R.drawable.device_thermostat_24px)
     "humidity" -> ImageVector.vectorResource(R.drawable.invert_colors_24px)
     "light" -> ImageVector.vectorResource(R.drawable.light_mode_24px)
     "airpressure" -> ImageVector.vectorResource(R.drawable.compress_24px)
-    "airquality" -> ImageVector.vectorResource(R.drawable.eco_24px)
+    "iaq", "voc", "eco2", "airquality" -> ImageVector.vectorResource(R.drawable.eco_24px)
     "motion" -> ImageVector.vectorResource(R.drawable.directions_run_24px)
     "online" -> ImageVector.vectorResource(R.drawable.bolt_24px)
     else -> ImageVector.vectorResource(R.drawable.question_mark_24px)

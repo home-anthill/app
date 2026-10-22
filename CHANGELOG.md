@@ -5,6 +5,9 @@
 
 ### Features
 
+- Added support for `altitude`, `co2`, `level`, and `ph` using the existing sensor patterns. Show feature icons in device lists and readings, with units/precision from metadata and threshold labels for water level.
+- Enable the existing per-feature notification silence control for `level`, alongside motion and thermostat mode.
+- Add icons and numeric reading coverage for `iaq`, `voc`, and `eco2`, distinct from legacy categorical airquality.
 - Added thermostat `mode` sensor cards with error, sleep, cooling, and heating status icons.
 - Updated device feature UI handling to use `Feature.spec` for sensor value precision, controller slider bounds/steps, list options, and command normalization.
 - Added an online-feature notification silence icon toggle backed by the new device feature
@@ -22,6 +25,8 @@
 
 ### Bug fixes
 
+- Keep credentials and stay on the profile screen when server logout fails, showing a message to check the connection and retry.
+- Hardened mobile OAuth callbacks by handling code-exchange exceptions with pending-secret cleanup, ignoring overlapping callbacks and login clicks during an exchange, and restricting callbacks with no configured port to omitted or scheme-default ports.
 - Scheduled an immediate FCM token registration on every app process start, so updating the app while already logged in no longer leaves Redis online records without `fcmToken` until the retained daily worker runs.
 - Moved Kotlin compiler options out of the Android DSL block to remove the suspicious receiver warning in `app/build.gradle.kts`.
 

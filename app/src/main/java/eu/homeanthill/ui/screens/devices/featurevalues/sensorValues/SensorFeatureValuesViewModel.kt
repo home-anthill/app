@@ -56,19 +56,21 @@ class SensorFeatureValuesViewModel(
     }
   }
 
-  private fun formatByStep(value: Double, step: Float?): String {
+  private fun formatByStep(value: Double, step: Float?, maxPrecision: Int = MAX_DECIMAL_PRECISION): String {
     val decimals = if (step == null || step <= 0f) {
       DEFAULT_DECIMAL_PRECISION
     } else {
       max(0.0, ceil(-log10(step.toDouble()))).toInt()
     }
-    return String.format(Locale.US, "%.${min(decimals, MAX_DECIMAL_PRECISION)}f", value)
+    return String.format(Locale.US, "%.${min(decimals, maxPrecision)}f", value)
   }
 
   fun getValue(featureValue: FeatureValue): String {
     return when (featureValue.feature.name) {
+      "level" -> if (featureValue.value == 0.0) "Below threshold" else "Above threshold"
       "motion" -> getMotionValue(featureValue.value.toInt())
       "airquality" -> getAirQualityValue(featureValue.value.toInt())
+      "voc" -> "${formatByStep(featureValue.value, featureValue.feature.spec.step, 3)} ${featureValue.feature.unit}"
       else -> "${formatByStep(featureValue.value, featureValue.feature.spec.step)} ${featureValue.feature.unit}"
     }
   }
@@ -110,6 +112,6 @@ class SensorFeatureValuesViewModel(
     private const val TAG = "SensorValuesViewModel"
     private const val DEFAULT_DECIMAL_PRECISION = 2
     private const val MAX_DECIMAL_PRECISION = 2
-    private val NOTIFICATION_FEATURE_NAMES = setOf("motion", "mode")
+    private val NOTIFICATION_FEATURE_NAMES = setOf("motion", "mode", "level")
   }
 }

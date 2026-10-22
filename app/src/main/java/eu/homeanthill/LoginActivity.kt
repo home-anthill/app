@@ -14,11 +14,13 @@ import androidx.lifecycle.lifecycleScope
 import eu.homeanthill.ui.screens.login.LoginScreen
 import eu.homeanthill.ui.theme.AppTheme
 import eu.homeanthill.repository.AppLoginExchangeRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class LoginActivity : ComponentActivity() {
   private val appLoginExchangeRepository: AppLoginExchangeRepository by inject()
+  private var oauthExchangeInProgress = false
 
   companion object {
     private const val TAG = "LoginActivity"
@@ -29,6 +31,8 @@ class LoginActivity : ComponentActivity() {
    * [PermissionActivity]. Returns true if all required parameters were present and handled.
    */
   private fun handleOAuthCallback(data: Uri): Boolean {
+    if (oauthExchangeInProgress) return true
+
     if (!isAllowedOAuthCallback(data)) {
       Log.e(
         TAG,
@@ -67,25 +71,32 @@ class LoginActivity : ComponentActivity() {
       clearPendingOAuth()
       return false
     }
+    oauthExchangeInProgress = true
     lifecycleScope.launch {
-      val result = appLoginExchangeRepository.exchangeCode(code, codeVerifier)
-      if (result == null) {
-        Log.e(TAG, "handleOAuthCallback - code exchange failed")
-        clearPendingOAuth()
-        return@launch
-      }
+      try {
+        val result = appLoginExchangeRepository.exchangeCode(code, codeVerifier)
+        if (result == null) {
+          Log.e(TAG, "handleOAuthCallback - code exchange failed")
+          return@launch
+        }
 
-      this@LoginActivity.securePrefs().edit {
-        putString(jwtKey, result.token)
-          .putString(refreshTokenKey, result.refreshToken)
-          .remove(pkceCodeVerifierKey)
-          .remove(oauthStateKey)
+        this@LoginActivity.securePrefs().edit {
+          putString(jwtKey, result.token)
+            .putString(refreshTokenKey, result.refreshToken)
+        }
+        FcmScheduler.scheduleImmediateRefresh(this@LoginActivity.applicationContext)
+        val i = Intent(this@LoginActivity, PermissionActivity::class.java)
+        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(i)
+        finish()
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        Log.e(TAG, "handleOAuthCallback - code exchange failed")
+      } finally {
+        clearPendingOAuth()
+        oauthExchangeInProgress = false
       }
-      FcmScheduler.scheduleImmediateRefresh(this@LoginActivity.applicationContext)
-      val i = Intent(this@LoginActivity, PermissionActivity::class.java)
-      i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-      startActivity(i)
-      finish()
     }
     return true
   }
@@ -120,7 +131,9 @@ class LoginActivity : ComponentActivity() {
         data.host == host &&
         data.path == path &&
         when {
-          port.isBlank() -> true
+          port.isBlank() -> actualPort == -1 ||
+              (scheme == "https" && actualPort == 443) ||
+              (scheme == "http" && actualPort == 80)
           actualPort == expectedPort -> true
           actualPort == -1 && scheme == "https" && expectedPort == 443 -> true
           actualPort == -1 && scheme == "http" && expectedPort == 80 -> true
@@ -179,25 +192,27 @@ class LoginActivity : ComponentActivity() {
       AppTheme {
         LoginScreen(
           onLoginClick = {
-            val codeVerifier = PKCE.generateCodeVerifier()
-            val codeChallenge = PKCE.buildCodeChallenge(codeVerifier)
-            val oauthState = PKCE.generateState()
-            context.securePrefs().edit {
-              putString(pkceCodeVerifierKey, codeVerifier)
-                .putString(oauthStateKey, oauthState)
+            if (!oauthExchangeInProgress) {
+              val codeVerifier = PKCE.generateCodeVerifier()
+              val codeChallenge = PKCE.buildCodeChallenge(codeVerifier)
+              val oauthState = PKCE.generateState()
+              context.securePrefs().edit {
+                putString(pkceCodeVerifierKey, codeVerifier)
+                  .putString(oauthStateKey, oauthState)
+              }
+              val loginUri = (BuildConfig.API_BASE_URL + "oauth/app/login")
+                .toUri()
+                .buildUpon()
+                .appendQueryParameter("code_challenge", codeChallenge)
+                .appendQueryParameter("code_challenge_method", "S256")
+                .appendQueryParameter("app_state", oauthState)
+                .build()
+              val intent = Intent(
+                Intent.ACTION_VIEW,
+                loginUri
+              )
+              context.startActivity(intent)
             }
-            val loginUri = (BuildConfig.API_BASE_URL + "oauth/app/login")
-              .toUri()
-              .buildUpon()
-              .appendQueryParameter("code_challenge", codeChallenge)
-              .appendQueryParameter("code_challenge_method", "S256")
-              .appendQueryParameter("app_state", oauthState)
-              .build()
-            val intent = Intent(
-              Intent.ACTION_VIEW,
-              loginUri
-            )
-            context.startActivity(intent)
           }
         )
       }

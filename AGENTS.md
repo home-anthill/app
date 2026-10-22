@@ -169,7 +169,7 @@ The dedicated OkHttp/Retrofit pair is registered in Koin under the `named("refre
 
 #### Logout Flow (mobile)
 
-`ProfileViewModel.logout()` calls `LogoutRepository.logoutWithServerAndRedirect()`. The repository reads `refreshTokenKey` and posts `{ "refreshToken": "..." }` to `/api/oauth/app/logout` so the api-server can revoke the mobile refresh-token family. The mobile logout endpoint does not clear or renew Gin session cookies; session/cookie cleanup belongs only to web logout. Local logout and redirect still happen if the token is missing or the server call fails.
+`ProfileViewModel.logout()` calls `LogoutRepository.logoutWithServerAndRedirect()`. The repository reads `refreshTokenKey` and posts `{ "refreshToken": "..." }` to `/api/oauth/app/logout` so the api-server can revoke the mobile refresh-token family. The mobile logout endpoint does not clear or renew Gin session cookies; session/cookie cleanup belongs only to web logout. The repository checks the HTTP response and throws IOException on failure or a missing refresh token. The profile screen shows a retry message and retains credentials on failure; local logout and redirect happen only after successful server logout.
 
 #### Credential storage (`PreferencesKeys.kt` + `SecurePrefs.kt`)
 

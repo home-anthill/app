@@ -1,5 +1,7 @@
 package eu.homeanthill.repository
 
+import java.io.IOException
+
 import eu.homeanthill.api.model.RefreshTokenRequest
 import eu.homeanthill.api.requests.LogoutServices
 
@@ -8,12 +10,11 @@ class LogoutRepository(
   private val loginRepository: LoginRepository,
 ) {
   suspend fun logoutWithServerAndRedirect() {
-    try {
-      loginRepository.getRefreshToken()?.let { refreshToken ->
-        logoutService.logout(RefreshTokenRequest(refreshToken))
-      }
-    } catch (_: Exception) {
-      // Local logout must still happen if the server session is already unavailable.
+    val refreshToken = loginRepository.getRefreshToken()
+      ?: throw IOException("Refresh token not found")
+    val response = logoutService.logout(RefreshTokenRequest(refreshToken))
+    if (!response.isSuccessful) {
+      throw IOException("Cannot logout")
     }
     loginRepository.logoutAndRedirect()
   }

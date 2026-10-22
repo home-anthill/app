@@ -178,6 +178,22 @@ class SensorFeatureValuesViewModelTest {
         assertEquals("Unknown", vm.getValue(fv))
     }
 
+    @Test
+    fun `new numeric sensors use their units and precision`() {
+        assertEquals("-12.5 m", vm.getValue(makeFeatureValue("altitude", -12.5, "m", Spec(format = Format.FLOAT, step = 0.5f))))
+        assertEquals("850 ppm", vm.getValue(makeFeatureValue("co2", 850.0, "ppm", Spec(format = Format.INT, step = 1f))))
+        assertEquals("7.25 pH", vm.getValue(makeFeatureValue("ph", 7.25, "pH")))
+        assertEquals("75 IAQ", vm.getValue(makeFeatureValue("iaq", 75.0, "IAQ", Spec(format = Format.FLOAT, step = 1f))))
+        assertEquals("0.753 ppm", vm.getValue(makeFeatureValue("voc", 0.753, "ppm", Spec(format = Format.FLOAT, step = 0.001f))))
+        assertEquals("650 ppm", vm.getValue(makeFeatureValue("eco2", 650.0, "ppm", Spec(format = Format.FLOAT, step = 1f))))
+    }
+
+    @Test
+    fun `water level describes both threshold states`() {
+        assertEquals("Below threshold", vm.getValue(makeFeatureValue("level", 0.0)))
+        assertEquals("Above threshold", vm.getValue(makeFeatureValue("level", 1.0)))
+    }
+
     // --- getValue: airpressure ---
 
     @Test
@@ -227,8 +243,9 @@ class SensorFeatureValuesViewModelTest {
     }
 
     @Test
-    fun `supportsNotifications accepts motion and thermostat mode only`() {
+    fun `supportsNotifications accepts motion thermostat mode and level only`() {
         assertTrue(vm.supportsNotifications(makeFeatureValue("motion", 1.0)))
+        assertTrue(vm.supportsNotifications(makeFeatureValue("level", 1.0)))
         assertTrue(vm.supportsNotifications(makeFeatureValue("mode", -1.0)))
         assertEquals(false, vm.supportsNotifications(makeFeatureValue("temperature", 22.0)))
     }
